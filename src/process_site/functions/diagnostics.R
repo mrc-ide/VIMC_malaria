@@ -37,7 +37,6 @@ incident_cases_diagnostic<- function(dt, pg){
   
   p<-   ggplot(data= dt, mapping = aes(x= year, y= cases, color= scenario, fill= scenario))+
     geom_point(alpha= 0.5)  +
-    expand_limits(x= 0, y= 0)+
     facet_wrap_paginate(~age, scales= 'free', 
                         ncol= 5, nrow= 5, 
                         page = pg) +
@@ -57,7 +56,6 @@ incidence_rate_diagnostic<- function(dt, pg){
   
   p<-  ggplot(data= dt, mapping = aes(x= year, y= clinical, color= scenario, fill= scenario))+
     geom_point(alpha= 0.5)  +
-    expand_limits(x= 0, y= 0)+
     facet_wrap_paginate(~age, 
                         scales = 'free', nrow= 5, ncol= 5, page = pg) +
     labs(x= 'Time (in years)', 
@@ -79,7 +77,6 @@ mortality_diagnostic<- function(dt, pg){
   
   p<- ggplot(data= dt, mapping = aes(x= year, y= deaths, color= scenario, fill= scenario))+
     geom_point(alpha= 0.5)  +
-    expand_limits(x= 0, y= 0)+
     geom_vline(xintercept= 2023, linetype= "dotted") +
     facet_wrap_paginate(~age, 
                         scales = 'free', ncol= 5, nrow= 5, page = pg) +
@@ -99,7 +96,6 @@ mortality_rate_diagnostic<- function(dt, pg){
   
   p<- ggplot(data= dt, mapping = aes(x= year, y= mortality, color= scenario, fill= scenario))+
     geom_point(alpha= 0.5) +
-    expand_limits(x= 0, y= 0)+
     geom_vline(xintercept= 2023, linetype= "dotted") +
     facet_wrap_paginate(~age, 
                         scales = 'free', ncol= 5, nrow= 5, page= pg) +
@@ -121,7 +117,6 @@ daly_diagnostic<- function(dt, pg){
   
   p<- ggplot(data= dt, mapping = aes(x= year, y= dalys, color= scenario, fill= scenario))+
     geom_point(alpha= 0.5)  +
-    expand_limits(x= 0, y= 0)+
     facet_wrap_paginate(~age, 
                scales = 'free', ncol= 5, nrow= 5, page = pg) +
     geom_vline(xintercept= 2023, linetype= "dotted") +
@@ -413,13 +408,13 @@ prevalence_diagnostic<- function(site){
 
 
 # interventions ----------------------------------------------------------------
-plot_interventions_combined(
-  interventions = site$interventions,
-  population = site$population,
-  group_var = c("country", "name_1"),
-  include = c("itn_use", "itn_input_dist", "tx_cov", "smc_cov", "pmc_cov"),
-  labels = c("ITN usage", "ITN model input", "Treatment","SMC", "PMC")
-)
+# plot_interventions_combined(
+#   interventions = site$interventions,
+#   population = site$population,
+#   group_var = c("country", "name_1"),
+#   include = c("itn_use", "itn_input_dist", "tx_cov", "smc_cov", "pmc_cov"),
+#   labels = c("ITN usage", "ITN model input", "Treatment","SMC", "PMC")
+# )
 
 
 
