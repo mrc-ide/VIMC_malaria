@@ -1,0 +1,24 @@
+.Rproj.user
+.Rhistory
+.Rdata
+.httr-oauth
+.DS_Store
+.csv
+.xlsx
+2022/
+raw_data/
+data/
+contexts/
+archive/
+.outpack/
+draft/
+src/set_parameters/vimc_inputs/
+src/set_parameters/site_files/
+
+# ---VVV--- added by orderly ---VVV----------------
+# Don't manually edit content between these markers
+.outpack
+orderly_envir.yml
+draft
+archive
+# ---^^^--- added by orderly ---^^^----------------

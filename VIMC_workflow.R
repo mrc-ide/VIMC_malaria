@@ -1,0 +1,105 @@
+# VIMC orderly workflow
+# author: Lydia Haile
+# orderly workflow for VIMC model runs. This script: 
+# 1) formats input parameters for model runs
+# 2) runs models
+# 3) processes country outputs
+# 4) generates diagnostics
+################################################################################
+
+# packages  
+library(orderly2)
+library(site)
+lapply(list.files('functions/', full.names = T), source)
+
+# obtain list of countries to run model for
+coverage<- read.csv('src/process_inputs/vimc_inputs/vaccine_coverage/coverage_202310gavi-1_malaria-r3-default.csv')
+iso3cs<- unique(coverage$country_code)
+
+dir<- getwd()
+source('run_report.R')
+
+# PARAMETERS TO CHANGE FOR REPORTS ---------------------------------------------
+iso3c<- 'NGA'                                                                  # country to launch model for
+sites<- readRDS(paste0('src/process_site/site_files/', iso3c, '.rds'))$sites   # sites for country of interest
+pop_val<- 50000                                                                # population size
+descrip<- 'turn_off_demography'                                                # reason for model run
+draw<- 0                                                                       # parameter draw to run (0 for central runs)
+burnin<- 15           
+
+# if just testing reports for one site:
+site_name<- 'Lagos'
+ur<- 'urban'
+
+################################################################################
+# 1 prepare and save inputs
+# unless inputs change, this only needs to be run once for all countries
+# for (iso3c in iso3cs){
+#   
+#   orderly2::orderly_run(
+#     'process_inputs',
+#     list(iso3c = iso3c),
+#   )
+# }
+# 
+
+
+# 2 following reports reports to run (in chronological order)
+reports<- c('set_parameters', 'launch_models', 'process_site', 'site_diagnostics', 'process_country')
+report_type<- reports[3]   # select a report to run
+
+# scenarios to run (no order)
+scenarios<- c('no-vaccination', 'r3-default', 'r3-r4-default', 'rts3-bluesky', 'rts3-default', 'rts3-rts4-bluesky')
+scenario<-  scenarios[3]   # select a scenario to run per VIMC inputs.
+
+# cluster setup --------------------------------------------------------------
+ctx <- context::context_save("contexts", sources= 'launch_model.R')
+config <- didehpc::didehpc_config(cluster = "big")
+obj <- didehpc::queue_didehpc(ctx, config = config)
+
+# run reports for all sites in a country  --------------------------------------
+print(report_type) # report to run
+print(scenario)
+
+test<- obj$lapply(
+  1:nrow(sites),
+  run_report,
+  report_name = report_type,
+  path = dir,
+  site_data = sites,
+  population = pop_val,
+  description = descrip,
+  scenario = scenario,
+  parameter_draw = draw,
+  burnin = burnin
+)
+
+
+# # run report just for one site  ------------------------------------------------
+job<- obj$enqueue(orderly2::orderly_run(
+  report_type,
+  list(
+    iso3c = iso3c,
+    site_name = site_name,
+    ur= ur,
+    description = descrip,
+    population = pop_val,
+    parameter_draw = draw,
+    burnin= burnin,
+    scenario = scenario),
+  root = dir
+))
+
+# # run country aggregation
+orderly2::orderly_run(
+  'process_country',
+  list(
+    iso3c = iso3c,
+    description = descrip,
+    population = pop_val,
+    parameter_draw = draw,
+    burnin= burnin,
+    projection = proj),
+  root = dir
+)
+
