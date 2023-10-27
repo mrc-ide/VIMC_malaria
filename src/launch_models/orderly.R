@@ -1,3 +1,57 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:7931a52e32f5dcfa817c53d3e47d04a099f46ff95843d3401cd7921857070586
-size 1895
+# launch models ----------------------------------------------------------------
+orderly2::orderly_parameters(iso3c = NULL,
+                             description = NULL,
+                             site_name = NULL,
+                             ur = NULL,
+                             population = NULL,
+                             burnin = NULL,
+                             parameter_draw = NULL,
+                             scenario = NULL)
+
+
+
+orderly2::orderly_description('Launch malariasimulation model')
+orderly2::orderly_artefact('Model output', 'model_output.rds')
+
+orderly2::orderly_dependency("set_parameters",
+                             "latest(parameter:iso3c == this:iso3c 
+                             && parameter:site_name == this:site_name 
+                             && parameter:ur == this:ur 
+                             && parameter:scenario == this:scenario 
+                             && parameter:description == this:description 
+                             && parameter:population == this:population
+                             && parameter:parameter_draw == this:parameter_draw)",
+                             c(model_input.rds = "model_input.rds"))
+
+
+
+library(dplyr)
+library(malariasimulation)
+
+model_input <- readRDS("model_input.rds")
+
+params <- model_input$param_list
+params$progress_bar <- TRUE
+
+
+timesteps <<- model_input$param_list$timesteps
+
+
+message('running the model')
+model <- malariasimulation::run_simulation(timesteps = params$timesteps,
+                                    parameters = params)
+
+# add identifying information to output
+model <- model |>
+  mutate(site_name = site_name,
+         urban_rural = ur,
+         iso = iso3c,
+         description = description, 
+         scenario = scenario,
+         parameter_draw = parameter_draw)
+
+
+
+# save model runs somewhere
+message('saving the model')
+saveRDS(model, 'model_output.rds')
