@@ -21,7 +21,7 @@ source('run_report.R')
 
 # PARAMETERS TO CHANGE FOR REPORTS ---------------------------------------------
 iso3c<- 'NGA'                                                                  # country to launch model for
-sites<- readRDS(paste0('src/process_site/site_files/', iso3c, '.rds'))$sites   # sites for country of interest
+sites<- readRDS(paste0('src/process_inputs/site_files/', iso3c, '.rds'))$sites   # sites for country of interest
 population<- 50000                                                                # population size
 description<- 'first_test_run'                                                # reason for model run
 draw<- 0                                                                       # parameter draw to run (0 for central runs)
@@ -52,7 +52,7 @@ for (iso3c in iso3cs){
 # 
 
 # cluster setup --------------------------------------------------------------
-ctx <- context::context_save("contexts", sources= 'launch_model.R')
+ctx <- context::context_save("contexts", sources= 'run_report.R')
 config <- didehpc::didehpc_config(cluster = "big")
 obj <- didehpc::queue_didehpc(ctx, config = config)
 
@@ -66,8 +66,8 @@ test<- obj$lapply(
   report_name = report_type,
   path = dir,
   site_data = sites,
-  population = pop_val,
-  description = descrip,
+  population = population,
+  description = description,
   scenario = scenario,
   parameter_draw = draw,
   burnin = burnin
@@ -81,8 +81,8 @@ job<- obj$enqueue(orderly2::orderly_run(
     iso3c = iso3c,
     site_name = site_name,
     ur= ur,
-    description = descrip,
-    population = pop_val,
+    description = description,
+    population = population,
     parameter_draw = draw,
     burnin= burnin,
     scenario = scenario),
@@ -94,8 +94,8 @@ orderly2::orderly_run(
   'process_country',
   list(
     iso3c = iso3c,
-    description = descrip,
-    population = pop_val,
+    description = description,
+    population = population,
     parameter_draw = draw,
     burnin= burnin,
     projection = proj),
