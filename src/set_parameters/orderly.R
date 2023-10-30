@@ -26,19 +26,24 @@ source('set_demog.R')
 source('set_vaccine_coverage.R')
 source('extract_site.R')
 
-# pull site data
-site_data <- readRDS(paste0('site_files/', iso3c, '.rds'))
+lapply(list.files('functions/', full.names = T), source)
 
+coverage_data<- read.csv(paste0('vimc_inputs/vaccine_coverage/coverage_202310gavi-1_malaria-', scenario, '.csv')) |>           # pull another projection for data table structure
+  filter(country_code == iso3c)
+
+# pull site data  
+site_data <- readRDS(paste0('site_files/', iso3c, '.rds'))
 site <- extract_site(site_file = site_data,
-               site_name = site_name,
-               ur = ur)
+                     site_name = site_name,
+                     ur = ur)
 
 # specify vaccine coverage based on forecast  ----------------------------------
-site<- set_vaccine_coverage(site, scenario = scenario, 
-                            terminal_year = 2050, 
-                            rtss_target= 0.8,
-                            rtss_year = 2023)
-      
+site<- expand_intervention_coverage(site, 
+                                    terminal_year = 2100)
+
+site<- update_coverage_values(site, 
+                              coverage_data)
+
 # plot input parameters
 pdf('intervention_plot.pdf')
 plot_interventions_combined(
