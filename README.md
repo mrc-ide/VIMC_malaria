@@ -11,6 +11,7 @@ You may need to initialize this repository by setting your working directory to 
 ###  Install site package
 This workflow uses a modified version of the site package [(link here)](https://github.com/mrc-ide/VIMC_malaria/blob/main/site_0.2.2.tar.gz), which is used to translate site files into malariasimulation model paramters. The key change is that this version allows the user to parameterize the R21 vaccine, and also allows the user to implement varied coverage of the booster vaccine dose over time. The modified version of this package should be installed prior to running this workflow using the following command:
 `install.packages('VIMC_malaria/site_0.2.2.tar.gz')`
+### Save input files
 
 ###  Change input parameters
 The following parameters must be changed for each run (on the [following lines](https://github.com/mrc-ide/VIMC_malaria/blob/main/VIMC_workflow.R#L22-L32)):
