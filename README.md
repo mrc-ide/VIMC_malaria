@@ -11,7 +11,9 @@ You may need to initialize this repository by setting your working directory to 
 ###  Install site package
 This workflow uses a modified version of the site package [(link here)](https://github.com/mrc-ide/VIMC_malaria/blob/main/site_0.2.2.tar.gz), which is used to translate site files into malariasimulation model paramters. The key change is that this version allows the user to parameterize the R21 vaccine, and also allows the user to implement varied coverage of the booster vaccine dose over time. The modified version of this package should be installed prior to running this workflow using the following command:
 `install.packages('VIMC_malaria/site_0.2.2.tar.gz')`
+
 ### Save input files
+VIMC model inputs are saved locally and not tracked on this repository due to large size and privacy issues. VIMC inputs should be saved under `/src/set_parameters/`. Contact Lydia for access to these files.
 
 ###  Change input parameters
 The following parameters must be changed for each run (on the [following lines](https://github.com/mrc-ide/VIMC_malaria/blob/main/VIMC_workflow.R#L22-L32)):
@@ -38,27 +40,29 @@ This reports must be run in chronological order for all of the sites in a countr
 ### Run process_country to aggregate outputs up to country level.
 Run this report using the code linked [here](https://github.com/mrc-ide/VIMC_malaria/blob/main/VIMC_workflow.R#L93-L104).
 
-### Produce diagnostics as needed.
+### Produce diagnostics
 Diagnostics can be produced with the "site_diagnostics" report.
-
 
 # Methods documentation
 ##  Process inputs
-1) Process external inputs for country of interest, including site file, demographic, and vaccine coverage data [("process_inputs")](https://github.com/mrc-ide/VIMC_malaria/blob/main/src/process_inputs/orderly.R)
+Process external inputs for country of interest, including site file, demographic, and vaccine coverage data [("process_inputs")](https://github.com/mrc-ide/VIMC_malaria/blob/main/src/process_inputs/orderly.R). Reads in and saves the following inputs by country:
+- Site file (characterizing the level and pattern of transmission in an admin 1 unit, in addition to intervention coverage and vector species)
+- Life expectacy by age (from VIMC)
+- Mortality rate (from VIMC)
+- Population size (from VIMC)
+
+These reports should only be run once, then rerun if inputs change.
 
 ## Parameterize model
-3) Parametrize model [("set_parameters")](https://github.com/mrc-ide/VIMC_malaria/blob/main/src/set_parameters/orderly.R)
-
+Parameterize model [("set_parameters")](https://github.com/mrc-ide/VIMC_malaria/blob/main/src/set_parameters/orderly.R). 
 ## Launch model
-5) Run malariasimulation model [("launch_models")](https://github.com/mrc-ide/VIMC_malaria/blob/main/src/launch_models/orderly.R)
+Run malariasimulation model [("launch_models")](https://github.com/mrc-ide/VIMC_malaria/blob/main/src/launch_models/orderly.R).
 
+## Postprocess outputs
+Process model outputs [("process_site")](https://github.com/mrc-ide/VIMC_malaria/blob/main/src/process_site/orderly.R)
 
-7) Process model outputs [("process_site")](https://github.com/mrc-ide/VIMC_malaria/blob/main/src/process_site/orderly.R)
-8) Produce diagnostic report (at the site level) [("site_diagnostics")](https://github.com/mrc-ide/VIMC_malaria/blob/main/src/process_site/orderly.R)
-9) Aggregate outputs up to country level [("process_country")](https://github.com/mrc-ide/VIMC_malaria/blob/main/src/process_country/orderly.R)
+## Prodyce diagnostics
+Produce diagnostic report (at the site level) [("site_diagnostics")](https://github.com/mrc-ide/VIMC_malaria/blob/main/src/process_site/orderly.R)
 
-#  Application
-
-
-#  Other notes
-
+## Process country
+Aggregate outputs up to country level [("process_country")](https://github.com/mrc-ide/VIMC_malaria/blob/main/src/process_country/orderly.R)
