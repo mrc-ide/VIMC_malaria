@@ -23,7 +23,7 @@ source('run_report.R')
 iso3c<- 'NGA'                                                                  # country to launch model for
 sites<- readRDS(paste0('src/process_site/site_files/', iso3c, '.rds'))$sites   # sites for country of interest
 population<- 50000                                                                # population size
-description<- 'turn_off_demography'                                                # reason for model run
+description<- 'first_test_run'                                                # reason for model run
 draw<- 0                                                                       # parameter draw to run (0 for central runs)
 burnin<- 15           
 
@@ -33,7 +33,7 @@ ur<- 'urban'
 
 # 2 following reports reports to run (in chronological order)
 reports<- c('set_parameters', 'launch_models', 'process_site', 'site_diagnostics', 'process_country')
-report_type<- reports[3]   # select a report to run
+report_type<- reports[1]   # select a report to run
 
 # scenarios to run (no order)
 scenarios<- c('no-vaccination', 'r3-default', 'r3-r4-default', 'rts3-bluesky', 'rts3-default', 'rts3-rts4-bluesky')
@@ -42,13 +42,13 @@ scenario<-  scenarios[3]   # select a scenario to run per VIMC inputs.
 ################################################################################
 # 1 prepare and save inputs
 # unless inputs change, this only needs to be run once for all countries
-# for (iso3c in iso3cs){
-#   
-#   orderly2::orderly_run(
-#     'process_inputs',
-#     list(iso3c = iso3c),
-#   )
-# }
+for (iso3c in iso3cs){
+
+  orderly2::orderly_run(
+    'process_inputs',
+    list(iso3c = iso3c),
+    root = dir)
+}
 # 
 
 # cluster setup --------------------------------------------------------------

@@ -1,7 +1,9 @@
 # process inputs for all sites -------------------------------------------------
 orderly2::orderly_parameters(iso3c = NULL)
 
-
+library(data.table)
+library(countrycode)
+library(dplyr)
 # outputs from this report  ----------------------------------------------------
 orderly2::orderly_artefact('Site file input', 'site_file.rds')
 orderly2::orderly_artefact('Coverage input', 'coverage_input.rds')
@@ -13,7 +15,7 @@ orderly2::orderly_artefact('Mortality rate input', 'mort_rate_input.rds')
 
 # pull site data  --------------------------------------------------------------
 site_data <- readRDS(paste0('site_files/', iso3c, '.rds'))
-saveRDS(site, 'site_file.rds')
+saveRDS(site_data, 'site_file.rds')
 
 
 # pull coverage data -----------------------------------------------------------
