@@ -54,7 +54,10 @@ Process external inputs for country of interest, including site file, demographi
 These reports should only be run once, then rerun if inputs change.
 
 ## Parameterize model
-Parameterize model [("set_parameters")](https://github.com/mrc-ide/VIMC_malaria/blob/main/src/set_parameters/orderly.R). 
+Parameterize model [("set_parameters")](https://github.com/mrc-ide/VIMC_malaria/blob/main/src/set_parameters/orderly.R). Models are run with single year age groups from 0 to 100, from 2000-2100. 
+This script pulls in the corresponding site file for an admin 1 unit, which characterizes the pattern on malaria transmission in this area. The interventions component of the site file is modified based on the VIMC scenario of interest, specifying the coverage and booster coverage for each year of the simulation (for either RTS,S or R21). These values are added to the site file via the following columns: **rtss_coverage**, **rtss_booster_coverage**, **r21_coverage**, and **r21_booster_coverage**.
+
+We additionally carry over intervention coverage from the last observed year (typically 2023) out to 2100, assuming constant values for the remainder of the simulation period. Note that ITN usage follos a 3-year cyclical pattern-- this pattern is carried out for the fu
 ## Launch model
 Run malariasimulation model [("launch_models")](https://github.com/mrc-ide/VIMC_malaria/blob/main/src/launch_models/orderly.R).
 
