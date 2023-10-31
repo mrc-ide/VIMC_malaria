@@ -52,7 +52,7 @@ vaccine_coverage_input<- orderly2::orderly_dependency("set_parameters",
                                                           && parameter:description == this:description
                                                           && parameter:scenario == this:scenario
                                                           && parameter:parameter_draw == this:parameter_draw)",
-                                                      c(vaccine_plot_inputs.rds = "vaccine_plot_inputs.rds"))
+                                                      c(vaccine_plot_input.rds = "vaccine_plot_input.rds"))
 
 metadata<- orderly2::orderly_dependency("process_inputs",
                                         "latest(parameter:iso3c == this:iso3c)",
@@ -74,7 +74,7 @@ message('read inputs successfully')
 orderly_artefact('Diagnostic report', 'diagnostic_report.Rmd')
 
 # read in inputs to pass into report as parameters
-model_input<- readRDS('vaccine_plot_inputs.rds')
+model_input<- readRDS('vaccine_plot_input.rds')
 raw_output<- readRDS('raw_model_output.rds')
 processed_output<- readRDS('processed.rds')
 

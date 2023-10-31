@@ -11,7 +11,7 @@ orderly2::orderly_parameters(iso3c = NULL,
 
 orderly2::orderly_description('Set parameters for model run')
 orderly2::orderly_artefact('Model input', 'model_input.rds')
-orderly2::orderly_artefact('Intervention plot', 'intervention_plot.pdf')
+orderly2::orderly_artefact('Vaccine plot input', 'vaccine_plot_input.rds')
 
 # packages
 library(site)
@@ -20,41 +20,50 @@ library(dplyr)
 library(scene)
 library(malariasimulation)
 library(openxlsx)
-
+library(ggplot2)
+library(tidyr)
+library(tibble)
 # functions
-source('set_demog.R')
-source('set_vaccine_coverage.R')
-source('extract_site.R')
-
 lapply(list.files('functions/', full.names = T), source)
 
-coverage_data<- read.csv(paste0('vimc_inputs/vaccine_coverage/coverage_202310gavi-1_malaria-', scenario, '.csv')) |>           # pull another projection for data table structure
-  filter(country_code == iso3c)
+orderly2::orderly_dependency("process_inputs",
+                             "latest(parameter:iso3c == this:iso3c )",
+                             c(coverage_input.rds = "coverage_input.rds"))
 
+coverage_data<- readRDS('coverage_input.rds') 
+
+scen<- scenario # doesn't work when scenario has the same name
+
+if(scen == 'no-vaccination'){
+  
+  coverage_data<- coverage_data |>           # pull another projection for data table structure
+    filter(country_code == iso3c) |>
+    filter(scenario == 'malaria-r3-r4-default') |>
+    mutate(coverage == 0)
+  
+}
+
+coverage_data<- coverage_data |>           # pull another projection for data table structure
+  filter(country_code == iso3c) |>
+  filter(scenario == scen)
+
+orderly2::orderly_dependency("process_inputs",
+                             "latest(parameter:iso3c == this:iso3c )",
+                             c(site_file.rds = "site_file.rds"))
 # pull site data  
-site_data <- readRDS(paste0('site_files/', iso3c, '.rds'))
+site_data <- readRDS('site_file.rds')
 site <- extract_site(site_file = site_data,
                      site_name = site_name,
                      ur = ur)
 
 # specify vaccine coverage based on forecast  ----------------------------------
 site<- expand_intervention_coverage(site, 
-                                    terminal_year = 2100)
+                                    terminal_year = 2050)
 
 site<- update_coverage_values(site, 
                               coverage_data)
 
-# plot input parameters
-pdf('intervention_plot.pdf')
-plot_interventions_combined(
-  interventions = site$interventions,
-  population = site$population,
-  group_var = c("country", "name_1"),
-  include = c("itn_use", "itn_input_dist", "tx_cov", "smc_cov", "pmc_cov", "rtss_cov"),
-  labels = c("ITN usage", "ITN model input", "Treatment","SMC", "PMC", "RTSS")
-)
-dev.off()
-
+saveRDS(site, 'vaccine_plot_input.rds')
 message('formatting')
 
 # pull parameters for this site ------------------------------------------------
@@ -86,11 +95,6 @@ params$age_group_rendering_max_ages = max_ages
 
 # set mortality   --------------------------------------------------------------
 message('setting mortality')
-
-# if (demog= TRUE){
-# params <- set_demog(params)
-# 
-# }
 
 # if this is a stochastic run, set parameter draw
 if (parameter_draw > 0){

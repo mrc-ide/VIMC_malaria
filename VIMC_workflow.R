@@ -10,6 +10,7 @@
 # packages  
 library(orderly2)
 library(site)
+
 lapply(list.files('functions/', full.names = T), source)
 
 # obtain list of countries to run model for
@@ -20,11 +21,11 @@ dir<- getwd()
 source('run_report.R')
 
 # PARAMETERS TO CHANGE FOR REPORTS ---------------------------------------------
-iso3c<- 'NGA'                                                                  # country to launch model for
-sites<- readRDS(paste0('src/process_inputs/site_files/', iso3c, '.rds'))$sites   # sites for country of interest
-population<- 50000                                                                # population size
-description<- 'first_test_run'                                                # reason for model run
-draw<- 0                                                                       # parameter draw to run (0 for central runs)
+iso3c<- 'NGA'                                                                   # country to launch model for
+sites<- readRDS(paste0('src/process_inputs/site_files/', iso3c, '.rds'))$sites  # sites for country of interest
+population<- 5000                                                              # population size
+description<- 'small_pop_for_formatting'                                                  # reason for model run
+draw<- 0                                                                        # parameter draw to run (0 for central runs)
 burnin<- 15           
 
 # if just testing reports for one site:
@@ -36,31 +37,33 @@ reports<- c('set_parameters', 'launch_models', 'process_site', 'site_diagnostics
 report_type<- reports[1]   # select a report to run
 
 # scenarios to run (no order)
-scenarios<- c('no-vaccination', 'r3-default', 'r3-r4-default', 'rts3-bluesky', 'rts3-default', 'rts3-rts4-bluesky')
+scenarios<- c('malaria-no-vaccination', 'malaria-r3-default', 'malaria-r3-r4-default', 'malaria-rts3-bluesky', 'malaria-rts3-default', 'malaria-rts3-rts4-bluesky')
 scenario<-  scenarios[3]   # select a scenario to run per VIMC inputs.
 
 ################################################################################
 # 1 prepare and save inputs
 # unless inputs change, this only needs to be run once for all countries
-for (iso3c in iso3cs){
-
-  orderly2::orderly_run(
-    'process_inputs',
-    list(iso3c = iso3c),
-    root = dir)
-}
+# for (iso3c in iso3cs){
 # 
+#   orderly2::orderly_run(
+#     'process_inputs',
+#     list(iso3c = iso3c),
+#     root = dir)
+# }
+# # 
 
 # cluster setup --------------------------------------------------------------
 ctx <- context::context_save("contexts", sources= 'run_report.R')
 config <- didehpc::didehpc_config(cluster = "big")
 obj <- didehpc::queue_didehpc(ctx, config = config)
 
+# if you have not already, install orderly2, malariasimulation, orderly2, and dplyr
+#obj$install_packages('mrc-ide/orderly2')
 # run reports for all sites in a country  --------------------------------------
 print(report_type) # report to run
 print(scenario)
 
-test<- obj$lapply(
+small_models<- obj$lapply(
   1:nrow(sites),
   run_report,
   report_name = report_type,
