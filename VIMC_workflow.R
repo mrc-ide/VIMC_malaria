@@ -23,8 +23,8 @@ source('run_report.R')
 # PARAMETERS TO CHANGE FOR REPORTS ---------------------------------------------
 iso3c<- 'NGA'                                                                   # country to launch model for
 sites<- readRDS(paste0('src/process_inputs/site_files/', iso3c, '.rds'))$sites  # sites for country of interest
-population<- 5000                                                              # population size
-description<- 'small_pop_for_formatting'                                                  # reason for model run
+population<- 50000                                                               # population size
+description<- 'small_pop_2050'                                                  # reason for model run
 draw<- 0                                                                        # parameter draw to run (0 for central runs)
 burnin<- 15           
 
@@ -34,7 +34,7 @@ ur<- 'urban'
 
 # 2 following reports reports to run (in chronological order)
 reports<- c('set_parameters', 'launch_models', 'process_site', 'site_diagnostics', 'process_country')
-report_type<- reports[1]   # select a report to run
+report_type<- reports[2]   # select a report to run
 
 # scenarios to run (no order)
 scenarios<- c('malaria-no-vaccination', 'malaria-r3-default', 'malaria-r3-r4-default', 'malaria-rts3-bluesky', 'malaria-rts3-default', 'malaria-rts3-rts4-bluesky')
@@ -59,6 +59,7 @@ obj <- didehpc::queue_didehpc(ctx, config = config)
 
 # if you have not already, install orderly2, malariasimulation, orderly2, and dplyr
 #obj$install_packages('mrc-ide/orderly2')
+
 # run reports for all sites in a country  --------------------------------------
 print(report_type) # report to run
 print(scenario)

@@ -58,7 +58,7 @@ site <- extract_site(site_file = site_data,
 
 # specify vaccine coverage based on forecast  ----------------------------------
 site<- expand_intervention_coverage(site, 
-                                    terminal_year = 2050)
+                                    terminal_year = 2100)
 
 site<- update_coverage_values(site, 
                               coverage_data)
