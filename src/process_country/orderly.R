@@ -31,7 +31,9 @@ output<- data.table()
     message(i)
     metadata<-orderly2::orderly_dependency("process_site", quote(latest(parameter:iso3c == this:iso3c &&
                                                                    parameter:description == this:description &&
-                                                                   parameter:projection == this:projection &&
+                                                                   paramter:population == this:population &&
+                                                                   parameter:scenario == this:scenario &&
+                                                                   parameter:burnin == this:burnin &&
                                                                    parameter:site_name == environment:site_name &&
                                                                    parameter:ur == environment:ur)),
                                            c(file.rds = "processed_output.rds"))
@@ -40,10 +42,6 @@ output<- data.table()
     output<- rbind(output, dt, fill = T)
     
 }
-  
-
-# pull in VIMC population for country
-
 
 # sum cases up to country level ------------------------------------------------
 dt<- copy(output)
@@ -74,31 +72,7 @@ dt<- dt|>
          mortality = deaths/ cohort_size,
          dalys_pp = dalys/ cohort_size)
 
-
-
-
-# calculate counts by multiplying by VIMC population  --------------------------
-# merge in VIMC population
-# merge in national population
-vimc_pop<- read.csv('vimc_inputs/demography/202310gavi-1_dds-202208_tot_pop_both.csv') |>
-  filter(country_code == iso3c,
-         year >= 2000)|>
-  rename(national_pop = value)|>
-  select(year, national_pop)
-
-dt <- merge(output, pop, by = 'year', all.x = T)
-
-
-dt <- merge(dt, pop, by = c('age', 'year'))
-
-dt<- dt|>
-  select(-cohort_size)|>
-  mutate(cases = clinical * value,
-         deaths = mortality * value,
-         dalys = dalys_pp * value) |>
-rename(cohort_size = value)
-
-# save outputs
+# save outputs  ----------------------------------------------------------------
 saveRDS(dt, 'country_output.rds')
 message('done')
 

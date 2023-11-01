@@ -1,0 +1,171 @@
+---
+title: 'VIMC diagnostic report: site'
+output:
+  html_document: default
+  pdf_document: default
+date: "!r Sys.Date()"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE)
+library(scene)
+library(ggpubr)
+# source plotting code for report
+lapply(list.files('functions/', full.names = T), source, local= knitr::knit_global())
+
+
+```
+
+## VIMC site-level diagnostic report
+
+This is a diagnostic report for VIMC outputs for `r site_name`, `r ur`. The EIR for this site is `r site$eir$eir[[1]]`. The description for this model run is `r description`. The scenario ran was `r scenario`. The population size of this model run was `r population`. The burn-in time was `r burnin` years.  
+
+## Vaccine coverage specified for scenario
+```{r inputs}
+
+plot_vaccine_coverage(model_input)
+
+plot_interventions_combined(
+  interventions = model_input$interventions,
+  population = model_input$population,
+  group_var = c("country", "name_1"),
+  include = c("itn_use", "itn_input_dist", "tx_cov", "smc_cov", "pmc_cov", "rtss_cov"),
+  labels = c("ITN usage", "ITN model input", "Treatment","SMC", "PMC", "RTSS")
+)
+
+
+```
+# Doses delivered in raw model outputs
+
+```{r doses}
+plot_doses_delivered(raw_output)
+
+
+```
+#   Plot mortality rates for VIMC inputs
+
+```{r mortality rate}
+
+plotting_theme<- theme_bw(base_size = 12) +
+  theme( legend.position = 'bottom',
+         strip.text.x = element_text(size = rel(0.8)),
+         axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1.1), 
+         #axis.text.y = element_blank(),
+         text = element_text(family= 'Arial Narrow'),
+         axis.ticks.y= element_blank(), 
+         panel.grid.major = element_blank(), panel.grid.minor = element_blank()) 
+
+
+
+p1<- ggplot(data = site$demography, mapping = aes(x= age_upper, y= mortality_rate))+
+  geom_point()+
+  ylim(0, 1.2) +
+  plotting_theme +
+  labs(title= 'Site file mortality rate inputs (2000-2500))',
+       xlab= 'age',
+       ylab= 'mortality rate')
+
+
+p2<-ggplot(data = mort, mapping = aes(x= age_to, y= value))+
+  geom_point()+
+  ylim(0, 1.2)+
+  plotting_theme+
+  labs(title= 'VIMC mortality rate inputs (2000-2100))',
+       xlab= 'age',
+       ylab= 'mortality rate')
+
+ggarrange(p1, p2, ncol= 2)
+
+```
+# Site file diagnostics
+# Prevalence 
+# Site file inputs
+```{r prevalence, echo=FALSE}
+
+prevalence_diagnostic(site, model_input)
+
+
+```
+# Model outputs
+```{r}
+plot_pfpr_over_time(raw_output)
+```
+
+## Site file
+```{r pop, echo=FALSE}
+
+population_diagnostic(site)
+
+
+```
+
+## Modelled outputs
+
+```{r population, echo=FALSE, fig.height=10, fig.width= 15}
+population_diagnostic_model(processed_output, pg= 1)
+population_diagnostic_model(processed_output, pg= 2)
+population_diagnostic_model(processed_output, pg= 3)
+population_diagnostic_model(processed_output, pg= 4)
+
+
+```
+
+# Incident cases
+```{r incident cases, echo=FALSE, fig.height=10, fig.width= 15}
+
+incident_cases_diagnostic(processed_output, pg= 1)
+incident_cases_diagnostic(processed_output, pg= 2)
+incident_cases_diagnostic(processed_output, pg= 3)
+incident_cases_diagnostic(processed_output, pg= 4)
+
+
+```
+
+#   Incidence rate 
+```{r incidence rate, echo = FALSE, fig.height=10, fig.width= 10}
+
+incidence_rate_diagnostic(processed_output, pg= 1)
+incidence_rate_diagnostic(processed_output, pg= 2)
+incidence_rate_diagnostic(processed_output, pg= 3)
+incidence_rate_diagnostic(processed_output, pg= 4)
+
+```
+
+# Deaths
+
+```{r deaths, echo=FALSE, fig.height=10, fig.width= 15}
+
+mortality_diagnostic(processed_output, pg= 1)
+mortality_diagnostic(processed_output, pg= 2)
+mortality_diagnostic(processed_output, pg= 3)
+mortality_diagnostic(processed_output, pg= 4)
+
+```
+
+# Mortality rate 
+```{r mort rate, echo=FALSE, fig.height=10, fig.width= 15}
+
+mortality_rate_diagnostic(processed_output, pg= 1)
+mortality_rate_diagnostic(processed_output, pg= 2)
+mortality_rate_diagnostic(processed_output, pg= 3)
+mortality_rate_diagnostic(processed_output, pg= 4)
+
+```
+
+# DALYs
+```{r dalys, echo = FALSE, fig.height=10, fig.width= 15}
+
+daly_diagnostic(processed_output, pg = 1)
+daly_diagnostic(processed_output, pg = 2)
+daly_diagnostic(processed_output, pg = 3)
+daly_diagnostic(processed_output, pg = 4)
+```
+
+
+# Cases averted by age
+
+```{r cases averted, echo =FALSE, fig.height=10, fig.width= 15}
+plot_cases_averted(processed_output)
+
+```
+

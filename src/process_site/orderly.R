@@ -7,6 +7,7 @@ orderly2::orderly_parameters(iso3c = NULL,
                              burnin = NULL,
                              parameter_draw = NULL,
                              scenario = NULL)
+
 orderly2::orderly_description('Process model outputs')
 orderly2::orderly_artefact('Processed output', 'processed_output.rds')
 orderly2::orderly_artefact('model output', 'raw_model_output.rds')

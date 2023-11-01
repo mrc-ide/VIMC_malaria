@@ -34,7 +34,7 @@ ur<- 'urban'
 
 # 2 following reports reports to run (in chronological order)
 reports<- c('set_parameters', 'launch_models', 'process_site', 'site_diagnostics', 'process_country')
-report_type<- reports[3]   # select a report to run
+report_type<- reports[4]   # select a report to run
 
 # scenarios to run (no order)
 scenarios<- c('malaria-no-vaccination', 'malaria-r3-default', 'malaria-r3-r4-default', 'malaria-rts3-bluesky', 'malaria-rts3-default', 'malaria-rts3-rts4-bluesky')
@@ -80,7 +80,7 @@ small_models<- obj$lapply(
 
 # # run report just for one site  ------------------------------------------------
 small_job<- obj$enqueue(orderly2::orderly_run(
-  'set_parameters',
+  'site_diagnostics',
   list(
     iso3c = iso3c,
     site_name = site_name,

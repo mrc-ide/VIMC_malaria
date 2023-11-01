@@ -38,7 +38,7 @@ plot_interventions_combined(
 # Doses delivered in raw model outputs
 
 ```{r doses}
-#plot_doses_delivered(raw_output)
+plot_doses_delivered(raw_output)
 
 
 ```
@@ -78,15 +78,6 @@ ggarrange(p1, p2, ncol= 2)
 
 ```
 # Site file diagnostics
-# Site file cases and deaths (country-level, not to be compared directly to site outputs)
-
-```{r cases_deaths, echo=FALSE}
-
-cases_deaths_diagnostic(site)
-
-
-```
-
 # Prevalence 
 # Site file inputs
 ```{r prevalence, echo=FALSE}

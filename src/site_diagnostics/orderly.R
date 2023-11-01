@@ -1,16 +1,19 @@
 # produce diagnostic report ------------------------------------------------------------------
-orderly2::orderly_parameters(iso3c = 'NGA',
-                             description = 'turn_off_demography',
-                             site_name = 'Abia',
-                             ur = 'rural',
-                             population = 50000,
-                             burnin = 15,
-                             parameter_draw = 0,
-                             scenario = 'r3-r4-default')
+orderly2::orderly_parameters(iso3c = NULL,
+                             description = NULL,
+                             site_name = NULL,
+                             ur = NULL,
+                             population = NULL,
+                             burnin = NULL,
+                             parameter_draw = NULL,
+                             scenario = NULL)
 
 
 orderly2::orderly_description('Produce diagnostic report for site')
+#orderly_artefact('Diagnostic report', 'site_diagnostic_report.html')
+
 library(dplyr)
+lapply(list.files('functions/', full.names = T), source)
 
 # pull processed output
 intvn_metadata<- orderly2::orderly_dependency("process_site",
@@ -54,35 +57,32 @@ vaccine_coverage_input<- orderly2::orderly_dependency("set_parameters",
                                                           && parameter:parameter_draw == this:parameter_draw)",
                                                       c(vaccine_plot_input.rds = "vaccine_plot_input.rds"))
 
-metadata<- orderly2::orderly_dependency("process_inputs",
+orderly2::orderly_dependency("process_inputs",
                                         "latest(parameter:iso3c == this:iso3c)",
                                         c(site_file.rds = "site_file.rds"))
 
-metadata2<- orderly2::orderly_dependency("process_inputs",
+orderly2::orderly_dependency("process_inputs",
                                          "latest(parameter:iso3c == this:iso3c)",
                                          c(coverage_input.rds = "coverage_input.rds"))
 
-metadata2<- orderly2::orderly_dependency("process_inputs",
+orderly2::orderly_dependency("process_inputs",
                                          "latest(parameter:iso3c == this:iso3c)",
-                                         c(coverage_input.rds = "mort_rate_input.rds"))
+                                         c(mort_rate_input.rds = "mort_rate_input.rds"))
 site_data<- readRDS('site_file.rds')
 coverage_data<- readRDS('coverage_input.rds')
 mort<- readRDS('mort_rate_input.rds')
 
-
-message('read inputs successfully')
-orderly_artefact('Diagnostic report', 'diagnostic_report.Rmd')
-
 # read in inputs to pass into report as parameters
 model_input<- readRDS('vaccine_plot_input.rds')
 raw_output<- readRDS('raw_model_output.rds')
-processed_output<- readRDS('processed.rds')
+processed_output<- readRDS('processed_output.rds')
 
-lapply(list.files('functions/', full.names = T), source)
+message('read inputs successfully')
+
 
 # render report
-rmarkdown::render(input= 'diagnostic_report.Rmd',
-                  output_file = 'diagnostics',
+rmarkdown::render(input= 'M:/Lydia/VIMC_malaria/src/site_diagnostics/diagnostic_report.Rmd',
+                  output_file = 'site_diagnostic_report',
                   output_format = 'html_document',
                   params= list('iso3c' = iso3c,
                                'description'= description,
