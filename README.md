@@ -57,15 +57,26 @@ These reports should only be run once, then rerun if inputs change.
 Parameterize model [("set_parameters")](https://github.com/mrc-ide/VIMC_malaria/blob/main/src/set_parameters/orderly.R). Models are run with single year age groups from 0 to 100, from 2000-2100. 
 This script pulls in the corresponding site file for an admin 1 unit, which characterizes the pattern on malaria transmission in this area. The interventions component of the site file is modified based on the VIMC scenario of interest, specifying the coverage and booster coverage for each year of the simulation (for either RTS,S or R21). These values are added to the site file via the following columns: **rtss_coverage**, **rtss_booster_coverage**, **r21_coverage**, and **r21_booster_coverage**.
 
-We additionally carry over intervention coverage from the last observed year (typically 2023) out to 2100, assuming constant values for the remainder of the simulation period. Note that ITN usage follos a 3-year cyclical pattern-- this pattern is carried out for the fu
+We additionally carry over intervention coverage from the last observed year (typically 2023) out to 2100, assuming constant values for the remainder of the simulation period. Note that ITN usage follows a 3-year cyclical pattern-- this pattern of the last 3 year cycle observed is carried out for the remainder of the simulation period.
+
+We utilize a modified version of the site package to translate site file inputs into malariasimulation parameters. The base version of the site package is found [here](https://github.com/mrc-ide/site). The `add_interventions()` function in the site file was modified to reflect changing booster coverage over time. For source code, contact Lydia. 
+
+Note that this report can not be launched on the HPC cluster, because of package dependency issues.
+
 ## Launch model
-Run malariasimulation model [("launch_models")](https://github.com/mrc-ide/VIMC_malaria/blob/main/src/launch_models/orderly.R).
+Run malariasimulation model [("launch_models")](https://github.com/mrc-ide/VIMC_malaria/blob/main/src/launch_models/orderly.R). If you would like to obtain an estimate of model run time, test this report locally before launching on the cluster.
 
-## Postprocess outputs
-Process model outputs [("process_site")](https://github.com/mrc-ide/VIMC_malaria/blob/main/src/process_site/orderly.R)
+## Postprocess outputs 
+Process model outputs [("process_site")](https://github.com/mrc-ide/VIMC_malaria/blob/main/src/process_site/orderly.R). Outputs are processed in the following steps.
 
-## Prodyce diagnostics
-Produce diagnostic report (at the site level) [("site_diagnostics")](https://github.com/mrc-ide/VIMC_malaria/blob/main/src/process_site/orderly.R)
+* `get_rates()` from the [postie](https://github.com/mrc-ide/postie) package is used to estimate incidence, mortality, YLD, YLL, and DALY rates from model outputs. Note that these rates are based on the population size used to run the model, not the real-world population size of the site modelled. DALY functionality for postie is currently on the [DALYs](https://github.com/mrc-ide/postie/tree/dalys/R) repository branch; you will need to install this version of the postie package to run this code using the function call `install.packages('mrc-ide/postie@dalys'). DWs for malaria are sourced from the Global Burden of Disease study. For the purposes of VIMC modelling, we ignore malaria GBD disability weights for comorbid conditions such as anemia and motor impairiment. For documentation on the DW values used, see source code [here](https://github.com/mrc-ide/postie/blob/dalys/R/epi.R#L36-L85).
+* Because the VIMC utilizes country-specific life-expectancy, YLLs and DALY rates are recalculated based on these inputs.
+* Rates are multiplied by site population to estimate cases, deaths, and DALYs from 2000-2050.
+* We scale site file populations such that the sum of site file populations is equivalent to the national VIMC population.
+* From 2050 onward, site population is estimated as (national population in year) * [(scaled site population in 2050)/ (national population in 2050)]. We assume that the proportional breakdown of population by site is fixed from 2050-2100, in the absence of other data.
+
+## Produce diagnostics
+Produce diagnostic report (at the site level) [("site_diagnostics")](https://github.com/mrc-ide/VIMC_malaria/blob/main/src/process_site/orderly.R).
 
 ## Process country
-Aggregate outputs up to country level [("process_country")](https://github.com/mrc-ide/VIMC_malaria/blob/main/src/process_country/orderly.R)
+Aggregate outputs up to country level [("process_country")](https://github.com/mrc-ide/VIMC_malaria/blob/main/src/process_country/orderly.R).
