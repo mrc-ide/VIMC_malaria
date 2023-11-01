@@ -58,7 +58,7 @@ site <- extract_site(site_file = site_data,
 
 # specify vaccine coverage based on forecast  ----------------------------------
 site<- expand_intervention_coverage(site, 
-                                    terminal_year = 2100)
+                                    terminal_year = 2010)
 
 site<- update_coverage_values(site, 
                               coverage_data)
@@ -93,10 +93,7 @@ params$age_group_rendering_min_ages = min_ages
 params$age_group_rendering_max_ages = max_ages
 
 
-# set mortality   --------------------------------------------------------------
-message('setting mortality')
-
-# if this is a stochastic run, set parameter draw
+# if this is a stochastic run, set parameter draw ------------------------------
 if (parameter_draw > 0){
   
 params<- params |>

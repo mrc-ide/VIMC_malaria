@@ -7,6 +7,9 @@ orderly2::orderly_parameters(iso3c = NULL,
                              burnin = NULL,
                              parameter_draw = NULL,
                              scenario = NULL)
+orderly2::orderly_description('Process model outputs')
+orderly2::orderly_artefact('Processed output', 'processed_output.rds')
+orderly2::orderly_artefact('model output', 'raw_model_output.rds')
 
 # packages  
 library(postie)
@@ -17,28 +20,38 @@ library(wesanderson)
 library(ggforce)
 library(ggpubr)
 
-source('diagnostics.R')
+# read inputs ------------------------------------------------------------------
+# model input
+orderly2::orderly_dependency("launch_models",
+                             "latest(parameter:iso3c == this:iso3c && 
+                                     parameter:site_name == this:site_name && 
+                                     parameter:ur == this:ur && 
+                                     parameter:population == this:population &&
+                                     parameter:scenario == this:scenario &&
+                                     parameter:description == this:description)",
+                             c(model_output.rds = "model_output.rds"))
+# site file
+orderly2::orderly_dependency("process_inputs",
+                             "latest(parameter:iso3c == this:iso3c )",
+                             c(site_file.rds = "site_file.rds"))
+# life expectancy
+orderly2::orderly_dependency("process_inputs",
+                             "latest(parameter:iso3c == this:iso3c )",
+                             c(le_input.rds = "le_input.rds"))
+# population
+orderly2::orderly_dependency("process_inputs",
+                             "latest(parameter:iso3c == this:iso3c )",
+                             c(population_input_all_age.rds = "population_input_all_age.rds"))
 
-sites <- readRDS(paste0('site_files/', iso3c, '.rds'))
-
-orderly2::orderly_description('Process model outputs')
-orderly2::orderly_artefact('Processed output', 'processed_output.rds')
-orderly2::orderly_artefact('model output', 'raw_model_output.rds')
-
-# pull inputs ------------------------------------------------------------------
-metadata<- orderly2::orderly_dependency("launch_models",
-                                        "latest(parameter:iso3c == this:iso3c && 
-                                        parameter:site_name == this:site_name && 
-                                        parameter:ur == this:ur && 
-                                        parameter:population == this:population &&
-                                        parameter:scenario == this:scenario &&
-                                        parameter:description == this:description)",
-                                        c(model_output.rds = "model_output.rds"))
 
 output<- readRDS('model_output.rds')
-message('read input successfully')
+site_data <- readRDS('site_file.rds')
+le <- readRDS('le_input.rds')
+vimc_pop<- readRDS('population_input_all_age.rds')
 
-# drop burn-in
+message('read inputs successfully')
+
+# calculate rates --------------------------------------------------------------
 output<- drop_burnin(output, burnin= burnin* 365)
 saveRDS(output, 'raw_model_output.rds') # save for diagnostics
 
@@ -51,21 +64,12 @@ output <- postie::get_rates(
   treatment_scaler = 0.42,
 )
 
-# remove DALYs, as YLLs will need to be recalculated using VIMC country-specific life expectancies
+# recalculate YLLs and DALYs based on country-specific life expectancy  --------
 output<- output |>
   select(-yll_pp, -dalys_pp) |>
   rename(year = t)
 
-# merge in population from site files (as we only have VIMC inputs for the national level)
-site_data <- readRDS(paste0('site_files/', iso3c, '.rds'))
-pop <- site_data$population |>
-  filter(name_1 == site_name & urban_rural == ur) |>
-  select(year, pop) |>
-  rename(site_file_population = pop)
-
 # merge in inputs for expected remaining years of life (to calculate YLLs)
-le<- read.csv('vimc_inputs/demography/202310gavi-1_dds-202208_life_ex_both.csv') 
-
 le<- le |>
   filter(country_code == iso3c,
          year >= 2000) |>
@@ -84,49 +88,69 @@ le<- le |>
          remaining_yrs = value) |>
   select(year, age_lower, remaining_yrs) 
 
-# merge in national population
-vimc_pop<- read.csv('vimc_inputs/demography/202310gavi-1_dds-202208_tot_pop_both.csv') |>
-  filter(country_code == iso3c,
-         year >= 2000)|>
-  rename(national_pop = value)|>
-  select(year, national_pop)
+# calculate ylls_pp + dalys per person
+dt<- merge(output, le, by = c('year', 'age_lower'))
 
-dt <- merge(output, pop, by = 'year', all.x = T)
-dt<- merge(dt, le, by = c('year', 'age_lower'))
-dt<- merge(dt, vimc_pop, by = 'year', all.x = T)
-
-# calculate ylls_pp + dalys pp
 dt<- dt |>
   mutate(ylls_pp = mortality * remaining_yrs) |>
   mutate(dalys_pp = ylls_pp + yld_pp) |>
   select(-remaining_yrs)
 
-# calculate counts up to 2050
+# calculate counts  ------------------------------------------------------------
+# merge in population from site files (as we only have VIMC inputs for the national level)
+# first, separately sum cases by year
+total_pop<- site_data$population |>
+  group_by(year) |>
+  mutate(pop = sum(pop)) |>
+  ungroup() |>
+  rename(summed_pop = pop) |>
+  select(year, summed_pop)
+total_pop<- unique(total_pop, by = 'year')
+
+pop <- site_data$population |>
+  filter(name_1 == site_name & urban_rural == ur) |>
+  select(year, pop) |>
+  rename(site_file_population = pop)
+
+# merge these two tables together
+pops<- merge(pop, total_pop, by= 'year')
+
+# merge in national population from VIMC (available for entire time period)
+vimc_pop<- vimc_pop |>
+  filter(country_code == iso3c,
+         year >= 2000)|>
+  rename(national_pop = value)|>
+  select(year, national_pop)
+
+# merge in vimc population
+pops<- merge(vimc_pop, pops, all.x = T)
+
+# first rescale site file population based on the ratio of (sum of site file pops in country)/ (VIMC country level population)
+pops<- pops |>
+  mutate(vimc_site_population = (site_file_population * national_pop)/summed_pop)
+
+# should be more or less the same, but should be done for consistency sake
+# calculate population ratio as vimc(site)/ vimc(country)
+pops<- pops |>
+  mutate(pop_ratio = vimc_site_population/ national_pop) |>
+  tidyr::fill(pop_ratio, .direction = 'down')
+
+# then calculate vimc_site_population by multiplying this ratio to the national population for the final 50 years
+pops<- pops |>
+  mutate(vimc_site_population = ifelse(year<= 2050, vimc_site_population, pop_ratio* national_pop))|>
+  select(year, vimc_site_population)
+
+dt<- merge(dt, pops, by= 'year')
+
+# calculate counts for entire time period --------------------------------------
 dt<- dt |>
   mutate(
-    cases = round(clinical * site_file_population * prop_n),
-    deaths = round(mortality * site_file_population * prop_n),
-    dalys = round(dalys_pp * site_file_population * prop_n),
-    population = round(site_file_population * prop_n))
+    cases = round(clinical * vimc_site_population * prop_n),
+    deaths = round(mortality * vimc_site_population * prop_n),
+    dalys = round(dalys_pp * vimc_site_population * prop_n),
+    population = round(vimc_site_population * prop_n))
 
-# calculate some scaling factor for population from 2050-21-- in leiu of site-specific pop for these years
-later_yrs<- dt |>
-  mutate(pop_ratio = site_file_population / national_pop) |>
-  tidyr::fill(pop_ratio, .direction = "down") |>
-  filter(year >= 2051) |>
-  mutate(site_file_population = pop_ratio * national_pop) |>
-  mutate(cases = round(clinical * site_file_population * prop_n),
-         deaths = round(mortality * site_file_population * prop_n),
-         dalys = round(dalys_pp * site_file_population * prop_n),
-         population = round(site_file_population * prop_n)) |>
-  select(-pop_ratio)
-
-# bid years after 2050 and years before 2050 together
-dt<- dt |>
-  filter(year <= 2050)
-full_dt<- rbind(dt, later_yrs, fill= T)
-
-# final formatting
+# final formatting  ------------------------------------------------------------
 dt <- dt |>
   mutate(
     disease = 'Malaria',
