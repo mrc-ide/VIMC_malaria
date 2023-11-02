@@ -13,7 +13,7 @@ This workflow uses a modified version of the site package [(link here)](https://
 `install.packages('VIMC_malaria/site_0.2.2.tar.gz')`
 
 ### Install dalys branch of postie package
-This workflow uses the postie package to postprocess outputs, with DALY functionality for postie is currently on the [DALYs](https://github.com/mrc-ide/postie/tree/dalys/R) repository branch; you will need to install this version of the postie package to run this code using the function call `install.packages('mrc-ide/postie@dalys'). 
+This workflow uses the postie package to postprocess outputs, with DALY functionality for postie is currently on the [DALYs](https://github.com/mrc-ide/postie/tree/dalys/R) repository branch; you will need to install this version of the postie package to run this code using the function call `install.packages('mrc-ide/postie@dalys')`. 
 
 ### Save input files
 VIMC model inputs are saved locally and not tracked on this repository due to large size and privacy issues. VIMC inputs should be saved under `/src/set_parameters/`. Contact Lydia for access to these files.
