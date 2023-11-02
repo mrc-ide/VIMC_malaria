@@ -4,7 +4,8 @@
 #' @param   coverage_data    VIMC vaccine forecast for site of interest
 #' @returns site file with additional variables 'rtss_coverage', 'rtss_booster_coverage', 'r21_coverage', 'r21_booster_coverage'
 
-update_coverage_values<- function(site, coverage_data){
+update_coverage_values<- function(site, coverage_data, scenario){
+  
   dt<- coverage_data |>
     rename(vaccine_name = vaccine) |>
     data.table()
@@ -39,15 +40,17 @@ update_coverage_values<- function(site, coverage_data){
            r21_booster_coverage = R4) 
   
   # transform booster coverage into value per person according to coverage in the preceding year
-  for (yr in unique(dt$year)){
-    
-    dt[year== yr & rtss_coverage!= 0 & rtss_booster_coverage!= 0, 
-       rtss_booster_coverage := rtss_booster_coverage / dt[year == yr- 1, rtss_coverage]]
-    
-    dt[year== yr & r21_coverage!= 0 & r21_booster_coverage!= 0, 
-       r21_booster_coverage := r21_booster_coverage / dt[year == yr- 1, r21_coverage]]
-  }
+  # for (yr in unique(dt$year)){
+  #   
+  #   dt[year== yr & rtss_coverage!= 0 & rtss_booster_coverage!= 0, 
+  #      rtss_booster_coverage := rtss_booster_coverage / dt[year == yr- 1, rtss_coverage]]
+  #   
+  #   dt[year== yr & r21_coverage!= 0 & r21_booster_coverage!= 0, 
+  #      r21_booster_coverage := r21_booster_coverage / dt[year == yr- 1, r21_coverage]]
+  # }
 
+
+  
   intvns<- data.table(merge(site$interventions, dt, by = 'year', all.x= T))
   
   intvns[is.na(rtss_coverage), "rtss_coverage" := 0]
@@ -57,6 +60,17 @@ update_coverage_values<- function(site, coverage_data){
   intvns[is.na(vaccine), vaccine := vaccine_val]
   
   site$interventions<- intvns
+  
+  if(scenario %like% 'bluesky'){
+    
+    site$interventions$scenario_type<- 'bluesky'
+  }
+  
+  if(scenario %like% 'default'){
+    
+    site$interventions$scenario_type<- 'routine'
+    
+  }
   
   return(site)
 }

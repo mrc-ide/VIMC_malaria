@@ -23,22 +23,22 @@ source('run_report.R')
 # PARAMETERS TO CHANGE FOR REPORTS ---------------------------------------------
 iso3c<- 'NGA'                                                                   # country to launch model for
 sites<- readRDS(paste0('src/process_inputs/site_files/', iso3c, '.rds'))$sites  # sites for country of interest
-population<- 50000                                                               # population size
-description<- 'first_test_run'                                          # reason for model run
+population<- 50000                                                              # population size
+description<- 'larger_test'                                           # reason for model run
 draw<- 0                                                                        # parameter draw to run (0 for central runs)
-burnin<- 15          
+burnin<- 0          
 
 # if just testing reports for one site:
-site_name<- 'Lagos'
+site_name<- 'Zamfara'
 ur<- 'urban'
 
 # 2 following reports reports to run (in chronological order)
 reports<- c('set_parameters', 'launch_models', 'process_site', 'site_diagnostics', 'process_country')
-report_type<- reports[4]   # select a report to run
+report_type<- reports[1]   # select a report to run
 
 # scenarios to run (no order)
 scenarios<- c('malaria-no-vaccination', 'malaria-r3-default', 'malaria-r3-r4-default', 'malaria-rts3-bluesky', 'malaria-rts3-default', 'malaria-rts3-rts4-bluesky')
-scenario<-  scenarios[3]   # select a scenario to run per VIMC inputs.
+scenario<-  scenarios[6]   # select a scenario to run per VIMC inputs.
 
 ################################################################################
 # 1 prepare and save inputs
@@ -79,8 +79,8 @@ small_models<- obj$lapply(
 
 
 # # run report just for one site  ------------------------------------------------
-small_job<- obj$enqueue(orderly2::orderly_run(
-  'site_diagnostics',
+large_job<- obj$enqueue(orderly2::orderly_run(
+  'launch_models',
   list(
     iso3c = iso3c,
     site_name = site_name,

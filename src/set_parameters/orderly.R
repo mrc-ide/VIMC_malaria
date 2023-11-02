@@ -39,7 +39,7 @@ if(scen == 'no-vaccination'){
   coverage_data<- coverage_data |>           # pull another projection for data table structure
     filter(country_code == iso3c) |>
     filter(scenario == 'malaria-r3-r4-default') |>
-    mutate(coverage == 0)
+    mutate(coverage == 0) 
   
 }
 
@@ -58,11 +58,13 @@ site <- extract_site(site_file = site_data,
 
 # specify vaccine coverage based on forecast  ----------------------------------
 site<- expand_intervention_coverage(site, 
-                                    terminal_year = 2010)
+                                    terminal_year = 2100)
 
 site<- update_coverage_values(site, 
-                              coverage_data)
+                              coverage_data,
+                              scenario)
 
+# add in scenario variable which will be used to implement booster
 saveRDS(site, 'vaccine_plot_input.rds')
 message('formatting')
 
