@@ -6,11 +6,14 @@ In order to run this workflow, run the ["VIMC_workflow.R"](https://github.com/mr
 
 ### Initialize orderly repository
 Install orderly2, if you have not already, with the command `install_github('mrc-ide\orderly2')`.
-You may need to initialize this repository by setting your working directory to the repository and running the command `orderly2::orderly_init()`.
+You may need to initialize this repository by setting your working directory to the repository and running the command `orderly2::orderly_init()`. This will install supplemental folders in the repository that are not tracked via Git but are essential to run orderly reports.
 
 ###  Install site package
 This workflow uses a modified version of the site package [(link here)](https://github.com/mrc-ide/VIMC_malaria/blob/main/site_0.2.2.tar.gz), which is used to translate site files into malariasimulation model paramters. The key change is that this version allows the user to parameterize the R21 vaccine, and also allows the user to implement varied coverage of the booster vaccine dose over time. The modified version of this package should be installed prior to running this workflow using the following command:
 `install.packages('VIMC_malaria/site_0.2.2.tar.gz')`
+
+### Install dalys branch of postie package
+This workflow uses the postie package to postprocess outputs, with DALY functionality for postie is currently on the [DALYs](https://github.com/mrc-ide/postie/tree/dalys/R) repository branch; you will need to install this version of the postie package to run this code using the function call `install.packages('mrc-ide/postie@dalys')`. 
 
 ### Save input files
 VIMC model inputs are saved locally and not tracked on this repository due to large size and privacy issues. VIMC inputs should be saved under `/src/set_parameters/`. Contact Lydia for access to these files.
@@ -69,7 +72,7 @@ Run malariasimulation model [("launch_models")](https://github.com/mrc-ide/VIMC_
 ## Postprocess outputs 
 Process model outputs [("process_site")](https://github.com/mrc-ide/VIMC_malaria/blob/main/src/process_site/orderly.R). Outputs are processed in the following steps.
 
-* `get_rates()` from the [postie](https://github.com/mrc-ide/postie) package is used to estimate incidence, mortality, YLD, YLL, and DALY rates from model outputs. Note that these rates are based on the population size used to run the model, not the real-world population size of the site modelled. DALY functionality for postie is currently on the [DALYs](https://github.com/mrc-ide/postie/tree/dalys/R) repository branch; you will need to install this version of the postie package to run this code using the function call `install.packages('mrc-ide/postie@dalys'). DWs for malaria are sourced from the Global Burden of Disease study. For the purposes of VIMC modelling, we ignore malaria GBD disability weights for comorbid conditions such as anemia and motor impairiment. For documentation on the DW values used, see source code [here](https://github.com/mrc-ide/postie/blob/dalys/R/epi.R#L36-L85).
+* `get_rates()` from the [postie](https://github.com/mrc-ide/postie) package is used to estimate incidence, mortality, YLD, YLL, and DALY rates from model outputs. Note that these rates are based on the population size used to run the model, not the real-world population size of the site modelled. DWs for malaria are sourced from the Global Burden of Disease study. For the purposes of VIMC modelling, we ignore malaria GBD disability weights for comorbid conditions such as anemia and motor impairiment. For documentation on the DW values used, see source code [here](https://github.com/mrc-ide/postie/blob/dalys/R/epi.R#L36-L85).
 * Because the VIMC utilizes country-specific life-expectancy, YLLs and DALY rates are recalculated based on these inputs.
 * Rates are multiplied by site population to estimate cases, deaths, and DALYs from 2000-2050.
 * We scale site file populations such that the sum of site file populations is equivalent to the national VIMC population.
@@ -79,4 +82,4 @@ Process model outputs [("process_site")](https://github.com/mrc-ide/VIMC_malaria
 Produce diagnostic report (at the site level) [("site_diagnostics")](https://github.com/mrc-ide/VIMC_malaria/blob/main/src/process_site/orderly.R).
 
 ## Process country
-Aggregate outputs up to country level [("process_country")](https://github.com/mrc-ide/VIMC_malaria/blob/main/src/process_country/orderly.R).
+Aggregate outputs up to country level [("process_country")](https://github.com/mrc-ide/VIMC_malaria/blob/main/src/process_country/orderly.R) via simple summation.
