@@ -59,7 +59,7 @@ update_coverage_values<- function(site, coverage_data, scenario){
   intvns[is.na(r21_booster_coverage), "r21_booster_coverage" := 0]  
   intvns[is.na(vaccine), vaccine := vaccine_val]
   
-  site$interventions<- intvns
+  site$interventions<- intvns # keep in mind these booster values will not be fed into the model
   
   if(scenario %like% 'bluesky'){
     

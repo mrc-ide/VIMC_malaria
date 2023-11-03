@@ -6,7 +6,8 @@ orderly2::orderly_parameters(iso3c = NULL,
                              population = NULL,
                              burnin = NULL,
                              parameter_draw = NULL,
-                             scenario = NULL)
+                             scenario = NULL,
+                             quick_run = NULL)
 
 
 
@@ -20,7 +21,8 @@ orderly2::orderly_dependency("set_parameters",
                              && parameter:scenario == this:scenario 
                              && parameter:description == this:description 
                              && parameter:population == this:population
-                             && parameter:parameter_draw == this:parameter_draw)",
+                             && parameter:parameter_draw == this:parameter_draw
+                             && parameter:quick_run == this:quick_run)",
                              c(model_input.rds = "model_input.rds"))
 
 

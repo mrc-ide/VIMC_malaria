@@ -24,12 +24,12 @@ source('run_report.R')
 iso3c<- 'NGA'                                                                   # country to launch model for
 sites<- readRDS(paste0('src/process_inputs/site_files/', iso3c, '.rds'))$sites  # sites for country of interest
 population<- 5000                                                               # population size
-description<- 'test_booser_delivered'                                           # reason for model run
+description<- 'quick_run_rtss'                                                  # reason for model run
 draw<- 0                                                                        # parameter draw to run (0 for central runs)
-burnin<- 0          
-
+burnin<- 5                                                                      # burn-in in years            
+quick_run<- TRUE                                                                # boolean, T or F. If T, makes age groups larger and runs model through 2035.
 # if just testing reports for one site:
-site_name<- 'Zamfara'
+site_name<- 'Lagos'
 ur<- 'urban'
 
 # 2 following reports reports to run (in chronological order)
@@ -38,7 +38,7 @@ report_type<- reports[1]   # select a report to run
 
 # scenarios to run (no order)
 scenarios<- c('malaria-no-vaccination', 'malaria-r3-default', 'malaria-r3-r4-default', 'malaria-rts3-bluesky', 'malaria-rts3-default', 'malaria-rts3-rts4-bluesky')
-scenario<-  scenarios[6]   # select a scenario to run per VIMC inputs.
+scenario<-  'malaria-rts3-rts4-default'   # select a scenario to run per VIMC inputs.
 
 ################################################################################
 # 1 prepare and save inputs
@@ -74,13 +74,14 @@ small_models<- obj$lapply(
   description = description,
   scenario = scenario,
   parameter_draw = draw,
-  burnin = burnin
+  burnin = burnin,
+  quick_run = quick_run
 )
 
 
 # # run report just for one site  ------------------------------------------------
-large_job<- obj$enqueue(orderly2::orderly_run(
-  'site_diagnostics',
+smaller_job<- obj$enqueue(orderly2::orderly_run(
+  'launch_models',
   list(
     iso3c = iso3c,
     site_name = site_name,
@@ -89,7 +90,8 @@ large_job<- obj$enqueue(orderly2::orderly_run(
     population = population,
     parameter_draw = draw,
     burnin= burnin,
-    scenario = scenario),
+    scenario = scenario,
+    quick_run = quick_run),
   root = dir
 ))
 
@@ -102,7 +104,8 @@ orderly2::orderly_run(
     population = population,
     parameter_draw = draw,
     burnin= burnin,
-    projection = proj),
+    projection = proj,
+    quick_run = quick_run),
   root = dir
 )
 

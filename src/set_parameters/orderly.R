@@ -1,12 +1,13 @@
 # set parameters  --------------------------------------------------------------
-orderly2::orderly_parameters(iso3c = 'NGA', 
-                             site_name = 'Zamfara',
-                             ur = 'urban',
-                             description = 'test_bl',
-                             population = 5000,
-                             scenario = 'no-vaccination',
-                             parameter_draw = 0,
-                             burnin= 0)
+orderly2::orderly_parameters(iso3c = NULL, 
+                             site_name = NULL,
+                             ur = NULL,
+                             description = NULL,
+                             population = NULL,
+                             scenario = NULL,
+                             parameter_draw = NULL,
+                             burnin= NULL,
+                             quick_run = NULL)
 
 
 orderly2::orderly_description('Set parameters for model run')
@@ -58,9 +59,18 @@ site <- extract_site(site_file = site_data,
                      site_name = site_name,
                      ur = ur)
 
+
+# if quick run, set time length to 2035, if not set to 2100
+
+if(quick_run == T){
+  term_yr<- 2035
+} else{
+  term_yr<- 2100
+}
+
 # specify vaccine coverage based on forecast  ----------------------------------
 site<- expand_intervention_coverage(site, 
-                                    terminal_year = 2100)
+                                    terminal_year = term_yr)
 
 site<- update_coverage_values(site, 
                               coverage_data,
@@ -85,17 +95,26 @@ params <- site::site_parameters(
 
 
 # set age groups  --------------------------------------------------------------
-year<- 365
-min_ages = seq(0, 99, by= 1) * year
-max_ages = seq(1, 100, by= 1) * year -1
-
-params$clinical_incidence_rendering_min_ages = min_ages
-params$clinical_incidence_rendering_max_ages = max_ages
-params$severe_incidence_rendering_min_ages = min_ages
-params$severe_incidence_rendering_max_ages = max_ages
-params$age_group_rendering_min_ages = min_ages
-params$age_group_rendering_max_ages = max_ages
-
+if(quick_run== T) {
+  
+  params$human_population<-10000
+  year<- 365
+  min_ages = c(0:5, 6,15,20) * year
+  max_ages = c(1:6, 15,20,200) * year -1
+  
+}else{
+  
+  year<- 365
+  min_ages = seq(0, 99, by= 1) * year
+  max_ages = seq(1, 100, by= 1) * year -1
+  
+}  
+  params$clinical_incidence_rendering_min_ages = min_ages
+  params$clinical_incidence_rendering_max_ages = max_ages
+  params$severe_incidence_rendering_min_ages = min_ages
+  params$severe_incidence_rendering_max_ages = max_ages
+  params$age_group_rendering_min_ages = min_ages
+  params$age_group_rendering_max_ages = max_ages
 
 # if this is a stochastic run, set parameter draw ------------------------------
 if (parameter_draw > 0){

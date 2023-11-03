@@ -7,7 +7,8 @@ run_report<- function(i,
                       description,
                       scenario,
                       parameter_draw,
-                      burnin){
+                      burnin,
+                      quick_run){
   
   
   message(i)
@@ -22,7 +23,8 @@ run_report<- function(i,
                           population = population,
                           burnin = burnin,
                           scenario = scenario,
-                          parameter_draw = parameter_draw),
+                          parameter_draw = parameter_draw,
+                          quick_run = quick_run),
                           root = path)
   
   

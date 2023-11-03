@@ -1,12 +1,13 @@
 # process site --------------------------------------------------------------
-orderly2::orderly_parameters(iso3c = 'NGA',
-                             description = 'test_booser_delivered',
-                             site_name = 'Zamfara',
-                             ur = 'urban',
-                             population = 5000,
-                             burnin = 0,
-                             parameter_draw = 0,
-                             scenario = 'malaria-rts3-rts4-bluesky')
+orderly2::orderly_parameters(iso3c = NULL,
+                             description = NULL,
+                             site_name = NULL,
+                             ur = NULL,
+                             population = NULL,
+                             burnin = NULL,
+                             parameter_draw = NULL,
+                             scenario = NULL,
+                             quick_run = NULL)
 
 orderly2::orderly_description('Process model outputs')
 orderly2::orderly_artefact('Processed output', 'processed_output.rds')
@@ -65,6 +66,8 @@ output <- postie::get_rates(
   treatment_scaler = 0.42,
 )
 
+if(quick_run == F){
+  
 # recalculate YLLs and DALYs based on country-specific life expectancy  --------
 output<- output |>
   select(-yll_pp, -dalys_pp) |>
@@ -97,6 +100,7 @@ dt<- dt |>
   mutate(dalys_pp = ylls_pp + yld_pp) |>
   select(-remaining_yrs)
 
+}
 # calculate counts  ------------------------------------------------------------
 # merge in population from site files (as we only have VIMC inputs for the national level)
 # first, separately sum cases by year

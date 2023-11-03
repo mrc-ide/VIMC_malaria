@@ -6,7 +6,8 @@ orderly2::orderly_parameters(iso3c = NULL,
                              population = NULL,
                              burnin = NULL,
                              parameter_draw = NULL,
-                             scenario = NULL)
+                             scenario = NULL,
+                             quick_run= NULL)
 
 
 orderly2::orderly_description('Produce diagnostic report for site')
@@ -23,7 +24,8 @@ intvn_metadata<- orderly2::orderly_dependency("process_site",
                                                           && parameter:population == this:population
                                                           && parameter:description == this:description
                                                           && parameter:scenario == this:scenario
-                                                          && parameter:parameter_draw == this:parameter_draw)",
+                                                          && parameter:parameter_draw == this:parameter_draw
+                                                          && parameter:quick_run == this:quick_run)",
                                               c(processed_output.rds = "processed_output.rds"))
 
 # pull baseline output
@@ -44,7 +46,8 @@ raw_output<- orderly2::orderly_dependency("process_site",
                                                           && parameter:population == this:population
                                                           && parameter:description == this:description
                                                           && parameter:scenario == this:scenario
-                                                          && parameter:parameter_draw == this:parameter_draw)",
+                                                          && parameter:parameter_draw == this:parameter_draw
+                                                          && parameter:quick_run == this:quick_run)",
                                           c(raw_model_output.rds = "raw_model_output.rds"))
 # site file inputs
 vaccine_coverage_input<- orderly2::orderly_dependency("set_parameters",
@@ -54,7 +57,8 @@ vaccine_coverage_input<- orderly2::orderly_dependency("set_parameters",
                                                           && parameter:population == this:population
                                                           && parameter:description == this:description
                                                           && parameter:scenario == this:scenario
-                                                          && parameter:parameter_draw == this:parameter_draw)",
+                                                          && parameter:parameter_draw == this:parameter_draw
+                                                          && parameter:quick_run == this:quick_run)",
                                                       c(vaccine_plot_input.rds = "vaccine_plot_input.rds"))
 
 orderly2::orderly_dependency("process_inputs",
@@ -89,6 +93,7 @@ rmarkdown::render(input= 'M:/Lydia/VIMC_malaria/src/site_diagnostics/diagnostic_
                                'site_name' = site_name,
                                'ur' = ur,
                                'population' = population,
+                               'quick_run' = quick_run,
                                'burnin' = burnin,
                                'parameter_draw' = parameter_draw,
                                'model_input' = model_input,

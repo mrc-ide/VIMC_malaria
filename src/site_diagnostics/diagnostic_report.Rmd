@@ -3,7 +3,6 @@ title: 'VIMC diagnostic report: site'
 output:
   html_document: default
   pdf_document: default
-date: "!r Sys.Date()"
 ---
 
 ```{r setup, include=FALSE}
@@ -18,7 +17,7 @@ lapply(list.files('functions/', full.names = T), source, local= knitr::knit_glob
 
 ## VIMC site-level diagnostic report
 
-This is a diagnostic report for VIMC outputs for `r site_name`, `r ur`. The EIR for this site is `r site$eir$eir[[1]]`. The description for this model run is `r description`. The scenario ran was `r scenario`. The population size of this model run was `r population`. The burn-in time was `r burnin` years.  
+This is a diagnostic report for VIMC outputs for `r site_name`, `r ur`. The EIR for this site is `r site$eir$eir[[1]]`. The description for this model run is `r description`. The scenario ran was `r scenario`. The population size of this model run was `r population`. The burn-in time was `r burnin` years. For this run, quick_run was `r quick_run` .
 
 ## Vaccine coverage specified for scenario
 ```{r inputs}
