@@ -83,6 +83,9 @@ processed_output<- readRDS('processed_output.rds')
 
 message('read inputs successfully')
 
+site_data<-extract_site(site_file = site_data,
+                                 site_name = site_name,
+                                 ur = ur)
 
 # render report
 rmarkdown::render(input= 'M:/Lydia/VIMC_malaria/src/site_diagnostics/diagnostic_report.Rmd',

@@ -9,6 +9,9 @@ output:
 knitr::opts_chunk$set(echo = FALSE, warning = FALSE)
 library(scene)
 library(ggpubr)
+library(data.table)
+
+site<- site_data
 # source plotting code for report
 lapply(list.files('functions/', full.names = T), source, local= knitr::knit_global())
 
@@ -17,12 +20,15 @@ lapply(list.files('functions/', full.names = T), source, local= knitr::knit_glob
 
 ## VIMC site-level diagnostic report
 
-This is a diagnostic report for VIMC outputs for `r site_name`, `r ur`. The EIR for this site is `r site$eir$eir[[1]]`. The description for this model run is `r description`. The scenario ran was `r scenario`. The population size of this model run was `r population`. The burn-in time was `r burnin` years. For this run, quick_run was `r quick_run` .
+This is a diagnostic report for VIMC outputs for `r site_name`, `r ur`. The EIR for this site is `r site_data$eir$eir[[1]]`. The description for this model run is `r description`. The scenario ran was `r scenario`. The population size of this model run was `r population`. The burn-in time was `r burnin` years. For this run, quick_run was `r quick_run` .
 
 ## Vaccine coverage specified for scenario
 ```{r inputs}
 
 plot_vaccine_coverage(model_input)
+intvns<- data.table(model_input$interventions)
+
+intro_yr<- min(intvns[rtss_coverage!= 0 | r21_coverage!= 0, year])
 
 plot_interventions_combined(
   interventions = model_input$interventions,
@@ -87,7 +93,7 @@ prevalence_diagnostic(site)
 ```
 # Model outputs
 ```{r}
-plot_pfpr_over_time(raw_output)
+plot_pfpr_over_time(raw_output, intro_yr = intro_yr)
 ```
 
 ## Site file
@@ -101,63 +107,91 @@ population_diagnostic(site)
 ## Modelled outputs
 
 ```{r population, echo=FALSE, fig.height=10, fig.width= 15}
-population_diagnostic_model(processed_output, pg= 1)
-population_diagnostic_model(processed_output, pg= 2)
-population_diagnostic_model(processed_output, pg= 3)
-population_diagnostic_model(processed_output, pg= 4)
 
+if(quick_run == T){
+  population_diagnostic_model(processed_output, pg= 1, intro_yr = intro_yr)
+
+}else{
+population_diagnostic_model(processed_output, pg= 1, intro_yr = intro_yr)
+population_diagnostic_model(processed_output, pg= 2, intro_yr = intro_yr)
+population_diagnostic_model(processed_output, pg= 3, intro_yr = intro_yr)
+population_diagnostic_model(processed_output, pg= 4, intro_yr = intro_yr)
+}
 
 ```
 
 # Incident cases
 ```{r incident cases, echo=FALSE, fig.height=10, fig.width= 15}
 
-incident_cases_diagnostic(processed_output, pg= 1)
-incident_cases_diagnostic(processed_output, pg= 2)
-incident_cases_diagnostic(processed_output, pg= 3)
-incident_cases_diagnostic(processed_output, pg= 4)
-
+if(quick_run == T){
+ incident_cases_diagnostic(processed_output, pg= 1, intro_yr = intro_yr)
+ 
+}else{
+incident_cases_diagnostic(processed_output, pg= 1, intro_yr = intro_yr)
+incident_cases_diagnostic(processed_output, pg= 2, intro_yr = intro_yr)
+incident_cases_diagnostic(processed_output, pg= 3, intro_yr = intro_yr)
+incident_cases_diagnostic(processed_output, pg= 4, intro_yr = intro_yr)
+}
 
 ```
 
 #   Incidence rate 
 ```{r incidence rate, echo = FALSE, fig.height=10, fig.width= 10}
+if(quick_run== T){
+  incidence_rate_diagnostic(processed_output, pg= 1, intro_yr = intro_yr)
 
-incidence_rate_diagnostic(processed_output, pg= 1)
-incidence_rate_diagnostic(processed_output, pg= 2)
-incidence_rate_diagnostic(processed_output, pg= 3)
-incidence_rate_diagnostic(processed_output, pg= 4)
-
+}else{
+  
+incidence_rate_diagnostic(processed_output, pg= 1, intro_yr = intro_yr)
+incidence_rate_diagnostic(processed_output, pg= 2, intro_yr = intro_yr)
+incidence_rate_diagnostic(processed_output, pg= 3, intro_yr = intro_yr)
+incidence_rate_diagnostic(processed_output, pg= 4, intro_yr = intro_yr)
+}
 ```
 
 # Deaths
 
 ```{r deaths, echo=FALSE, fig.height=10, fig.width= 15}
 
-mortality_diagnostic(processed_output, pg= 1)
-mortality_diagnostic(processed_output, pg= 2)
-mortality_diagnostic(processed_output, pg= 3)
-mortality_diagnostic(processed_output, pg= 4)
+if(quick_run == T){
+  mortality_diagnostic(processed_output, pg= 1, intro_yr = intro_yr)
 
+}else{
+mortality_diagnostic(processed_output, pg= 1, intro_yr = intro_yr)
+mortality_diagnostic(processed_output, pg= 2, intro_yr = intro_yr)
+mortality_diagnostic(processed_output, pg= 3, intro_yr = intro_yr)
+mortality_diagnostic(processed_output, pg= 4, intro_yr = intro_yr)
+}
 ```
 
 # Mortality rate 
 ```{r mort rate, echo=FALSE, fig.height=10, fig.width= 15}
 
-mortality_rate_diagnostic(processed_output, pg= 1)
-mortality_rate_diagnostic(processed_output, pg= 2)
-mortality_rate_diagnostic(processed_output, pg= 3)
-mortality_rate_diagnostic(processed_output, pg= 4)
+if(quick_run== T){
+  mortality_rate_diagnostic(processed_output, pg= 1, intro_yr = intro_yr)
 
+}else{
+  
+mortality_rate_diagnostic(processed_output, pg= 1, intro_yr = intro_yr)
+mortality_rate_diagnostic(processed_output, pg= 2, intro_yr = intro_yr)
+mortality_rate_diagnostic(processed_output, pg= 3, intro_yr = intro_yr)
+mortality_rate_diagnostic(processed_output, pg= 4, intro_yr = intro_yr)
+}
 ```
 
 # DALYs
 ```{r dalys, echo = FALSE, fig.height=10, fig.width= 15}
 
-daly_diagnostic(processed_output, pg = 1)
-daly_diagnostic(processed_output, pg = 2)
-daly_diagnostic(processed_output, pg = 3)
-daly_diagnostic(processed_output, pg = 4)
+if(quick_run == T){
+  daly_diagnostic(processed_output, pg = 1, intro_yr = intro_yr)
+
+  
+}else{
+daly_diagnostic(processed_output, pg = 1, intro_yr = intro_yr)
+daly_diagnostic(processed_output, pg = 2, intro_yr = intro_yr)
+daly_diagnostic(processed_output, pg = 3, intro_yr = intro_yr)
+daly_diagnostic(processed_output, pg = 4, intro_yr = intro_yr)
+}
 ```
 
 

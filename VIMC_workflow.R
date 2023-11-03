@@ -28,6 +28,7 @@ description<- 'quick_run_rtss'                                                  
 draw<- 0                                                                        # parameter draw to run (0 for central runs)
 burnin<- 5                                                                      # burn-in in years            
 quick_run<- TRUE                                                                # boolean, T or F. If T, makes age groups larger and runs model through 2035.
+
 # if just testing reports for one site:
 site_name<- 'Lagos'
 ur<- 'urban'
@@ -81,7 +82,7 @@ small_models<- obj$lapply(
 
 # # run report just for one site  ------------------------------------------------
 smaller_job<- obj$enqueue(orderly2::orderly_run(
-  'launch_models',
+  'site_diagnostics',
   list(
     iso3c = iso3c,
     site_name = site_name,

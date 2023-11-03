@@ -145,6 +145,11 @@ pops<- pops |>
   mutate(vimc_site_population = ifelse(year<= 2050, vimc_site_population, pop_ratio* national_pop))|>
   select(year, vimc_site_population)
 
+if(quick_run == T){
+  dt<- output |>
+    rename(year = t)
+}
+
 dt<- merge(dt, pops, by= 'year')
 
 # calculate counts for entire time period --------------------------------------
