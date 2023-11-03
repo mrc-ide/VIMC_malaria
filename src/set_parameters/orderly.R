@@ -1,12 +1,12 @@
 # set parameters  --------------------------------------------------------------
-orderly2::orderly_parameters(iso3c = NULL, 
-                             site_name = NULL,
-                             ur = NULL,
-                             description = NULL,
-                             population = NULL,
-                             scenario = NULL,
-                             parameter_draw = NULL,
-                             burnin= NULL)
+orderly2::orderly_parameters(iso3c = 'NGA', 
+                             site_name = 'Zamfara',
+                             ur = 'urban',
+                             description = 'test_bl',
+                             population = 5000,
+                             scenario = 'no-vaccination',
+                             parameter_draw = 0,
+                             burnin= 0)
 
 
 orderly2::orderly_description('Set parameters for model run')
@@ -39,14 +39,16 @@ if(scen == 'no-vaccination'){
   coverage_data<- coverage_data |>           # pull another projection for data table structure
     filter(country_code == iso3c) |>
     filter(scenario == 'malaria-r3-r4-default') |>
-    mutate(coverage == 0) 
+    mutate(coverage = 0)  |>
+    mutate(scenario = scen,
+           set_name = scen) 
   
-}
+}else{
 
 coverage_data<- coverage_data |>           # pull another projection for data table structure
   filter(country_code == iso3c) |>
   filter(scenario == scen)
-
+}
 orderly2::orderly_dependency("process_inputs",
                              "latest(parameter:iso3c == this:iso3c )",
                              c(site_file.rds = "site_file.rds"))

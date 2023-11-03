@@ -1,12 +1,12 @@
 # process site --------------------------------------------------------------
-orderly2::orderly_parameters(iso3c = NULL,
-                             description = NULL,
-                             site_name = NULL,
-                             ur = NULL,
-                             population = NULL,
-                             burnin = NULL,
-                             parameter_draw = NULL,
-                             scenario = NULL)
+orderly2::orderly_parameters(iso3c = 'NGA',
+                             description = 'test_booser_delivered',
+                             site_name = 'Zamfara',
+                             ur = 'urban',
+                             population = 5000,
+                             burnin = 0,
+                             parameter_draw = 0,
+                             scenario = 'malaria-rts3-rts4-bluesky')
 
 orderly2::orderly_description('Process model outputs')
 orderly2::orderly_artefact('Processed output', 'processed_output.rds')

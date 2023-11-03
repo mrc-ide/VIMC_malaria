@@ -23,8 +23,8 @@ source('run_report.R')
 # PARAMETERS TO CHANGE FOR REPORTS ---------------------------------------------
 iso3c<- 'NGA'                                                                   # country to launch model for
 sites<- readRDS(paste0('src/process_inputs/site_files/', iso3c, '.rds'))$sites  # sites for country of interest
-population<- 50000                                                              # population size
-description<- 'larger_test'                                           # reason for model run
+population<- 5000                                                               # population size
+description<- 'test_booser_delivered'                                           # reason for model run
 draw<- 0                                                                        # parameter draw to run (0 for central runs)
 burnin<- 0          
 
@@ -80,7 +80,7 @@ small_models<- obj$lapply(
 
 # # run report just for one site  ------------------------------------------------
 large_job<- obj$enqueue(orderly2::orderly_run(
-  'launch_models',
+  'site_diagnostics',
   list(
     iso3c = iso3c,
     site_name = site_name,
