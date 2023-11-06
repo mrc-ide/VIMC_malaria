@@ -97,7 +97,6 @@ params <- site::site_parameters(
 # set age groups  --------------------------------------------------------------
 if(quick_run== T) {
   
-  params$human_population<-10000
   year<- 365
   min_ages = c(0:5, 6,15,20) * year
   max_ages = c(1:6, 15,20,200) * year -1

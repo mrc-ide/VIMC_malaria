@@ -15,11 +15,11 @@ plotting_theme<- theme_bw(base_size = 12) +
          axis.ticks.y= element_blank(), 
          panel.grid.major = element_blank(), panel.grid.minor = element_blank()) 
 
-population_diagnostic_model<- function(dt, pg, intro_yr){
+population_diagnostic_model<- function(dt, pg, intro_yr, rows= 5, cols = 5){
   
   p<-   ggplot(data= dt, mapping = aes(x= year, y= cohort_size, color= scenario, fill= scenario))+
     geom_point(alpha= 0.5)  +
-    facet_wrap_paginate(~age, ncol= 5, nrow= 5, page = pg) +
+    facet_wrap_paginate(~age, ncol= cols, nrow= rows, page = pg) +
     geom_vline(xintercept= intro_yr, linetype= "dotted") +
     labs(x= 'Time (in years)', 
          y= 'Population',
@@ -33,12 +33,12 @@ population_diagnostic_model<- function(dt, pg, intro_yr){
   
 }
 
-incident_cases_diagnostic<- function(dt, pg, intro_yr){
+incident_cases_diagnostic<- function(dt, pg, intro_yr, cols= 5, rows= 5){
   
   p<-   ggplot(data= dt, mapping = aes(x= year, y= cases, color= scenario, fill= scenario))+
     geom_point(alpha= 0.5)  +
     facet_wrap_paginate(~age, scales= 'free',
-                        ncol= 5, nrow= 5, 
+                        ncol= cols, nrow= rows, 
                         page = pg) +
     geom_vline(xintercept= intro_yr, linetype= "dotted") +
     labs(x= 'Time (in years)', y= 'Clinical cases', 
@@ -52,11 +52,11 @@ incident_cases_diagnostic<- function(dt, pg, intro_yr){
   
 }
 
-incidence_rate_diagnostic<- function(dt, pg, intro_yr){
+incidence_rate_diagnostic<- function(dt, pg, intro_yr, cols= 5, rows= 5){
   
   p<-  ggplot(data= dt, mapping = aes(x= year, y= clinical, color= scenario, fill= scenario))+
     geom_point(alpha= 0.5)  +
-    facet_wrap_paginate(~age,  nrow= 5, ncol= 5, page = pg) +
+    facet_wrap_paginate(~age,  nrow= rows, ncol= cols, page = pg) +
     labs(x= 'Time (in years)', 
          y= 'Incidence rate', 
          title= paste0('Incidence rate over time: ', unique(dt$site_name), ', ', description),
@@ -72,12 +72,12 @@ incidence_rate_diagnostic<- function(dt, pg, intro_yr){
 
 
 
-mortality_diagnostic<- function(dt, pg, intro_yr){
+mortality_diagnostic<- function(dt, pg, intro_yr, cols= 5, rows= 5){
   
   p<- ggplot(data= dt, mapping = aes(x= year, y= deaths, color= scenario, fill= scenario))+
     geom_point(alpha= 0.5)  +
     geom_vline(xintercept= intro_yr, linetype= "dotted") +
-    facet_wrap_paginate(~age, scales = 'free', ncol= 5, nrow= 5, page = pg) +
+    facet_wrap_paginate(~age, scales = 'free', ncol= cols, nrow= rows, page = pg) +
     labs(x= 'Time (in years)', 
          y= 'Deaths', 
          title= paste0('Deaths over time: ', unique(dt$site_name), ', ', description),
@@ -90,12 +90,12 @@ mortality_diagnostic<- function(dt, pg, intro_yr){
   return(p)
   
 }
-mortality_rate_diagnostic<- function(dt, pg, intro_yr){
+mortality_rate_diagnostic<- function(dt, pg, intro_yr, rows= 5, cols= 5){
   
   p<- ggplot(data= dt, mapping = aes(x= year, y= mortality, color= scenario, fill= scenario))+
     geom_point(alpha= 0.5) +
     geom_vline(xintercept= 2023, linetype= "dotted") +
-    facet_wrap_paginate(~age, ncol= 5, nrow= 5, page= pg) +
+    facet_wrap_paginate(~age, ncol= cols, nrow= rows, page= pg) +
     labs(x= 'Time (in years)',
          y= 'Mortality rate', 
          title= paste0('Mortality rate over time: ', unique(dt$site_name)),
@@ -110,11 +110,11 @@ mortality_rate_diagnostic<- function(dt, pg, intro_yr){
 }
 
 
-daly_diagnostic<- function(dt, pg, intro_yr){
+daly_diagnostic<- function(dt, pg, intro_yr, rows= 5, cols =5){
   
   p<- ggplot(data= dt, mapping = aes(x= year, y= dalys, color= scenario, fill= scenario))+
     geom_point(alpha= 0.5)  +
-    facet_wrap_paginate(~age,scales = 'free', ncol= 5, nrow= 5, page = pg) +
+    facet_wrap_paginate(~age,scales = 'free', ncol= cols, nrow= rows, page = pg) +
     geom_vline(xintercept= intro_yr, linetype= "dotted") +
     labs(x= 'Time (in years)', y= 'DALYs', title= paste0('DALYs over time: ', unique(dt$site_name), ', ', description),
          color= 'Scenario', fill= 'Scenario') +
@@ -170,14 +170,14 @@ plot_cases_averted<- function(dt){
   site_name<- unique(dt$site_name)
   ur<- unique(dt$urban_rural)
   
-  dt<- dt |> subset(year >= 2035)
-  intvn<- dt|> subset(scenario == 'intervention')
+  #dt<- dt |> subset(year >= 2035)
+  intvn<- dt|> subset(scenario %like% 'malaria')
   intvn<- intvn |> 
     rename(cases_intvn = cases,
            dalys_intvn = dalys,
            deaths_intvn = deaths)
   
-  bl<- dt|> subset(scenario== 'baseline')
+  bl<- dt|> subset(scenario== 'no-vaccination')
   
   merged<- merge(intvn, bl, by= c('year', 'age'))
   

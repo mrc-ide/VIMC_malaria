@@ -30,7 +30,8 @@ orderly2::orderly_dependency("launch_models",
                                      parameter:ur == this:ur && 
                                      parameter:population == this:population &&
                                      parameter:scenario == this:scenario &&
-                                     parameter:description == this:description)",
+                                     parameter:description == this:description &&
+                                     parameter:quick_run == this:quick_run)",
                              c(model_output.rds = "model_output.rds"))
 # site file
 orderly2::orderly_dependency("process_inputs",

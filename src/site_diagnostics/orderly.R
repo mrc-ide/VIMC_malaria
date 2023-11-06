@@ -26,19 +26,21 @@ intvn_metadata<- orderly2::orderly_dependency("process_site",
                                                           && parameter:scenario == this:scenario
                                                           && parameter:parameter_draw == this:parameter_draw
                                                           && parameter:quick_run == this:quick_run)",
-                                              c(processed_output.rds = "processed_output.rds"))
+                                              c(intvn_output.rds = "processed_output.rds"))
 
 # pull baseline output
-# baseline_metadata<- orderly2::orderly_dependency("process_site",
-#                                               "latest(parameter:iso3c == this:iso3c 
-#                                                           && parameter:site_name == this:site_name 
-#                                                           && parameter:ur == this:ur 
-#                                                           && parameter:population == this:population
-#                                                           && parameter:description == this:description
-#                                                           && parameter:scenario == 'no-vaccination'
-#                                                           && parameter:parameter_draw == this:parameter_draw)",
-#                                               c(baseline.rds = "baseline_output.rds"))
-# raw model output
+baseline_scenario_name<- 'no-vaccination'
+baseline_metadata<- orderly2::orderly_dependency("process_site",
+                                              "latest(parameter:iso3c == this:iso3c
+                                                          && parameter:site_name == this:site_name
+                                                          && parameter:ur == this:ur
+                                                          && parameter:population == this:population
+                                                          && parameter:description == this:description
+                                                          && parameter:scenario == environment:baseline_scenario_name
+                                                          && parameter:parameter_draw == this:parameter_draw
+                                                          && parameter:quick_run == this:quick_run)",
+                                              c(baseline_output.rds = "processed_output.rds"))
+# raw model output for intervention
 raw_output<- orderly2::orderly_dependency("process_site",
                                           "latest(parameter:iso3c == this:iso3c 
                                                           && parameter:site_name == this:site_name 
@@ -60,7 +62,7 @@ vaccine_coverage_input<- orderly2::orderly_dependency("set_parameters",
                                                           && parameter:parameter_draw == this:parameter_draw
                                                           && parameter:quick_run == this:quick_run)",
                                                       c(vaccine_plot_input.rds = "vaccine_plot_input.rds"))
-
+# VIMC inputs
 orderly2::orderly_dependency("process_inputs",
                                         "latest(parameter:iso3c == this:iso3c)",
                                         c(site_file.rds = "site_file.rds"))
@@ -79,7 +81,13 @@ mort<- readRDS('mort_rate_input.rds')
 # read in inputs to pass into report as parameters
 model_input<- readRDS('vaccine_plot_input.rds')
 raw_output<- readRDS('raw_model_output.rds')
-processed_output<- readRDS('processed_output.rds')
+intvn_output<- readRDS('intvn_output.rds')
+baseline_output<- readRDS('baseline_output.rds')
+
+# bind intervention and baseline outputs together
+processed_output<- rbind(baseline_output, intvn_output, fill = T)
+processed_output<- data.table(processed_output)
+processed_output<- processed_output[scenario!= TRUE]
 
 message('read inputs successfully')
 
