@@ -11,7 +11,6 @@ orderly2::orderly_parameters(iso3c = NULL,
 
 
 orderly2::orderly_description('Produce diagnostic report for site')
-#orderly_artefact('Diagnostic report', 'site_diagnostic_report.html')
 
 library(dplyr)
 lapply(list.files('functions/', full.names = T), source)
