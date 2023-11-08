@@ -104,8 +104,8 @@ if(quick_run== T) {
 }else{
   
   year<- 365
-  min_ages = seq(0, 99, by= 1) * year
-  max_ages = seq(1, 100, by= 1) * year -1
+  min_ages = c(seq(0, 19, by= 1), seq(20, 95, by= 5)) * year
+  max_ages = c(seq(1, 20, by= 1), seq(25, 100, by= 5)) * year -1
   
 }  
   params$clinical_incidence_rendering_min_ages = min_ages

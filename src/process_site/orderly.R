@@ -45,12 +45,16 @@ orderly2::orderly_dependency("process_inputs",
 orderly2::orderly_dependency("process_inputs",
                              "latest(parameter:iso3c == this:iso3c )",
                              c(population_input_all_age.rds = "population_input_all_age.rds"))
+orderly2::orderly_dependency("process_inputs",
+                             "latest(parameter:iso3c == this:iso3c )",
+                             c(population_input_single_yr.rds = "population_input_single_yr.rds"))
 
 
 output<- readRDS('model_output.rds')
 site_data <- readRDS('site_file.rds')
 le <- readRDS('le_input.rds')
 vimc_pop<- readRDS('population_input_all_age.rds')
+pop_single_yr<- readRDS('population_input_single_yr.rds')
 
 message('read inputs successfully')
 
@@ -67,6 +71,15 @@ output <- postie::get_rates(
   treatment_scaler = 0.42,
 )
 
+# fill rates out to single year age groups
+output<- output |>
+  dplyr::group_by(t) |>
+  tidyr::complete(age_lower = c(1:100)) |>
+  select(-age_upper) |>
+  dplyr::ungroup() |>
+  tidyr::fill(clinical, severe, mortality, yld_pp, yll_pp, dalys_pp, .direction = 'down') |>
+  select(-prop_n, -n)
+  
 if(quick_run == F){
   
 # recalculate YLLs and DALYs based on country-specific life expectancy  --------
@@ -94,7 +107,7 @@ le<- le |>
   select(year, age_lower, remaining_yrs) 
 
 # calculate ylls_pp + dalys per person
-dt<- merge(output, le, by = c('year', 'age_lower'))
+dt<- merge(output, le, by = c('year', 'age_lower'), all.x = TRUE)
 
 dt<- dt |>
   mutate(ylls_pp = mortality * remaining_yrs) |>
@@ -113,6 +126,7 @@ total_pop<- site_data$population |>
   select(year, summed_pop)
 total_pop<- unique(total_pop, by = 'year')
 
+# pull the population for the site of interest
 pop <- site_data$population |>
   filter(name_1 == site_name & urban_rural == ur) |>
   select(year, pop) |>
@@ -143,15 +157,34 @@ pops<- pops |>
 
 # then calculate vimc_site_population by multiplying this ratio to the national population for the final 50 years
 pops<- pops |>
-  mutate(vimc_site_population = ifelse(year<= 2050, vimc_site_population, pop_ratio* national_pop))|>
+  mutate(vimc_site_population = ifelse(year<= 2050, vimc_site_population, pop_ratio* national_pop))
+
+# subset out site file population for 2000-2100
+site_pop<- pops |>
   select(year, vimc_site_population)
+
+# pull in single year population to calculate proportion_n by age group
+national_pop<- pops |>
+  select(year, national_pop)
+pop_single_yr<- merge(pop_single_yr, national_pop, by = c('year'))
+pop_single_yr <- pop_single_yr |>
+  mutate(prop_n = value/ national_pop) |>
+  select(year, age_from, age_to, prop_n) |>
+  rename(age_lower = age_from)
+
+
 
 if(quick_run == T){
   dt<- output |>
     rename(year = t)
 }
 
-dt<- merge(dt, pops, by= 'year')
+# merge in site population
+dt<- merge(dt, site_pop, by= 'year')
+
+# merge in prop_n
+dt<- merge(dt, pop_single_yr, by = c('year', 'age_lower'))
+
 
 # calculate counts for entire time period --------------------------------------
 dt<- dt |>
@@ -159,7 +192,8 @@ dt<- dt |>
     cases = round(clinical * vimc_site_population * prop_n),
     deaths = round(mortality * vimc_site_population * prop_n),
     dalys = round(dalys_pp * vimc_site_population * prop_n),
-    population = round(vimc_site_population * prop_n))
+    population = round(vimc_site_population * prop_n)) |>
+  select(-prop_n)
 
 # final formatting  ------------------------------------------------------------
 dt <- dt |>

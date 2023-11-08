@@ -25,10 +25,10 @@ source('run_report.R')
 iso3c<- 'NGA'                                                                   # country to launch model for
 sites<- readRDS(paste0('src/process_inputs/site_files/', iso3c, '.rds'))$sites  # sites for country of interest
 population<- 50000                                                              # population size
-description<- 'quick_run_NGA'                                                   # reason for model run
+description<- 'quick_run__NGA'                                                    # reason for model run
 draw<- 0                                                                        # parameter draw to run (0 for central runs)
 burnin<- 15                                                                     # burn-in in years            
-quick_run<- TRUE                                                                # boolean, T or F. If T, makes age groups larger and runs model through 2035.
+quick_run<- FALSE                                                               # boolean, T or F. If T, makes age groups larger and runs model through 2035.
 
 # if just testing reports for one site:
 site_name<- 'Lagos'
@@ -95,7 +95,7 @@ orderly2::orderly_run(
     population = population,
     parameter_draw = draw,
     burnin= burnin,
-    scenario = 'no-vaccination',
+    scenario = 'malaria-rts3-rts4-default',
     quick_run = quick_run),
   root = dir
 )
@@ -135,7 +135,7 @@ reports_cluster<- obj$lapply(
   site_data = sites,
   population = population,
   description = description,
-  scenario = 'no-vaccination',
+  scenario = 'malaria-rts3-rts4-default',
   parameter_draw = draw,
   burnin = burnin,
   quick_run = quick_run

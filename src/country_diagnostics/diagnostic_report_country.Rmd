@@ -102,90 +102,67 @@ population_diagnostic_vimc(population_data)
 
 ```{r population, echo=FALSE, fig.height=10, fig.width= 15}
 
-if(quick_run == T){
-  population_diagnostic_model(processed_output, pg= 1, intro_yr = intro_yr, rows = 3, cols = 3)
-
-}else{
 population_diagnostic_model(processed_output, pg= 1, intro_yr = intro_yr)
 population_diagnostic_model(processed_output, pg= 2, intro_yr = intro_yr)
 population_diagnostic_model(processed_output, pg= 3, intro_yr = intro_yr)
 population_diagnostic_model(processed_output, pg= 4, intro_yr = intro_yr)
-}
+
 
 ```
 
 # Incident cases
 ```{r incident cases, echo=FALSE, fig.height=10, fig.width= 15}
 
-if(quick_run == T){
- incident_cases_diagnostic(processed_output, pg= 1, intro_yr = intro_yr, rows= 3, cols= 3)
- 
-}else{
+
 incident_cases_diagnostic(processed_output, pg= 1, intro_yr = intro_yr)
 incident_cases_diagnostic(processed_output, pg= 2, intro_yr = intro_yr)
 incident_cases_diagnostic(processed_output, pg= 3, intro_yr = intro_yr)
 incident_cases_diagnostic(processed_output, pg= 4, intro_yr = intro_yr)
-}
+
 
 ```
 
 #   Incidence rate 
 ```{r incidence rate, echo = FALSE, fig.height=10, fig.width= 10}
-if(quick_run== T){
-  incidence_rate_diagnostic(processed_output, pg= 1, intro_yr = intro_yr, rows= 3, cols= 3)
-
-}else{
   
 incidence_rate_diagnostic(processed_output, pg= 1, intro_yr = intro_yr)
 incidence_rate_diagnostic(processed_output, pg= 2, intro_yr = intro_yr)
 incidence_rate_diagnostic(processed_output, pg= 3, intro_yr = intro_yr)
 incidence_rate_diagnostic(processed_output, pg= 4, intro_yr = intro_yr)
-}
+
 ```
 
 # Deaths
 
 ```{r deaths, echo=FALSE, fig.height=10, fig.width= 15}
 
-if(quick_run == T){
-  mortality_diagnostic(processed_output, pg= 1, intro_yr = intro_yr, rows= , cols = 3)
-
-}else{
 mortality_diagnostic(processed_output, pg= 1, intro_yr = intro_yr)
 mortality_diagnostic(processed_output, pg= 2, intro_yr = intro_yr)
 mortality_diagnostic(processed_output, pg= 3, intro_yr = intro_yr)
 mortality_diagnostic(processed_output, pg= 4, intro_yr = intro_yr)
-}
+
 ```
 
 # Mortality rate 
 ```{r mort rate, echo=FALSE, fig.height=10, fig.width= 15}
 
-if(quick_run== T){
-  mortality_rate_diagnostic(processed_output, pg= 1, intro_yr = intro_yr, rows= 3, cols = 3)
-
-}else{
   
 mortality_rate_diagnostic(processed_output, pg= 1, intro_yr = intro_yr)
 mortality_rate_diagnostic(processed_output, pg= 2, intro_yr = intro_yr)
 mortality_rate_diagnostic(processed_output, pg= 3, intro_yr = intro_yr)
 mortality_rate_diagnostic(processed_output, pg= 4, intro_yr = intro_yr)
-}
+
 ```
 
 # DALYs
 ```{r dalys, echo = FALSE, fig.height=10, fig.width= 15}
 
-if(quick_run == T){
-  daly_diagnostic(processed_output, pg = 1, intro_yr = intro_yr, rows= 3, cols =3)
 
-  
-}else{
 daly_diagnostic(processed_output, pg = 1, intro_yr = intro_yr)
 daly_diagnostic(processed_output, pg = 2, intro_yr = intro_yr)
 daly_diagnostic(processed_output, pg = 3, intro_yr = intro_yr)
 daly_diagnostic(processed_output, pg = 4, intro_yr = intro_yr)
-}
+
 ```
 
 
