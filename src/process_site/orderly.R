@@ -219,7 +219,6 @@ dt <- dt |>
     country_name,
     site_name,
     urban_rural,
-    prop_n,
     scenario,
     description,
     cohort_size,
