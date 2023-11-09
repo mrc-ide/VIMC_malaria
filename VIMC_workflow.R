@@ -25,10 +25,10 @@ source('run_report.R')
 iso3c<- 'NGA'                                                                   # country to launch model for
 sites<- readRDS(paste0('src/process_inputs/site_files/', iso3c, '.rds'))$sites  # sites for country of interest
 population<- 50000                                                              # population size
-description<- 'quick_run_NGA'                                                  # reason for model run
+description<- 'full_run_NGA'                                                  # reason for model run
 draw<- 0                                                                        # parameter draw to run (0 for central runs)
 burnin<- 15                                                                     # burn-in in years            
-quick_run<- TRUE                                                               # boolean, T or F. If T, makes age groups larger and runs model through 2035.
+quick_run<- FALSE                                                               # boolean, T or F. If T, makes age groups larger and runs model through 2035.
 
 # if just testing reports for one site:
 site_name<- 'Lagos'
@@ -72,19 +72,19 @@ scenarios <-
 lapply(
   1:nrow(sites),
   run_report,
-  report_name = 'process_site',
+  report_name = 'set_parameters',
   path = dir,
   site_data = sites,
   population = population,
   description = description,
-  scenario = 'no-vaccination',
+  scenario = 'malaria-rts3-rts4-default',
   parameter_draw = draw,
   burnin = burnin,
   quick_run = quick_run
 )
 
 
-# run a single report locally      ---------------------------------------------
+## run a single report locally      ---------------------------------------------
 orderly2::orderly_run(
   'launch_models',
   list(
@@ -127,15 +127,15 @@ report_cluster<- obj$enqueue(orderly2::orderly_run(
 
 
 # run a group of reports on the cluster ----------------------------------------
-reports_cluster<- obj$lapply(
+reports_cluster_vax<- obj$lapply(
   1:nrow(sites),
   run_report,
-  report_name = 'process_site',
+  report_name = 'launch_models',
   path = dir,
   site_data = sites,
   population = population,
   description = description,
-  scenario = 'malaria-rts3-rts4-default',
+  scenario = 'no-vaccination',
   parameter_draw = draw,
   burnin = burnin,
   quick_run = quick_run
@@ -147,12 +147,12 @@ orderly2::orderly_run(
   'process_country',
   list(
     iso3c = iso3c,
-    description = description,
+    description = 'quick_run_NGA',
     population = population,
     parameter_draw = draw,
     burnin= burnin,
-    scenario = 'no-vaccination',
-    quick_run = quick_run),
+    scenario = 'malaria-rts3-rts4-default',
+    quick_run = TRUE),
   root = dir
 )
  
@@ -160,11 +160,11 @@ orderly2::orderly_run(
   'country_diagnostics',
   list(
     iso3c = iso3c,
-    description = description,
+    description = 'quick_run_NGA',
     population = population,
     parameter_draw = draw,
     burnin= burnin,
     scenario = 'malaria-rts3-rts4-default',
-    quick_run = quick_run),
+    quick_run = TRUE),
   root = dir
 )
