@@ -78,8 +78,11 @@ Process model outputs [("process_site")](https://github.com/mrc-ide/VIMC_malaria
 * We scale site file populations such that the sum of site file populations is equivalent to the national VIMC population.
 * From 2050 onward, site population is estimated as (national population in year) * [(scaled site population in 2050)/ (national population in 2050)]. We assume that the proportional breakdown of population by site is fixed from 2050-2100, in the absence of other data.
 
-## Produce diagnostics
-Produce diagnostic report (at the site level) [("site_diagnostics")](https://github.com/mrc-ide/VIMC_malaria/blob/main/src/process_site/orderly.R).
+## Produce site diagnostics
+Produce diagnostic report (at the site level) [("site_diagnostics")](https://github.com/mrc-ide/VIMC_malaria/blob/main/src/process_site/orderly.R). Note that for this report to run properly, you must have processed outputs (from "process_site") for the no-vaccination scenario in addition to the intervention scenario you specify.
 
 ## Process country
 Aggregate outputs up to country level [("process_country")](https://github.com/mrc-ide/VIMC_malaria/blob/main/src/process_country/orderly.R) via simple summation.
+
+## Produce country diagnostics
+Produce similar diagnostic report for country outputs [("country_diagnostics")](https://github.com/mrc-ide/VIMC_malaria/blob/main/src/country_diagnostics/orderly.R)https://github.com/mrc-ide/VIMC_malaria/blob/main/src/country_diagnostics/orderly.R). Note that for this report to run properly, you must have processed outputs (from "process_country") for the no-vaccination scenario in addition to the intervention scenario you specify.
