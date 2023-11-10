@@ -20,7 +20,10 @@ saveRDS(site_data, 'site_file.rds')
 
 # pull coverage data -----------------------------------------------------------
 coverage_files<- list.files('vimc_inputs/vaccine_coverage/', full.names = T)
-coverage_dt<- rbindlist(lapply(coverage_files, read.csv))
+coverage_dt<- rbindlist(lapply(coverage_files, read.csv)) 
+
+coverage_dt <- coverage_dt |>
+  filter(country_code == iso3c)
 
 saveRDS(coverage_dt, 'coverage_input.rds')
 

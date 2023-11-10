@@ -5,6 +5,7 @@
 .DS_Store
 .csv
 .xlsx
+.rds
 2022/
 raw_data/
 data/

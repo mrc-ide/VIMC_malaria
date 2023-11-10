@@ -1,13 +1,13 @@
 # set parameters  --------------------------------------------------------------
-orderly2::orderly_parameters(iso3c = NULL, 
-                             site_name = NULL,
-                             ur = NULL,
-                             description = NULL,
-                             population = NULL,
-                             scenario = NULL,
-                             parameter_draw = NULL,
-                             burnin= NULL,
-                             quick_run = NULL)
+orderly2::orderly_parameters(iso3c = 'NGA', 
+                             site_name = 'Antananarivo',
+                             ur = 'urban',
+                             description = 'test',
+                             population = 50000,
+                             scenario = 'no-vaccination',
+                             parameter_draw = 0,
+                             burnin= 15,
+                             quick_run = TRUE)
 
 
 orderly2::orderly_description('Set parameters for model run')
@@ -28,7 +28,7 @@ library(tibble)
 lapply(list.files('functions/', full.names = T), source)
 
 orderly2::orderly_dependency("process_inputs",
-                             "latest(parameter:iso3c == this:iso3c )",
+                             "latest(parameter:iso3c == this:iso3c)",
                              c(coverage_input.rds = "coverage_input.rds"))
 
 coverage_data<- readRDS('coverage_input.rds') 
