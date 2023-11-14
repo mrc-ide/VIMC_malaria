@@ -80,7 +80,7 @@ output<- output |>
   tidyr::fill(clinical, severe, mortality, yld_pp, yll_pp, dalys_pp, .direction = 'down') |>
   select(-prop_n, -n)
   
-if(quick_run == F){
+#if(quick_run == F){
   
 # recalculate YLLs and DALYs based on country-specific life expectancy  --------
 output<- output |>
@@ -114,7 +114,7 @@ dt<- dt |>
   mutate(dalys_pp = ylls_pp + yld_pp) |>
   select(-remaining_yrs)
 
-}
+
 # calculate counts  ------------------------------------------------------------
 # merge in population from site files (as we only have VIMC inputs for the national level)
 # first, separately sum cases by year
@@ -146,10 +146,11 @@ vimc_pop<- vimc_pop |>
 pops<- merge(vimc_pop, pops, all.x = T)
 
 # first rescale site file population based on the ratio of (sum of site file pops in country)/ (VIMC country level population)
+# should be more or less the same, but should be done for consistency sake
+
 pops<- pops |>
   mutate(vimc_site_population = (site_file_population * national_pop)/summed_pop)
 
-# should be more or less the same, but should be done for consistency sake
 # calculate population ratio as vimc(site)/ vimc(country)
 pops<- pops |>
   mutate(pop_ratio = vimc_site_population/ national_pop) |>
@@ -172,12 +173,6 @@ pop_single_yr <- pop_single_yr |>
   select(year, age_from, age_to, prop_n) |>
   rename(age_lower = age_from)
 
-
-
-if(quick_run == T){
-  dt<- output |>
-    rename(year = t)
-}
 
 # merge in site population
 dt<- merge(dt, site_pop, by= 'year')

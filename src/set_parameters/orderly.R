@@ -1,13 +1,13 @@
 # set parameters  --------------------------------------------------------------
-orderly2::orderly_parameters(iso3c = 'NGA', 
-                             site_name = 'Antananarivo',
-                             ur = 'urban',
-                             description = 'test',
-                             population = 50000,
-                             scenario = 'no-vaccination',
-                             parameter_draw = 0,
-                             burnin= 15,
-                             quick_run = TRUE)
+orderly2::orderly_parameters(iso3c = NULL, 
+                             site_name = NULL,
+                             ur = NULL,
+                             description = NULL ,
+                             population = NULL,
+                             scenario = NULL,
+                             parameter_draw = NULL,
+                             burnin= NULL,
+                             quick_run = NULL)
 
 
 orderly2::orderly_description('Set parameters for model run')
@@ -24,6 +24,7 @@ library(openxlsx)
 library(ggplot2)
 library(tidyr)
 library(tibble)
+
 # functions
 lapply(list.files('functions/', full.names = T), source)
 
@@ -50,6 +51,7 @@ coverage_data<- coverage_data |>           # pull another projection for data ta
   filter(country_code == iso3c) |>
   filter(scenario == scen)
 }
+
 orderly2::orderly_dependency("process_inputs",
                              "latest(parameter:iso3c == this:iso3c )",
                              c(site_file.rds = "site_file.rds"))
@@ -61,7 +63,6 @@ site <- extract_site(site_file = site_data,
 
 
 # if quick run, set time length to 2035, if not set to 2100
-
 if(quick_run == T){
   term_yr<- 2035
 } else{
@@ -79,6 +80,12 @@ site<- update_coverage_values(site,
 # add in scenario variable which will be used to implement booster
 saveRDS(site, 'vaccine_plot_input.rds')
 message('formatting')
+
+if(site$eir$eir[[1]] == 0){
+  
+  stop('Can not model this site beause PfPR EIR is equal to zero. Note this site/ urbanicity combination and exclude from future model runs.')
+  
+}
 
 # pull parameters for this site ------------------------------------------------
 params <- site::site_parameters(
