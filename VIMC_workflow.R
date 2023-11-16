@@ -20,19 +20,20 @@ iso3cs<- unique(coverage$country_code)
 
 dir<- getwd()
 source('run_report.R')
-soruce('remove_zero_eirs.R')
+source('remove_zero_eirs.R')
+
 # PARAMETERS TO CHANGE FOR REPORTS ---------------------------------------------
 iso3c<- 'MDG'                                                                   # country to launch model for
 sites<- data.table(readRDS(paste0('src/process_inputs/site_files/', iso3c, '.rds'))$sites)  # sites for country of interest
-population<- 50000                                                              # population size
-description<- 'quick_run_other_countries'                                                    # reason for model run (change this for every run if you do not want to overwrite outputs)
+population<- 100000                                                             # population size
+description<- 'full_model_runs'                                                      # reason for model run (change this for every run if you do not want to overwrite outputs)
 draw<- 0                                                                        # parameter draw to run (0 for central runs)
 burnin<- 15                                                                     # burn-in in years            
-quick_run<- FALSE                                                               # boolean, T or F. If T, makes age groups larger and runs model through 2035.
+quick_run<- FALSE                                                                # boolean, T or F. If T, makes age groups larger and runs model through 2035.
 
 # if just testing reports for one site:
-site_name<- 'Sahel'
-ur<- 'rural'
+# site_name<- 'Sahel'
+# ur<- 'rural'
 
 # don't launch models for sites with EIR of zero
 sites<- remove_zero_eirs(iso3c, sites)
@@ -72,24 +73,34 @@ for (iso3c in iso3cs){
 
 
 # run reports for all sites in a country locally -------------------------------
-lapply(
-  1:nrow(sites),
-  run_report,
-  report_name = 'set_parameters',
-  path = dir,
-  site_data = sites,
-  population = population,
-  description = description,
-  scenario = 'no-vaccination',
-  parameter_draw = draw,
-  burnin = burnin,
-  quick_run = quick_run
-)
+for (iso3c in iso3cs){
+  
+  print(iso3c)
+  sites<- data.table(readRDS(paste0('src/process_inputs/site_files/', iso3c, '.rds'))$sites)  # sites for country of interest
+  
+  sites<- remove_zero_eirs(iso3c, sites)
+  
+  lapply(
+    1:nrow(sites),
+    run_report,
+    report_name = 'site_diagnostics',
+    path = dir,
+    site_data = sites,
+    population = population,
+    description = description,
+    scenario = 'malaria-rts3-rts4-default',
+    parameter_draw = draw,
+    burnin = burnin,
+    quick_run = quick_run
+  )
+  
+  
+}
 
 
 # ## run a single report locally      ---------------------------------------------
 orderly2::orderly_run(
-  'launch_models',
+  'process_site',
   list(
     iso3c = iso3c,
     site_name = site_name,
@@ -98,7 +109,7 @@ orderly2::orderly_run(
     population = population,
     parameter_draw = draw,
     burnin= burnin,
-    scenario = 'no-vaccination',
+    scenario = 'malaria-rts3-rts4-default',
     quick_run = quick_run),
   root = dir
 )
@@ -120,24 +131,24 @@ obj <- didehpc::queue_didehpc(ctx, config = config)
 
  
 # # run a single report on the cluster -------------------------------------------
-# report_cluster<- obj$enqueue(orderly2::orderly_run(
-#   'launch_models',
-#   list(
-#     iso3c = iso3c,
-#     site_name = site_name,
-#     ur= ur,
-#     description = description,
-#     population = population,
-#     parameter_draw = draw,
-#     burnin= burnin,
-#     scenario = 'malaria-rts3-rts4-default',
-#     quick_run = quick_run),
-#   root = dir
-# ))
-# 
-# 
+report_cluster<- obj$enqueue(orderly2::orderly_run(
+  'launch_models',
+  list(
+    iso3c = iso3c,
+    site_name = site_name,
+    ur= ur,
+    description = description,
+    population = population,
+    parameter_draw = draw,
+    burnin= burnin,
+    scenario = 'no-vaccination',
+    quick_run = quick_run),
+  root = dir
+))
+
+
 # # run a group of reports on the cluster ----------------------------------------
-reports_cluster_mdg_novax<- obj$lapply(
+reports_cluster_novax_ken<- obj$lapply(
   1:nrow(sites),
   run_report,
   report_name = 'launch_models',
@@ -151,7 +162,7 @@ reports_cluster_mdg_novax<- obj$lapply(
   quick_run = quick_run
 )
 
-reports_cluster_mdg_vax<- obj$lapply(
+reports_cluster_vax_ken<- obj$lapply(
   1:nrow(sites),
   run_report,
   report_name = 'launch_models',
@@ -170,12 +181,12 @@ orderly2::orderly_run(
   'process_country',
   list(
     iso3c = 'BFA',
-    description = 'quick_run_other_countries',
+    description = 'full_model_runs',
     population = population,
     parameter_draw = draw,
     burnin= burnin,
     scenario = 'malaria-rts3-rts4-default',
-    quick_run = TRUE),
+    quick_run = FALSE),
   root = dir
 )
 # 
@@ -183,12 +194,12 @@ orderly2::orderly_run(
 orderly2::orderly_run(
   'country_diagnostics',
   list(
-    iso3c = 'MDG',
-    description = 'quick_run_other_countries',
+    iso3c = 'BFA',
+    description = 'full_model_runs',
     population = population,
     parameter_draw = draw,
     burnin= burnin,
     scenario = 'malaria-rts3-rts4-default',
-    quick_run = TRUE),
+    quick_run = FALSE),
   root = dir
 )

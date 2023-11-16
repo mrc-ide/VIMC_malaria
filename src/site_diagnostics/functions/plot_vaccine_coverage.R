@@ -1,5 +1,5 @@
 
-plot_vaccine_coverage<- function(site){
+plot_vaccine_coverage<- function(site, output){
   # pull in vaccine forecast
   plotting_theme<- theme_bw(base_size = 12) +
     theme( legend.position = 'bottom',
@@ -22,7 +22,7 @@ plot_vaccine_coverage<- function(site){
                            ' ', ur, 
                            ', model run: ', description, 
                            ' projection: ', scenario))
-  
+
   
   print(p)
 }
