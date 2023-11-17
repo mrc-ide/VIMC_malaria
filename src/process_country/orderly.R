@@ -17,12 +17,11 @@ orderly2::orderly_artefact('Processed output', 'country_output.rds')
 
 
 # read in model outputs for all sites in country
-
 orderly2::orderly_dependency("process_inputs",
                              "latest(parameter:iso3c == this:iso3c )",
                              c(site_file.rds = "site_file.rds"))
-sites <- readRDS('site_file.rds')
-sites<- sites$sites
+site_data <- readRDS('site_file.rds')
+sites<- site_data$sites
   
 output<- data.table()
   
@@ -80,6 +79,17 @@ dt<- dt|>
          mortality = deaths/ cohort_size,
          dalys_pp = dalys/ cohort_size) |>
   select(-site_name, -urban_rural)
+
+
+# # scale outputs based on cases from WMR from 2000-2020
+# # first sum cases by year in model output and compare
+# pre_scale<- dt |>
+#   group_by(year) |>
+#   summarise(cases = sum(cases)) 
+#   
+# scaling<- merge(pre_scale, site_data$cases_deaths[, c('year', 'wmr_cases')], by= 'year') 
+# scaling<- scaling |>
+#   mutate(ratio = wmr_cases / cases)
 
 # save outputs  ----------------------------------------------------------------
 saveRDS(dt, 'country_output.rds')

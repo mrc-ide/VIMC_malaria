@@ -95,7 +95,7 @@ site_data<-extract_site(site_file = site_data,
                                  ur = ur)
 
 # render report
-rmarkdown::render(input= 'M:/Lydia/VIMC_malaria/src/site_diagnostics/diagnostic_report.Rmd',
+rmarkdown::render(input= 'diagnostic_report.Rmd',
                   output_file = 'site_diagnostic_report',
                   output_format = 'html_document',
                   params= list('iso3c' = iso3c,

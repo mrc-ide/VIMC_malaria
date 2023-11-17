@@ -11,7 +11,8 @@
 # packages  
 library(orderly2)
 library(site)
-
+library(data.table)
+library(dplyr)
 lapply(list.files('functions/', full.names = T), source)
 
 # obtain list of countries to run model for
@@ -19,100 +20,37 @@ coverage<- read.csv('src/process_inputs/vimc_inputs/vaccine_coverage/coverage_20
 iso3cs<- unique(coverage$country_code)
 
 dir<- getwd()
+
+# custom functions
 source('run_report.R')
 source('remove_zero_eirs.R')
-
-# PARAMETERS TO CHANGE FOR REPORTS ---------------------------------------------
-iso3c<- 'MDG'                                                                   # country to launch model for
-sites<- data.table(readRDS(paste0('src/process_inputs/site_files/', iso3c, '.rds'))$sites)  # sites for country of interest
-population<- 100000                                                             # population size
-description<- 'full_model_runs'                                                      # reason for model run (change this for every run if you do not want to overwrite outputs)
-draw<- 0                                                                        # parameter draw to run (0 for central runs)
-burnin<- 15                                                                     # burn-in in years            
-quick_run<- FALSE                                                                # boolean, T or F. If T, makes age groups larger and runs model through 2035.
-
-# if just testing reports for one site:
-# site_name<- 'Sahel'
-# ur<- 'rural'
-
-# don't launch models for sites with EIR of zero
-sites<- remove_zero_eirs(iso3c, sites)
-
-# reports to run (in chronological order)
-# reports <-
-#   c(
-#     'set_parameters',
-#     'launch_models',
-#     'process_site',
-#     'site_diagnostics',
-#     'process_country',
-#     'country_diagnostics'
-#   )
-# 
-# # scenarios to run (in no order)
-# scenarios <-
-#   c(
-#     'no-vaccination',
-#     'malaria-r3-default',
-#     'malaria-r3-r4-default',
-#     'malaria-rts3-bluesky',
-#     'malaria-rts3-default',
-#     'malaria-rts3-rts4-bluesky'
-#   )
+source('make_parameter_map.R')
 
 ################################################################################
 # 1 prepare and save inputs
 # unless inputs change, this only needs to be run once for all countries
-for (iso3c in iso3cs){
-
-  orderly2::orderly_run(
-    'process_inputs',
-    list(iso3c = iso3c),
-    root = dir)
-}
-
-
-# run reports for all sites in a country locally -------------------------------
-for (iso3c in iso3cs){
-  
-  print(iso3c)
-  sites<- data.table(readRDS(paste0('src/process_inputs/site_files/', iso3c, '.rds'))$sites)  # sites for country of interest
-  
-  sites<- remove_zero_eirs(iso3c, sites)
-  
-  lapply(
-    1:nrow(sites),
-    run_report,
-    report_name = 'site_diagnostics',
-    path = dir,
-    site_data = sites,
-    population = population,
-    description = description,
-    scenario = 'malaria-rts3-rts4-default',
-    parameter_draw = draw,
-    burnin = burnin,
-    quick_run = quick_run
-  )
-  
-  
-}
+# for (iso3c in iso3cs){
+# 
+#   orderly2::orderly_run(
+#     'process_inputs',
+#     list(iso3c = iso3c),
+#     root = dir)
+# }
 
 
-# ## run a single report locally      ---------------------------------------------
-orderly2::orderly_run(
-  'process_site',
-  list(
-    iso3c = iso3c,
-    site_name = site_name,
-    ur= ur,
-    description = description,
-    population = population,
-    parameter_draw = draw,
-    burnin= burnin,
-    scenario = 'malaria-rts3-rts4-default',
-    quick_run = quick_run),
-  root = dir
+# PARAMETERS TO CHANGE FOR REPORTS ---------------------------------------------
+maps<- make_parameter_maps(
+  iso3cs = iso3cs[1:10],                                                        # Pick 10 countries to begin with
+  population = 100000,                                                          # population size
+  description = 'full_model_runs',                                              # reason for model run (change this for every run if you do not want to overwrite outputs)
+  parameter_draw = 0,                                                           # parameter draw to run (0 for central runs)
+  burnin= 15,                                                                  # burn-in in years            
+  quick_run = FALSE                                                             # boolean, T or F. If T, makes age groups larger and runs model through 2035.
 )
+
+# reports to run (in chronological order)
+reports <- c('set_parameters', 'launch_models', 'process_site', 'site_diagnostics', 'process_country', 'country_diagnostics')
+
 
 
 # # cluster setup ----------------------------------------------------------------
@@ -129,77 +67,48 @@ obj <- didehpc::queue_didehpc(ctx, config = config)
 # # if you have not already, install orderly2, malariasimulation, orderly2, and dplyr
 #obj$install_packages('mrc-ide/orderly2')
 
- 
-# # run a single report on the cluster -------------------------------------------
-report_cluster<- obj$enqueue(orderly2::orderly_run(
-  'launch_models',
-  list(
-    iso3c = iso3c,
-    site_name = site_name,
-    ur= ur,
-    description = description,
-    population = population,
-    parameter_draw = draw,
-    burnin= burnin,
-    scenario = 'no-vaccination',
-    quick_run = quick_run),
-  root = dir
-))
 
-
-# # run a group of reports on the cluster ----------------------------------------
-reports_cluster_novax_ken<- obj$lapply(
-  1:nrow(sites),
+# run report for all sites locally ---------------------------------------------
+lapply(
+    1:nrow(maps$site_map),
+    run_report,
+    report_name = 'set_parameters',
+    parameter_map = maps$site_map,
+    path = dir
+  )
+  
+# run report for all countries locally  ----------------------------------------
+lapply(
+  1:nrow(maps$country_map),
   run_report,
-  report_name = 'launch_models',
+  report_name = 'process_site',
+  parameter_map = maps$country_map,
   path = dir,
-  site_data = sites,
-  population = population,
-  description = description,
-  scenario = 'no-vaccination',
-  parameter_draw = draw,
-  burnin = burnin,
-  quick_run = quick_run
 )
 
-reports_cluster_vax_ken<- obj$lapply(
-  1:nrow(sites),
+
+# or launch models on cluster --------------------------------------------------
+# site reports
+obj$lapply(
+  1:nrow(maps$site_map),
   run_report,
-  report_name = 'launch_models',
+  report_name = 'set_parameters',
+  parameter_map = maps$site_map,
   path = dir,
-  site_data = sites,
-  population = population,
-  description = description,
-  scenario = 'malaria-rts3-rts4-default',
-  parameter_draw = draw,
-  burnin = burnin,
-  quick_run = quick_run
 )
 
-# # aggregate country outputs (after all sites in country have finished) ---------
-orderly2::orderly_run(
-  'process_country',
-  list(
-    iso3c = 'BFA',
-    description = 'full_model_runs',
-    population = population,
-    parameter_draw = draw,
-    burnin= burnin,
-    scenario = 'malaria-rts3-rts4-default',
-    quick_run = FALSE),
-  root = dir
+# country reports
+obj$lapply(
+  1:nrow(maps$country_map),
+  run_report_country,
+  report_name = 'launch_models',
+  parameter_map = maps$country_map,
+  path = dir,
 )
-# 
-# # produce diagnostics at the country level (after processing outputs) ----------
-orderly2::orderly_run(
-  'country_diagnostics',
-  list(
-    iso3c = 'BFA',
-    description = 'full_model_runs',
-    population = population,
-    parameter_draw = draw,
-    burnin= burnin,
-    scenario = 'malaria-rts3-rts4-default',
-    quick_run = FALSE),
-  root = dir
-)
+
+
+
+# check if jobs have completed  ------------------------------------------------
+metadata <- orderly2::orderly_metadata_extract(extract = c("name", "parameters", 'files'))
+
+

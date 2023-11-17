@@ -1,34 +1,55 @@
 # launch orderly reports (locally or on the cluster)
 run_report<- function(i, 
                       report_name,
-                      site_data, 
-                      path,
-                      population, 
-                      description,
-                      scenario,
-                      parameter_draw,
-                      burnin,
-                      quick_run){
+                      parameter_map, 
+                      path){
   
   
   message(i)
-  site<- site_data[i,]
+  run<- parameter_map[i,]
   
-  orderly2::orderly_run(report_name,
+  message(run$iso3c)
+  
+ orderly2::orderly_run(report_name,
                         list(
-                          iso3c = site$iso3c,
-                          site_name = site$name_1,
-                          ur = site$urban_rural,
-                          description = description,
-                          population = population,
-                          burnin = burnin,
-                          scenario = scenario,
-                          parameter_draw = parameter_draw,
-                          quick_run = quick_run),
+                          iso3c = run$iso3c,
+                          site_name = run$site_name,
+                          ur = run$ur,
+                          description = run$description,
+                          population = run$population,
+                          burnin = run$burnin,
+                          scenario = run$scenario,
+                          parameter_draw = run$parameter_draw,
+                          quick_run = run$quick_run),
                           root = path)
   
+ message('report complete')
   
 }
 
 
 
+run_report_country<- function(i, 
+                      report_name,
+                      parameter_map, 
+                      path){
+  
+  
+  message(i)
+  run<- parameter_map[i,]
+  
+  
+  orderly2::orderly_run(report_name,
+                        list(
+                          iso3c = run$iso3c,
+                          description = run$description,
+                          population = run$population,
+                          burnin = run$burnin,
+                          scenario = run$scenario,
+                          parameter_draw = run$parameter_draw,
+                          quick_run = run$quick_run),
+                        root = path)
+  
+  message('report complete')
+  
+}

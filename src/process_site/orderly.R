@@ -120,11 +120,7 @@ dt<- dt |>
 # first, separately sum cases by year
 total_pop<- site_data$population |>
   group_by(year) |>
-  mutate(pop = sum(pop)) |>
-  ungroup() |>
-  rename(summed_pop = pop) |>
-  select(year, summed_pop)
-total_pop<- unique(total_pop, by = 'year')
+  summarise(summed_pop = sum(pop))
 
 # pull the population for the site of interest
 pop <- site_data$population |>
