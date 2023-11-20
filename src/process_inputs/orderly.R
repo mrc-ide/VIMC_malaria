@@ -1,5 +1,5 @@
 # process inputs for all sites -------------------------------------------------
-orderly2::orderly_parameters(iso3c = NULL)
+orderly2::orderly_parameters(iso3c = 'NGA')
 
 library(data.table)
 library(countrycode)
