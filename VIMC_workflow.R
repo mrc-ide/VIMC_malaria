@@ -26,33 +26,36 @@ source('run_report.R')
 source('remove_zero_eirs.R')
 source('make_parameter_map.R')
 
+installr::updateR()
 ################################################################################
 # 1 prepare and save inputs
 # unless inputs change, this only needs to be run once for all countries
-for (iso3c in iso3cs){
-
-  orderly2::orderly_run(
-    'process_inputs',
-    list(iso3c = iso3c),
-    root = dir)
-}
+# for (iso3c in iso3cs){
+# 
+#   orderly2::orderly_run(
+#     'process_inputs',
+#     list(iso3c = iso3c),
+#     root = dir)
+# }
 
 
 # PARAMETERS TO CHANGE FOR REPORTS ---------------------------------------------
 maps<- make_parameter_maps(
-  iso3cs = iso3cs[1:5],                                                        # Pick 10 countries to begin with
+  iso3cs = iso3cs,                                                             # Pick 10 countries to begin with
   population = 100000,                                                          # population size
-  description = 'full_model_runs',                                              # reason for model run (change this for every run if you do not want to overwrite outputs)
+  description = 'complete_run',                                                   # reason for model run (change this for every run if you do not want to overwrite outputs)
   parameter_draw = 0,                                                           # parameter draw to run (0 for central runs)
   burnin= 15,                                                                  # burn-in in years            
-  quick_run = FALSE                                                             # boolean, T or F. If T, makes age groups larger and runs model through 2035.
+  quick_run = TRUE                                                             # boolean, T or F. If T, makes age groups larger and runs model through 2035.
 )
 
 # reports to run (in chronological order)
 reports <- c('set_parameters', 'launch_models', 'process_site', 'site_diagnostics', 'process_country', 'country_diagnostics')
 
 
+site_map<- data.table(maps$site_map)
 
+site_map<- site_map[iso3c %in% c('ZMB', 'UGA') & scenario %in% c('malaria-rts3-rts4-default', 'no-vaccination')]
 # # cluster setup ----------------------------------------------------------------
 ctx <- context::context_save("contexts", sources= 'run_report.R')
 config <- didehpc::didehpc_config(
@@ -72,7 +75,7 @@ obj <- didehpc::queue_didehpc(ctx, config = config)
 lapply(
     1:nrow(maps$site_map),
     run_report,
-    report_name = 'set_parameters',
+    report_name = 'process_site',
     parameter_map = maps$site_map,
     path = dir
   )

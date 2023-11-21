@@ -3,7 +3,8 @@ make_parameter_maps<- function(iso3cs,
                               description,
                               parameter_draw,
                               quick_run,
-                              burnin){
+                              burnin,
+                              metadata){
   
   # could be cleaner but will do for now
   

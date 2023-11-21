@@ -110,4 +110,21 @@ rtssepiparams2 <- set_pev_epi(
 output <- run_simulation(timesteps = sim_length * 2, parameters = rtssepiparams2)
 plot_doses_multiple_boosters()
 
+# add changing coverage
+rtssepiparams2 <- set_pev_epi(
+  simparams,
+  profile = rtss_profile, 
+  timesteps = 1 * year, 
+  coverages = 1, 
+  age = 5 * month, 
+  min_wait = 0, 
+  booster_timestep = c(12 * month), # Here, we are testing a strategy with 2 boosters, one at 1 year after the 3rd dose and the second 2 years after the 3rd dose.
+  booster_coverage = c(1), # For each of the two boosters, coverage is 100%.
+  booster_timed_coverage = c(1, 1, 0.10, 0.10),
+  booster_timed_coverage_timestep = c(1, 2, 3, 4) * year,
+  booster_profile = list(rtss_booster_profile) 
+)
+
+output <- run_simulation(timesteps = sim_length * 2, parameters = rtssepiparams2)
+plot_doses()
 

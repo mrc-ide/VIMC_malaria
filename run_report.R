@@ -10,6 +10,10 @@ run_report<- function(i,
   
   message(run$iso3c)
   
+  # add in a check for if the report has already been run
+  
+  
+  
  orderly2::orderly_run(report_name,
                         list(
                           iso3c = run$iso3c,

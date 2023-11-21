@@ -18,7 +18,7 @@ plotting_theme<- theme_bw(base_size = 12) +
 population_diagnostic_model<- function(dt, pg, intro_yr, rows= 5, cols = 5){
   
   p<-   ggplot(data= dt, mapping = aes(x= year, y= cohort_size, color= scenario, fill= scenario))+
-    geom_point(alpha= 0.5)  +
+    geom_line(alpha= 0.5)  +
     facet_wrap_paginate(~age, ncol= cols, nrow= rows, page = pg) +
     geom_vline(xintercept= intro_yr, linetype= "dotted") +
     labs(x= 'Time (in years)', 
@@ -36,7 +36,7 @@ population_diagnostic_model<- function(dt, pg, intro_yr, rows= 5, cols = 5){
 incident_cases_diagnostic<- function(dt, pg, intro_yr, cols= 5, rows= 5){
   
   p<-   ggplot(data= dt, mapping = aes(x= year, y= cases, color= scenario, fill= scenario))+
-    geom_point(alpha= 0.5)  +
+    geom_line(alpha= 0.5)  +
     facet_wrap_paginate(~age, scales= 'free',
                         ncol= cols, nrow= rows, 
                         page = pg) +
@@ -55,7 +55,7 @@ incident_cases_diagnostic<- function(dt, pg, intro_yr, cols= 5, rows= 5){
 incidence_rate_diagnostic<- function(dt, pg, intro_yr, cols= 5, rows= 5){
   
   p<-  ggplot(data= dt, mapping = aes(x= year, y= clinical, color= scenario, fill= scenario))+
-    geom_point(alpha= 0.5)  +
+    geom_line(alpha= 0.5)  +
     facet_wrap_paginate(~age,  nrow= rows, ncol= cols, page = pg) +
     labs(x= 'Time (in years)', 
          y= 'Incidence rate', 
@@ -75,7 +75,7 @@ incidence_rate_diagnostic<- function(dt, pg, intro_yr, cols= 5, rows= 5){
 mortality_diagnostic<- function(dt, pg, intro_yr, cols= 5, rows= 5){
   
   p<- ggplot(data= dt, mapping = aes(x= year, y= deaths, color= scenario, fill= scenario))+
-    geom_point(alpha= 0.5)  +
+    geom_line(alpha= 0.5)  +
     geom_vline(xintercept= intro_yr, linetype= "dotted") +
     facet_wrap_paginate(~age, scales = 'free', ncol= cols, nrow= rows, page = pg) +
     labs(x= 'Time (in years)', 
@@ -93,7 +93,7 @@ mortality_diagnostic<- function(dt, pg, intro_yr, cols= 5, rows= 5){
 mortality_rate_diagnostic<- function(dt, pg, intro_yr, rows= 5, cols= 5){
   
   p<- ggplot(data= dt, mapping = aes(x= year, y= mortality, color= scenario, fill= scenario))+
-    geom_point(alpha= 0.5) +
+    geom_line(alpha= 0.5) +
     geom_vline(xintercept= 2023, linetype= "dotted") +
     facet_wrap_paginate(~age, ncol= cols, nrow= rows, page= pg) +
     labs(x= 'Time (in years)',
@@ -113,7 +113,7 @@ mortality_rate_diagnostic<- function(dt, pg, intro_yr, rows= 5, cols= 5){
 daly_diagnostic<- function(dt, pg, intro_yr, rows= 5, cols =5){
   
   p<- ggplot(data= dt, mapping = aes(x= year, y= dalys, color= scenario, fill= scenario))+
-    geom_point(alpha= 0.5)  +
+    geom_line(alpha= 0.5)  +
     facet_wrap_paginate(~age,scales = 'free', ncol= cols, nrow= rows, page = pg) +
     geom_vline(xintercept= intro_yr, linetype= "dotted") +
     labs(x= 'Time (in years)', y= 'DALYs', title= paste0('DALYs over time: ', unique(dt$iso3c), ', ', description),
