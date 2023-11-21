@@ -13,6 +13,7 @@ library(orderly2)
 library(site)
 library(data.table)
 library(dplyr)
+
 lapply(list.files('functions/', full.names = T), source)
 
 # obtain list of countries to run model for
@@ -21,12 +22,9 @@ iso3cs<- unique(coverage$country_code)
 
 dir<- getwd()
 
-# custom functions
-source('run_report.R')
-source('remove_zero_eirs.R')
-source('make_parameter_map.R')
 
-installr::updateR()
+# if you have not already, initialize the orderly repository
+#orderly2::orderly_init(path = dir)
 ################################################################################
 # 1 prepare and save inputs
 # unless inputs change, this only needs to be run once for all countries
@@ -41,23 +39,25 @@ installr::updateR()
 
 # PARAMETERS TO CHANGE FOR REPORTS ---------------------------------------------
 maps<- make_parameter_maps(
-  iso3cs = iso3cs,                                                             # Pick 10 countries to begin with
+  iso3cs = iso3cs,                                                              # Pick 10 countries to begin with
   population = 100000,                                                          # population size
-  description = 'complete_run',                                                   # reason for model run (change this for every run if you do not want to overwrite outputs)
+  description = 'complete_run',                                                 # reason for model run (change this for every run if you do not want to overwrite outputs)
   parameter_draw = 0,                                                           # parameter draw to run (0 for central runs)
-  burnin= 15,                                                                  # burn-in in years            
-  quick_run = TRUE                                                             # boolean, T or F. If T, makes age groups larger and runs model through 2035.
+  burnin= 15,                                                                   # burn-in in years            
+  quick_run = FALSE                                                             # boolean, T or F. If T, makes age groups larger and runs model through 2035.
 )
 
 # reports to run (in chronological order)
 reports <- c('set_parameters', 'launch_models', 'process_site', 'site_diagnostics', 'process_country', 'country_diagnostics')
 
+# remove duplicate reports before launching
+site_map<- remove_duplicate_reports(report_name = 'process_site', parameter_map = maps$site_map)
 
-site_map<- data.table(maps$site_map)
+# check that the preceding report has completed before you launch next report in chronology
+site_map<- generate_parameter_map_for_next_report(report_name = 'launch_models', parameter_map = site_map)
 
-site_map<- site_map[iso3c %in% c('ZMB', 'UGA') & scenario %in% c('malaria-rts3-rts4-default', 'no-vaccination')]
 # # cluster setup ----------------------------------------------------------------
-ctx <- context::context_save("contexts", sources= 'run_report.R')
+ctx <- context::context_save("contexts", sources= 'functions/run_report.R')
 config <- didehpc::didehpc_config(
   use_rrq = FALSE,
   cores = 1,
@@ -67,53 +67,61 @@ config <- didehpc::didehpc_config(
 
 obj <- didehpc::queue_didehpc(ctx, config = config)
 
-# # if you have not already, install orderly2, malariasimulation, orderly2, and dplyr
-#obj$install_packages('mrc-ide/orderly2')
+# # if you have not already, install packages:
+# pkgs<- c('mrc-ide/orderly2',
+#          'mrc-ide/malariasimulation',
+#          'mrc-ide/site_vimc',
+#          'wesanderson',
+#          'ggpubr',
+#          'ggforce',
+#          'data.table',
+#          'dplyr')
+
+# for (pkg in pkgs){
+# 
+#   obj$install_packages('mrc-ide/orderly2')
+# 
+# }
 
 
 # run report for all sites locally ---------------------------------------------
 lapply(
-    1:nrow(maps$site_map),
+    1:nrow(site_map),
     run_report,
     report_name = 'process_site',
-    parameter_map = maps$site_map,
+    parameter_map = site_map,
     path = dir
   )
   
 # run report for all countries locally  ----------------------------------------
-map<- data.table(maps$country_map)[scenario == 'malaria-rts3-rts4-default' | scenario == 'no-vaccination']
-
 lapply(
-  1:nrow(map),
-  run_report_country,
-  report_name = 'process_site',
-  parameter_map = map,
-  path = dir,
-)
-
-
-# or launch models on cluster --------------------------------------------------
-# site reports
-obj$lapply(
-  1:nrow(maps$site_map),
-  run_report,
-  report_name = 'set_parameters',
-  parameter_map = maps$site_map,
-  path = dir,
-)
-
-# country reports
-obj$lapply(
   1:nrow(maps$country_map),
   run_report_country,
-  report_name = 'launch_models',
+  report_name = 'process_site',
   parameter_map = maps$country_map,
   path = dir,
 )
 
 
+# # or launch models on cluster --------------------------------------------------
+# # site reports
+jobs<- obj$lapply(
+  1:nrow(site_map),
+  run_report,
+  report_name = 'process_site',
+  parameter_map = site_map,
+  path = dir
+)
 
-# check if jobs have completed  ------------------------------------------------
-metadata <- orderly2::orderly_metadata_extract(extract = c("name", "parameters", 'files'))
+# # country reports
+obj$lapply(
+  1:nrow(maps$country_map),
+  run_report_country,
+  report_name = 'launch_models',
+  parameter_map = maps$country_map,
+  path = dir
+)
+
+
 
 

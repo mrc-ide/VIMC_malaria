@@ -1,13 +1,13 @@
 # process site --------------------------------------------------------------
-orderly2::orderly_parameters(iso3c = 'UGA',
-                             description = 'complete_run',
-                             site_name = 'Busia',
-                             ur = 'urban',
-                             population = 100000,
-                             burnin = 15,
-                             parameter_draw = 0,
-                             scenario = 'no-vaccination',
-                             quick_run = FALSE)
+orderly2::orderly_parameters(iso3c = NULL,
+                             description = NULL,
+                             site_name = NULL,
+                             ur = NULL,
+                             population = NULL,
+                             burnin = NULL,
+                             parameter_draw = NULL,
+                             scenario = NULL,
+                             quick_run = NULL)
 
 orderly2::orderly_description('Process model outputs')
 orderly2::orderly_artefact('Processed output', 'processed_output.rds')
@@ -65,7 +65,7 @@ output <- postie::get_rates(
   baseline_t = 1999,
   age_divisor = 365,
   scaler = 0.215,
-  treatment_scaler = 0.42,
+  treatment_scaler = 0.517,
 )
 
 # fill rates out to single year age groups
