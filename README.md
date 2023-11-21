@@ -18,9 +18,21 @@ This workflow uses the postie package to postprocess outputs, with DALY function
 ### Save input files
 VIMC model inputs are saved locally and not tracked on this repository due to large size and privacy issues. VIMC inputs and site files should be saved under `/src/process_inputs/vimc_inputs` and `/src/process_inputs/site_files`, respectively. Contact Lydia for access to these files.
 
+### Run process inputs report
+The code to run this report is found [here](https://github.com/mrc-ide/VIMC_malaria/blob/main/VIMC_workflow.R#L29-L39). This only needs to be run one time, if VIMC inputs and site files do not change.
+
 ###  Change input parameters
-The following parameters must be changed for each run (on the [following lines](https://github.com/mrc-ide/VIMC_malaria/blob/main/VIMC_workflow.R#L22-L32)):
-* **iso3c:** country you would like to run models for
+The following parameters must be changed for each run (on the [following lines](https://github.com/mrc-ide/VIMC_malaria/blob/main/VIMC_workflow.R#L42-L49)):
+* **iso3c:** country/countries you would like to run models for
+- **draw:** draw value for model run. For median parameter values, set to 0.
+- **population:** population size for model run.
+- **description:** description of the reason for a certain model run. Make sure to change this value for each run, unless you seek to overwrite pre-existing outputs.
+- **burnin:** model burn-in time in years. Typically set to 15.
+- **quick_run**: Boolean, for whether you would like to run a test model or the full simulation. A test model produces outputs with wider age bands and a shorter time horizon (2000-2035), in order to optimize model run time. Preferable to set to TRUE when testing models locally, debugging changes, etc.
+
+The `make_parameter_maps` function will create input parameter data frames (at the site and country level) for all of the sites in the 31 VIMC-modelled countries, as well as each VIMC vaccination scenario. If you would like to change these parameters specifically, or run models on only a subset of sites or scenarios, they are as follows:
+- **site_name:** name of site to run
+- **ur:** urban/rural split for site of interest.
 * **scenario:** scenario you would like to run models for. Options:
     * 'no-vaccination': No vaccines implemented
     * 'r3-default': Initial series of R21, based on GAVI forecasts.
@@ -28,25 +40,15 @@ The following parameters must be changed for each run (on the [following lines](
     * 'rts3-bluesky': 90% coverage of initial series of RTS,S for entire modelling period
     * 'rts3-default': Initial series of RTS,S, based on GAVI forecasts.
     * 'rts3-rts4-bluesky': 90% of full series of RTS,S (90% coverage for entire modelling time period)
-- **draw:** draw value for model run. For median parameter values, set to 0.
-- **population:** population size for model run.
-- **description:** description of the reason for a certain model run. Make sure to change this value for each run, unless you seek to overwrite pre-existing outputs.
-- **site_name:** name of site to run
-- **ur:** urban/rural split for site of interest.
-- **burnin:** model burn-in time in years. Typically set to 15.
-- **quick_run**: Boolean, for whether you would like to run a test model or the full simulation. A test model produces outputs with wider age bands and a shorter time horizon (2000-2035), in order to optimize model run time. Preferable to set to TRUE when testing models locally, debugging changes, etc.
+ 
+  
+### Run set_parameters, launch_models, and process_site, and site_diagnostics for all sites
+This reports must be run in chronological order for all of the sites in a country for the vaccine scenario of interest. The code to run these reports can be found [here](https://github.com/mrc-ide/VIMC_malaria/blob/main/VIMC_workflow.R#L71-L78). 
 
-### Run process inputs report
-The code to run this report is found [here](https://github.com/mrc-ide/VIMC_malaria/blob/main/VIMC_workflow.R#L35-L44). This only needs to be run one time, if inputs do not change.
+Note that given long run time, you will likely prefer to launch models on the cluster. The clode to do so is linked [here](https://github.com/mrc-ide/VIMC_malaria/blob/main/VIMC_workflow.R#L92-L111)-- ensure orderly2, malariasimulation, dplyr, and data.table are installed in your cluster environment before launching models or they will fail.
 
-### Run set_parameters, launch_models, and process_site for all sites
-This reports must be run in chronological order for all of the sites in a country for the vaccine scenario of interest. The code to run these reports can be found [here](https://github.com/mrc-ide/VIMC_malaria/blob/main/VIMC_workflow.R#L47-L77). 
-
-### Run process_country to aggregate outputs up to country level.
-Run this report using the code linked [here](https://github.com/mrc-ide/VIMC_malaria/blob/main/VIMC_workflow.R#L93-L104).
-
-### Produce diagnostics
-Diagnostics can be produced with the "site_diagnostics" report (for site outputs) and "process_country" report (for country outputs). 
+### Run process_country and country_diagnostics for all countries
+Run these reports using the code linked [here](https://github.com/mrc-ide/VIMC_malaria/blob/main/VIMC_workflow.R#L93-L104). 
 
 ### Other notes
 This workflow can be quite space-intensive (particularly when running models for all sites in the 31 VIMC input countries). It is worthwhile to monitor the size of this repository and regularly clean out non-final reports. 
@@ -149,10 +151,10 @@ Process model outputs [("process_site")](https://github.com/mrc-ide/VIMC_malaria
 * From 2050 onward, site population is estimated as (national population in year) * [(scaled site population in 2050)/ (national population in 2050)]. We assume that the proportional breakdown of population by site is fixed from 2050-2100, in the absence of other data.
 
 ## Produce site diagnostics
-Produce diagnostic report (at the site level) [("site_diagnostics")](https://github.com/mrc-ide/VIMC_malaria/blob/main/src/process_site/orderly.R). Note that for this report to run properly, you must have processed outputs (from "process_site") for the no-vaccination scenario in addition to the intervention scenario you specify.
+Produce diagnostic report (at the site level) [("site_diagnostics")](https://github.com/mrc-ide/VIMC_malaria/blob/main/src/process_site/orderly.R). Note that for this report to run properly, you must have processed outputs (from "process_site") for the no-vaccination scenario in addition to the intervention scenario you specify. You cannot run a diagnostic report for the no-vaccination scenario alone.
 
 ## Process country
 Aggregate outputs up to country level [("process_country")](https://github.com/mrc-ide/VIMC_malaria/blob/main/src/process_country/orderly.R) via simple summation.
 
 ## Produce country diagnostics
-Produce similar diagnostic report for country outputs [("country_diagnostics")](https://github.com/mrc-ide/VIMC_malaria/blob/main/src/country_diagnostics/orderly.R). Note that for this report to run properly, you must have processed outputs (from "process_country") for the no-vaccination scenario in addition to the intervention scenario you specify.
+Produce similar diagnostic report for country outputs [("country_diagnostics")](https://github.com/mrc-ide/VIMC_malaria/blob/main/src/country_diagnostics/orderly.R). Note that for this report to run properly, you must have processed outputs (from "process_country") for the no-vaccination scenario in addition to the intervention scenario you specify. You cannot run a diagnostic report for the no-vaccination scenario alone.
