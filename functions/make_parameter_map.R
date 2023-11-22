@@ -1,5 +1,15 @@
 make_parameter_maps<- function(iso3cs,
                               population,
+                              scenarios =  
+                                c(
+                                  'no-vaccination',
+                                  'malaria-r3-default',
+                                  'malaria-r3-r4-default',
+                                  'malaria-rts3-bluesky',
+                                  'malaria-rts3-default',
+                                  'malaria-rts3-rts4-bluesky',
+                                  'malaria-rts3-rts4-default'
+                                ),
                               description,
                               parameter_draw,
                               quick_run,
@@ -27,17 +37,7 @@ make_parameter_maps<- function(iso3cs,
            quick_run = quick_run,
            burnin = burnin)
   
-  # scenarios to run (in no order)
-  scenarios <-
-    c(
-      'no-vaccination',
-      'malaria-r3-default',
-      'malaria-r3-r4-default',
-      'malaria-rts3-bluesky',
-      'malaria-rts3-default',
-      'malaria-rts3-rts4-bluesky',
-      'malaria-rts3-rts4-default'
-    )
+
   
   full_map<- data.table()
   for (scen in scenarios){
