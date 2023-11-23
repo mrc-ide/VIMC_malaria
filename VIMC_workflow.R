@@ -14,6 +14,7 @@ library(site)
 library(data.table)
 library(dplyr)
 
+#remotes::install_github('mrc-ide/site_vimc')
 lapply(list.files('functions/', full.names = T), source)
 
 # obtain list of countries to run model for
@@ -39,8 +40,8 @@ dir<- getwd()
 
 # PARAMETERS TO CHANGE FOR REPORTS ---------------------------------------------
 maps<- make_parameter_maps(
-  iso3cs = 'ZMB',                                                              # Pick 10 countries to begin with
-  scenarios= c('malaria-rts3-rts4-default'),                    # if you only want to run reports for certain scenarios. Default is all 7
+  iso3cs = iso3cs,                                                              # Pick 10 countries to begin with
+  #scenarios= c('malaria-rts3-rts4-default'),                    # if you only want to run reports for certain scenarios. Default is all 7
   population = 100000,                                                          # population size
   description = 'complete_run',                                                 # reason for model run (change this for every run if you do not want to overwrite outputs)
   parameter_draw = 0,                                                           # parameter draw to run (0 for central runs)
@@ -50,11 +51,13 @@ maps<- make_parameter_maps(
 
 reports <- c('set_parameters', 'launch_models', 'process_site', 'site_diagnostics', 'process_country', 'country_diagnostics')
 
+
+
 # remove duplicate reports before launching
-site_map<- remove_duplicate_reports(report_name = 'site_diagnostics', parameter_map = maps$site_map)
+site_map<- remove_duplicate_reports(report_name = 'launch_models', parameter_map = maps$site_map)
 
 # check that the preceding report has completed before you launch next report in chronology
-site_map<- generate_parameter_map_for_next_report(report_name = 'launch_models', parameter_map = maps$site_map)
+site_map<- generate_parameter_map_for_next_report(report_name = 'set_parameters', parameter_map = site_map)
 
 # # cluster setup ----------------------------------------------------------------
 ctx <- context::context_save("contexts", sources= 'functions/run_report.R')
@@ -68,7 +71,7 @@ config <- didehpc::didehpc_config(
 obj <- didehpc::queue_didehpc(ctx, config = config)
 
 # # if you have not already, install packages:
-# pkgs<- c('mrc-ide/orderly2',
+# pkgs<- c('mrc-ide/orderly2@mrc-4724',
 #          'mrc-ide/malariasimulation',
 #          'mrc-ide/site_vimc',
 #          'wesanderson',
@@ -79,7 +82,7 @@ obj <- didehpc::queue_didehpc(ctx, config = config)
 
 # for (pkg in pkgs){
 # 
-#   obj$install_packages('mrc-ide/orderly2@mrc-4724')
+#   obj$install_packages('mrc-ide/site_vimc')
 # 
 # }
 
@@ -88,17 +91,17 @@ obj <- didehpc::queue_didehpc(ctx, config = config)
 lapply(
     1:nrow(site_map),
     run_report,
-    report_name = 'site_diagnostics',
+    report_name = 'set_parameters',
     parameter_map = site_map,
     path = dir
   )
 
 
 # or launch on cluster
-models_5<- obj$lapply(
-  1:75,
+models<- obj$lapply(
+  1:250,
   run_report,
-  report_name = 'process_site',
+  report_name = 'launch_models',
   parameter_map = site_map,
   path = dir
 )
