@@ -40,8 +40,8 @@ dir<- getwd()
 
 # PARAMETERS TO CHANGE FOR REPORTS ---------------------------------------------
 maps<- make_parameter_maps(
-  iso3cs = iso3cs,                                                              # Pick 10 countries to begin with
-  #scenarios= c('malaria-rts3-rts4-default'),                    # if you only want to run reports for certain scenarios. Default is all 7
+  iso3cs = iso3cs,                                                              
+  scenarios= c('malaria-rts3-rts4-default', 'no-vaccination'),                 # if you only want to run reports for certain scenarios. Default is all 7
   population = 100000,                                                          # population size
   description = 'complete_run',                                                 # reason for model run (change this for every run if you do not want to overwrite outputs)
   parameter_draw = 0,                                                           # parameter draw to run (0 for central runs)
@@ -56,6 +56,9 @@ site_map<- remove_duplicate_reports(report_name = 'process_site', parameter_map 
 
 # check that the preceding report has completed before you launch next report in chronology
 site_map<- generate_parameter_map_for_next_report(report_name = 'launch_models', parameter_map = site_map)
+
+
+check_completion(report_name = 'process_site', parameter_map = maps$site_map)
 
 # # cluster setup ----------------------------------------------------------------
 ctx <- context::context_save("contexts", sources= 'functions/run_report.R')
@@ -97,9 +100,9 @@ lapply(
 
 # or launch on cluster
 models<- obj$lapply(
-  1:250,
+  1:30,
   run_report,
-  report_name = 'launch_models',
+  report_name = 'process_site',
   parameter_map = site_map,
   path = dir
 )

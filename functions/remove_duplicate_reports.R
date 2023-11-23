@@ -36,3 +36,36 @@ generate_parameter_map_for_next_report<- function(report_name, parameter_map){
   return(can_run)
   
 }
+
+
+
+check_completion<- function(report_name, parameter_map){
+  
+  # check that all the reports for a country + scenario have completed
+  
+  meta <- orderly2::orderly_metadata_extract(name = report_name, options = orderly2::orderly_search_options(allow_remote = TRUE))
+  
+  unique(lapply(meta$parameters, names))
+  nms <- names(meta$parameters[[1]])
+  pars <- do.call("data.frame", setNames(lapply(nms, function(nm) sapply(meta$parameters, function(x) x[[nm]])), nms))
+  
+  for (iso in unique(pars$iso3c)){
+    
+    cty<- pars |> filter(iso3c == iso)
+    
+    sites_to_run<- parameter_map |> filter(iso3c == iso)
+   
+    missing<- setdiff(sites_to_run, cty)
+    
+    if (nrow(missing) < 1){
+      
+      message(paste0(
+        ' site runs for country ',
+        iso,
+        ' scenario ',
+        unique(sites_to_run$scenario),
+        ' have completed'
+      ))
+  } 
+  
+}}

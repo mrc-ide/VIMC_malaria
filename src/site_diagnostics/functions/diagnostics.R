@@ -170,7 +170,7 @@ plot_cases_averted<- function(dt){
   site_name<- unique(dt$site_name)
   ur<- unique(dt$urban_rural)
   
-  #dt<- dt |> subset(year >= 2035)
+  dt<- dt |> subset(year >= 2085)
   intvn<- dt|> subset(scenario %like% 'malaria')
   intvn<- intvn |> 
     rename(cases_intvn = cases,
@@ -195,7 +195,7 @@ plot_cases_averted<- function(dt){
     plotting_theme +
     labs(title= paste0('Cases averted by age for site: ', site_name, ' ', ur),
          x= 'Age (years',
-         y= 'Cases averted, 2035-2050')
+         y= 'Cases averted, 2085-2100')
 }
 
 
