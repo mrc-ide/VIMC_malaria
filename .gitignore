@@ -10,6 +10,7 @@
 raw_data/
 data/
 contexts/
+pkgs/
 archive/
 .outpack/
 draft/
