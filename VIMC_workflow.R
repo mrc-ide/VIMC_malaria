@@ -51,21 +51,19 @@ maps<- make_parameter_maps(
 
 reports <- c('set_parameters', 'launch_models', 'process_site', 'site_diagnostics', 'process_country', 'country_diagnostics')
 
-
-
 # remove duplicate reports before launching
-site_map<- remove_duplicate_reports(report_name = 'launch_models', parameter_map = maps$site_map)
+site_map<- remove_duplicate_reports(report_name = 'process_site', parameter_map = maps$site_map)
 
 # check that the preceding report has completed before you launch next report in chronology
-site_map<- generate_parameter_map_for_next_report(report_name = 'set_parameters', parameter_map = site_map)
+site_map<- generate_parameter_map_for_next_report(report_name = 'launch_models', parameter_map = site_map)
 
 # # cluster setup ----------------------------------------------------------------
 ctx <- context::context_save("contexts", sources= 'functions/run_report.R')
 config <- didehpc::didehpc_config(
   use_rrq = FALSE,
   cores = 1,
-  cluster = "fi--didemrchnb" ,#"fi--dideclusthn", # , "fi--didemrchnb""fi--didemrchnb"
-  #template = "AllNodes",  ## use for the wpia cluster
+  cluster = "wpia-hn" ,#"fi--dideclusthn", # , "fi--didemrchnb""fi--didemrchnb"
+  template = "AllNodes",  ## use for the wpia cluster
   parallel = FALSE)
 
 obj <- didehpc::queue_didehpc(ctx, config = config)
@@ -91,7 +89,7 @@ obj <- didehpc::queue_didehpc(ctx, config = config)
 lapply(
     1:nrow(site_map),
     run_report,
-    report_name = 'set_parameters',
+    report_name = 'process_site',
     parameter_map = site_map,
     path = dir
   )

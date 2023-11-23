@@ -68,7 +68,7 @@ make_parameter_maps<- function(iso3cs,
   }
   
   Encoding(full_map$site_name) <- "UTF-8"
-  full_map$site_name<- iconv(maps$site_map$site_name, from="UTF-8", to="ASCII//TRANSLIT")
+  full_map$site_name<- iconv(full_map$site_name, from="UTF-8", to="ASCII//TRANSLIT")
   
   
   return(list('site_map' = full_map, 'country_map'= full_country_map))
