@@ -40,7 +40,7 @@ dir<- getwd()
 # PARAMETERS TO CHANGE FOR REPORTS ---------------------------------------------
 maps<- make_parameter_maps(
   iso3cs = iso3cs,                                                              # Pick 10 countries to begin with
-  scenarios= c('malaria-rts3-rts4-default', 'no-vaccination'),                    # if you only want to run reports for certain scenarios. Default is all 7
+  #scenarios= c('malaria-rts3-rts4-bluesky', 'malaria-r3-bluesky'),             # if you only want to run reports for certain scenarios. Default is all 7
   population = 100000,                                                          # population size
   description = 'complete_run',                                                 # reason for model run (change this for every run if you do not want to overwrite outputs)
   parameter_draw = 0,                                                           # parameter draw to run (0 for central runs)
@@ -48,20 +48,21 @@ maps<- make_parameter_maps(
   quick_run = FALSE                                                             # boolean, T or F. If T, makes age groups larger and runs model through 2035.
 )
 
-reports <- c('set_parameters', 'launch_models', 'process_site', 'site_diagnostics', 'process_country', 'country_diagnostics')
-
 # remove duplicate reports before launching
-site_map<- remove_duplicate_reports(report_name = 'launch_models', parameter_map = maps$site_map)
+site_map<- remove_duplicate_reports(report_name = 'process_site', 
+                                    parameter_map = maps$site_map)
 
 # check that the preceding report has completed before you launch next report in chronology
-site_map<- generate_parameter_map_for_next_report(report_name = 'set_parameters', parameter_map = site_map)
+site_map<- generate_parameter_map_for_next_report(report_name = 'launch_models', 
+                                                  parameter_map = site_map)
+
+sites<- purrr::map(.x = c(1:300), .f= ~ site_map[.x,])
 
 country_map<- maps$country_map
-sites<- purrr::map(.x = 1:nrow(site_map), .f= ~ site_map[.x,])
 countries<- purrr::map(.x = 1:nrow(country_map), .f= ~ country_map[.x,])
 
 # # cluster setup ----------------------------------------------------------------
-ctx <- context::context_save("pkgs", sources= 'functions/run_report.R')
+ctx <- context::context_save("ctxs", sources= 'functions/run_report.R')
 config <- didehpc::didehpc_config(
   use_rrq = FALSE,
   cores = 1,
@@ -72,33 +73,40 @@ config <- didehpc::didehpc_config(
 obj <- didehpc::queue_didehpc(ctx, config = config)
 
 # # if you have not already, install packages:
-# pkgs<- c('mrc-ide/orderly2@mrc-4724',
-#          'mrc-ide/malariasimulation',
-#          'mrc-ide/site_vimc',
-#          'data.table',
-#          'dplyr')
+pkgs<- c('mrc-ide/orderly2@mrc-4724',
+         'mrc-ide/malariasimulation',
+         'mrc-ide/site_vimc',
+         'data.table',
+         'dplyr',
+         'extrafont',
+         'wesanderson',
+         'ggpubr',
+         'ggforce',
+         'mrc-ide/postie@dalys',
+         'countrycode')
 
-# for (pkg in pkgs){
-# 
-#   obj$install_packages('dplyr')
-# 
-# }
+for (pkg in pkgs){
+
+  obj$install_packages('countrycode')
+
+}
 
 
 # run report for all sites locally ---------------------------------------------
 lapply(
-    1:nrow(site_map),
-    run_report,
-    report_name = 'process_site',
-    path = dir
-  )
+  sites,
+  run_report,
+  report_name = 'process_site',
+  path = dir
+)
+
 
 
 # or launch on cluster
-models_2<- obj$lapply(
+processing<- obj$lapply(
   sites,
   run_report,
-  report_name = 'launch_models',
+  report_name = 'process_site',
   path = dir
 )
   
@@ -106,7 +114,7 @@ models_2<- obj$lapply(
 lapply(
   countries,
   run_report_country,
-  report_name = 'country_diagnostics',
+  report_name = 'process_country',
   path = dir
 )
 

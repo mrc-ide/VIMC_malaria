@@ -25,8 +25,8 @@ population_diagnostic_model<- function(dt, pg){
          y= 'Population',
          title= paste0('Population over time: site ', unique(dt$site_name), ', ', description),
          color= 'Scenario', fill= 'Scenario') +
-    scale_color_manual(values= wes_palette('Royal2', n= 2)) +
-    scale_fill_manual(values= wes_palette('Royal2', n= 2))  +
+    scale_color_manual(values= wes_palette('BottleRocket2', n= 2)) +
+    scale_fill_manual(values= wes_palette('BottleRocket2', n= 2))  +
     plotting_theme
   
   return(p)
@@ -44,8 +44,8 @@ incident_cases_diagnostic<- function(dt, pg){
     labs(x= 'Time (in years)', y= 'Clinical cases', 
          title= paste0('Incident clinical cases over time: site ', unique(dt$site_name), ', ', description),
          color= 'Scenario', fill= 'Scenario') +
-    scale_color_manual(values= wes_palette('Royal2', n= 2)) +
-    scale_fill_manual(values= wes_palette('Royal2', n= 2))  +
+    scale_color_manual(values= wes_palette('BottleRocket2', n= 2)) +
+    scale_fill_manual(values= wes_palette('BottleRocket2', n= 2))  +
     plotting_theme
   
   return(p)
@@ -64,8 +64,8 @@ incidence_rate_diagnostic<- function(dt, pg){
          color= 'Scenario', 
          fill= 'Scenario') +
     geom_vline(xintercept= 2023, linetype= "dotted") +
-    scale_color_manual(values= wes_palette('Royal2', n= 2)) +
-    scale_fill_manual(values= wes_palette('Royal2', n= 2))  +
+    scale_color_manual(values= wes_palette('BottleRocket2', n= 2)) +
+    scale_fill_manual(values= wes_palette('BottleRocket2', n= 2))  +
     plotting_theme
   
   return(p)
@@ -85,8 +85,8 @@ mortality_diagnostic<- function(dt, pg){
          title= paste0('Deaths over time: ', unique(dt$site_name), ', ', description),
          color= 'Scenario', 
          fill= 'Scenario') +
-    scale_color_manual(values= wes_palette('Royal2', n= 2)) +
-    scale_fill_manual(values= wes_palette('Royal2', n= 2)) +
+    scale_color_manual(values= wes_palette('BottleRocket2', n= 2)) +
+    scale_fill_manual(values= wes_palette('BottleRocket2', n= 2)) +
     plotting_theme
   
   return(p)
@@ -104,8 +104,8 @@ mortality_rate_diagnostic<- function(dt, pg){
          title= paste0('Mortality rate over time: ', unique(dt$site_name)),
          color= 'Scenario', 
          fill= 'Scenario') +
-    scale_color_manual(values= wes_palette('Royal2', n= 2)) +
-    scale_fill_manual(values= wes_palette('Royal2', n= 2)) +
+    scale_color_manual(values= wes_palette('BottleRocket2', n= 2)) +
+    scale_fill_manual(values= wes_palette('BottleRocket2', n= 2)) +
     plotting_theme
   
   return(p)
@@ -123,8 +123,8 @@ daly_diagnostic<- function(dt, pg){
     labs(x= 'Time (in years)', y= 'DALYs', title= paste0('DALYs over time: ', unique(dt$site_name), ', ', description),
          color= 'Scenario', fill= 'Scenario') +
     theme_minimal()+
-    scale_color_manual(values= wes_palette('Royal2', n= 2)) +
-    scale_fill_manual(values= wes_palette('Royal2', n= 2)) +
+    scale_color_manual(values= wes_palette('BottleRocket2', n= 2)) +
+    scale_fill_manual(values= wes_palette('BottleRocket2', n= 2)) +
     plotting_theme
   
   return(p)
@@ -159,8 +159,8 @@ plot_model_against_prevalence<- function(dt){
     labs(title= 'Model output against parasite prevalence',
          y= 'PfPR',
          x= 'Year') +
-    scale_color_manual(values= wes_palette('Royal2', n= 2)) +
-    scale_fill_manual(values= wes_palette('Royal2', n= 2)) +
+    scale_color_manual(values= wes_palette('BottleRocket2', n= 2)) +
+    scale_fill_manual(values= wes_palette('BottleRocket2', n= 2)) +
     plotting_theme
   
   return(p)
@@ -216,8 +216,8 @@ plot_pfpr_over_time<- function(model_output){
     labs(x= 'Time (years)', y= 'PFPR (2-10), proportion',
          title= paste0('PFPR over time: ', site_name, ' ', ur))+
     plotting_theme +
-    scale_color_manual(values= wes_palette('Royal2', n= 2)) +
-    scale_fill_manual(values= wes_palette('Royal2', n= 2))  
+    scale_color_manual(values= wes_palette('BottleRocket2', n= 2)) +
+    scale_fill_manual(values= wes_palette('BottleRocket2', n= 2))  
   
 }
 
@@ -450,3 +450,49 @@ population_diagnostic<- function(site){
   
   return(plots)         
 }
+
+pull_doses_output <- function(raw_output, processed_output) {
+  scenario <- raw_output$scenario[1]
+  raw_output$year <- floor(raw_output$timestep / 365) + 2000
+  
+  ## Pull out doses before 2040 and over all time
+  # N fully vaccinated children are the number receiving the last dose.
+  
+  if(grepl("rts4", scenario) | grepl("r4", scenario)) {  ## for the booster scenarios
+    
+    doses_per_year <-raw_output |>
+      dplyr::group_by(year) |>
+      dplyr::summarise(n_model=mean(n_365_729),    ## average number of people in the eligible age grp (?best way to do this)
+                       doses_model=sum(n_pev_epi_booster_1)) |>
+      mutate(rate_dosing = doses_model/n_model)
+    
+    ### Merge in VIMC pop in eligible age gp.
+    vimc_cohort <- processed_output |>
+      dplyr::filter(age==1) |>
+      dplyr::select(year, cohort_size)
+    
+    doses_per_year <- left_join(doses_per_year, vimc_cohort, by="year") |>
+      mutate(doses = rate_dosing * cohort_size)
+    
+  } else {   ## for the dose 3 without booster scenarios
+    
+    doses_per_year <-raw_output |>
+      dplyr::group_by(year) |>
+      dplyr::summarise(n_model=mean(n_0_364),    ## average number of people in the eligible age grp (?best way to do this)
+                       doses_model=sum(n_pev_epi_dose_3)) |>
+      mutate(rate_dosing = doses_model/n_model)
+    
+    ### Merge in VIMC pop in eligible age gp.
+    vimc_cohort <- processed_output |>
+      dplyr::filter(age==0) |>
+      dplyr::select(year, cohort_size)
+    
+    doses_per_year <- left_join(doses_per_year, vimc_cohort, by="year") |>
+      mutate(doses = rate_dosing * cohort_size)  %>%
+      select(-c(n_model, doses_model)) %>%
+      filter(year<=2100)
+    
+  }
+  return(doses_per_year)
+}
+

@@ -15,67 +15,137 @@ plotting_theme<- theme_bw(base_size = 12) +
          axis.ticks.y= element_blank(), 
          panel.grid.major = element_blank(), panel.grid.minor = element_blank()) 
 
-population_diagnostic_model<- function(dt, pg, intro_yr, rows= 5, cols = 5){
+population_diagnostic_model<- function(dt, pg, intro_yr, rows= 5, cols = 5, summary =F){
   
-  p<-   ggplot(data= dt, mapping = aes(x= year, y= cohort_size, color= scenario, fill= scenario))+
-    geom_line(alpha= 0.5)  +
-    facet_wrap_paginate(~age, ncol= cols, nrow= rows, page = pg) +
-    geom_vline(xintercept= intro_yr, linetype= "dotted") +
-    labs(x= 'Time (in years)', 
-         y= 'Population',
-         title= paste0('Population over time: site ', unique(dt$site_name), ', ', description),
-         color= 'Scenario', fill= 'Scenario') +
-    scale_color_manual(values= wes_palette('Royal2', n= 2)) +
-    scale_fill_manual(values= wes_palette('Royal2', n= 2))  +
-    plotting_theme
+  if (summary == T){
+    
+    p<-   ggplot(data= dt, mapping = aes(x= year, y= cohort_size, color= scenario, fill= scenario))+
+      geom_line()  +
+      geom_vline(xintercept= intro_yr, linetype= "dotted") +
+      labs(x= 'Time (in years)', 
+           y= 'Population',
+           title= paste0('Population over time: site ', unique(dt$site_name), ', ', description),
+           color= 'Scenario', fill= 'Scenario') +
+      scale_color_manual(values= wes_palette('Royal2', n= 2)) +
+      scale_fill_manual(values= wes_palette('Royal2', n= 2))  +
+      plotting_theme
+    
+  }else{
+    
+    p<-   ggplot(data= dt, mapping = aes(x= year, y= cohort_size, color= scenario, fill= scenario))+
+      geom_line()  +
+      facet_wrap_paginate(~age, ncol= cols, nrow= rows, page = pg) +
+      geom_vline(xintercept= intro_yr, linetype= "dotted") +
+      labs(x= 'Time (in years)', 
+           y= 'Population',
+           title= paste0('Population over time: site ', unique(dt$site_name), ', ', description),
+           color= 'Scenario', fill= 'Scenario') +
+      scale_color_manual(values= wes_palette('Royal2', n= 2)) +
+      scale_fill_manual(values= wes_palette('Royal2', n= 2))  +
+      plotting_theme
+    
+  }
+  
   
   return(p)
   
 }
 
-incident_cases_diagnostic<- function(dt, pg, intro_yr, cols= 5, rows= 5){
+incident_cases_diagnostic<- function(dt, pg, intro_yr, cols= 5, rows= 5, summary = F){
   
-  p<-   ggplot(data= dt, mapping = aes(x= year, y= cases, color= scenario, fill= scenario))+
-    geom_line(alpha= 0.5)  +
-    facet_wrap_paginate(~age, scales= 'free',
-                        ncol= cols, nrow= rows, 
-                        page = pg) +
-    geom_vline(xintercept= intro_yr, linetype= "dotted") +
-    labs(x= 'Time (in years)', y= 'Clinical cases', 
-         title= paste0('Incident clinical cases over time: site ', unique(dt$site_name), ', ', description),
-         color= 'Scenario', fill= 'Scenario') +
-    scale_color_manual(values= wes_palette('Royal2', n= 2)) +
-    scale_fill_manual(values= wes_palette('Royal2', n= 2))  +
-    plotting_theme
   
+  if (summary == T){
+    
+    p<-   ggplot(data= dt, mapping = aes(x= year, y= cases, color= scenario, fill= scenario))+
+      geom_line()  +
+      geom_vline(xintercept= intro_yr, linetype= "dotted") +
+      labs(x= 'Time (in years)', y= 'Clinical cases', 
+           title= paste0('Incident clinical cases over time: site ', unique(dt$site_name), ', ', description),
+           color= 'Scenario', fill= 'Scenario') +
+      scale_color_manual(values= wes_palette('Royal2', n= 2)) +
+      scale_fill_manual(values= wes_palette('Royal2', n= 2))  +
+      plotting_theme
+    
+  }else{
+    
+    
+    p<-   ggplot(data= dt, mapping = aes(x= year, y= cases, color= scenario, fill= scenario))+
+      geom_line()  +
+      facet_wrap_paginate(~age, scales= 'free',
+                          ncol= cols, nrow= rows, 
+                          page = pg) +
+      geom_vline(xintercept= intro_yr, linetype= "dotted") +
+      labs(x= 'Time (in years)', y= 'Clinical cases', 
+           title= paste0('Incident clinical cases over time: site ', unique(dt$site_name), ', ', description),
+           color= 'Scenario', fill= 'Scenario') +
+      scale_color_manual(values= wes_palette('Royal2', n= 2)) +
+      scale_fill_manual(values= wes_palette('Royal2', n= 2))  +
+      plotting_theme
+    
+    
+  }
   return(p)
   
 }
 
-incidence_rate_diagnostic<- function(dt, pg, intro_yr, cols= 5, rows= 5){
+incidence_rate_diagnostic<- function(dt, pg, intro_yr, cols= 5, rows= 5, summary = F){
   
-  p<-  ggplot(data= dt, mapping = aes(x= year, y= clinical, color= scenario, fill= scenario))+
-    geom_line(alpha= 0.5)  +
-    facet_wrap_paginate(~age,  nrow= rows, ncol= cols, page = pg) +
-    labs(x= 'Time (in years)', 
-         y= 'Incidence rate', 
-         title= paste0('Incidence rate over time: ', unique(dt$site_name), ', ', description),
-         color= 'Scenario', 
-         fill= 'Scenario') +
-    geom_vline(xintercept= intro_yr, linetype= "dotted") +
-    scale_color_manual(values= wes_palette('Royal2', n= 2)) +
-    scale_fill_manual(values= wes_palette('Royal2', n= 2))  +
-    plotting_theme
+  if (summary == T){
+    
+    p<-  ggplot(data= dt, mapping = aes(x= year, y= clinical, color= scenario, fill= scenario))+
+      geom_line()  +
+      labs(x= 'Time (in years)', 
+           y= 'Incidence rate', 
+           title= paste0('Incidence rate over time: ', unique(dt$site_name), ', ', description),
+           color= 'Scenario', 
+           fill= 'Scenario') +
+      geom_vline(xintercept= intro_yr, linetype= "dotted") +
+      scale_color_manual(values= wes_palette('Royal2', n= 2)) +
+      scale_fill_manual(values= wes_palette('Royal2', n= 2))  +
+      plotting_theme
+    
+    
+  } else{
+    p<-  ggplot(data= dt, mapping = aes(x= year, y= clinical, color= scenario, fill= scenario))+
+      geom_line()  +
+      facet_wrap_paginate(~age,  nrow= rows, ncol= cols, page = pg) +
+      labs(x= 'Time (in years)', 
+           y= 'Incidence rate', 
+           title= paste0('Incidence rate over time: ', unique(dt$site_name), ', ', description),
+           color= 'Scenario', 
+           fill= 'Scenario') +
+      geom_vline(xintercept= intro_yr, linetype= "dotted") +
+      scale_color_manual(values= wes_palette('Royal2', n= 2)) +
+      scale_fill_manual(values= wes_palette('Royal2', n= 2))  +
+      plotting_theme
+    
+    
+  }
   
   return(p)
 }
 
 
 
-mortality_diagnostic<- function(dt, pg, intro_yr, cols= 5, rows= 5){
+mortality_diagnostic<- function(dt, pg, intro_yr, cols= 5, rows= 5, summary= F){
   
+  if (summary== T){
+    
+    p<- ggplot(data= dt, mapping = aes(x= year, y= deaths, color= scenario, fill= scenario))+
+      geom_line()  +
+      geom_vline(xintercept= intro_yr, linetype= "dotted") +
+      labs(x= 'Time (in years)', 
+           y= 'Deaths', 
+           title= paste0('Deaths over time: ', unique(dt$site_name), ', ', description),
+           color= 'Scenario', 
+           fill= 'Scenario') +
+      scale_color_manual(values= wes_palette('Royal2', n= 2)) +
+      scale_fill_manual(values= wes_palette('Royal2', n= 2)) +
+      plotting_theme
+    
+  }else{
   p<- ggplot(data= dt, mapping = aes(x= year, y= deaths, color= scenario, fill= scenario))+
-    geom_line(alpha= 0.5)  +
+    geom_line()  +
     geom_vline(xintercept= intro_yr, linetype= "dotted") +
     facet_wrap_paginate(~age, scales = 'free', ncol= cols, nrow= rows, page = pg) +
     labs(x= 'Time (in years)', 
@@ -86,14 +156,30 @@ mortality_diagnostic<- function(dt, pg, intro_yr, cols= 5, rows= 5){
     scale_color_manual(values= wes_palette('Royal2', n= 2)) +
     scale_fill_manual(values= wes_palette('Royal2', n= 2)) +
     plotting_theme
-  
+  }
   return(p)
   
 }
-mortality_rate_diagnostic<- function(dt, pg, intro_yr, rows= 5, cols= 5){
+mortality_rate_diagnostic<- function(dt, pg, intro_yr, rows= 5, cols= 5, summary = F){
+  
+  if (summary == T){
+    p<- ggplot(data= dt, mapping = aes(x= year, y= mortality, color= scenario, fill= scenario))+
+      geom_line() +
+      geom_vline(xintercept= 2023, linetype= "dotted") +
+      labs(x= 'Time (in years)',
+           y= 'Mortality rate', 
+           title= paste0('Mortality rate over time: ', unique(dt$site_name)),
+           color= 'Scenario', 
+           fill= 'Scenario') +
+      scale_color_manual(values= wes_palette('Royal2', n= 2)) +
+      scale_fill_manual(values= wes_palette('Royal2', n= 2)) +
+      plotting_theme
+    
+    
+  }else{
   
   p<- ggplot(data= dt, mapping = aes(x= year, y= mortality, color= scenario, fill= scenario))+
-    geom_line(alpha= 0.5) +
+    geom_line() +
     geom_vline(xintercept= 2023, linetype= "dotted") +
     facet_wrap_paginate(~age, ncol= cols, nrow= rows, page= pg) +
     labs(x= 'Time (in years)',
@@ -104,16 +190,30 @@ mortality_rate_diagnostic<- function(dt, pg, intro_yr, rows= 5, cols= 5){
     scale_color_manual(values= wes_palette('Royal2', n= 2)) +
     scale_fill_manual(values= wes_palette('Royal2', n= 2)) +
     plotting_theme
-  
+  }
   return(p)
   
 }
 
 
-daly_diagnostic<- function(dt, pg, intro_yr, rows= 5, cols =5){
+daly_diagnostic<- function(dt, pg, intro_yr, rows= 5, cols =5, summary = F){
   
+  
+  if (summary ==T){
+    
+    p<- ggplot(data= dt, mapping = aes(x= year, y= dalys, color= scenario, fill= scenario))+
+      geom_line()  +
+      geom_vline(xintercept= intro_yr, linetype= "dotted") +
+      labs(x= 'Time (in years)', y= 'DALYs', title= paste0('DALYs over time: ', unique(dt$site_name), ', ', description),
+           color= 'Scenario', fill= 'Scenario') +
+      theme_minimal()+
+      scale_color_manual(values= wes_palette('Royal2', n= 2)) +
+      scale_fill_manual(values= wes_palette('Royal2', n= 2)) +
+      plotting_theme
+    
+  }else{
   p<- ggplot(data= dt, mapping = aes(x= year, y= dalys, color= scenario, fill= scenario))+
-    geom_line(alpha= 0.5)  +
+    geom_line()  +
     facet_wrap_paginate(~age,scales = 'free', ncol= cols, nrow= rows, page = pg) +
     geom_vline(xintercept= intro_yr, linetype= "dotted") +
     labs(x= 'Time (in years)', y= 'DALYs', title= paste0('DALYs over time: ', unique(dt$site_name), ', ', description),
@@ -122,7 +222,7 @@ daly_diagnostic<- function(dt, pg, intro_yr, rows= 5, cols =5){
     scale_color_manual(values= wes_palette('Royal2', n= 2)) +
     scale_fill_manual(values= wes_palette('Royal2', n= 2)) +
     plotting_theme
-  
+  }
   return(p)
 }
 
@@ -163,14 +263,13 @@ plot_model_against_prevalence<- function(dt, intro_yr){
   return(p)
 }
 
-
 plot_cases_averted<- function(dt){
   
   
   site_name<- unique(dt$site_name)
   ur<- unique(dt$urban_rural)
   
-  dt<- dt |> subset(year >= 2085)
+  #dt<- dt |> subset(year >= 2085)
   intvn<- dt|> subset(scenario %like% 'malaria')
   intvn<- intvn |> 
     rename(cases_intvn = cases,
@@ -186,16 +285,64 @@ plot_cases_averted<- function(dt){
            deaths_averted = deaths - deaths_intvn,
            dalys_averted = dalys - dalys_intvn)
   
-  merged<- data.table(merged)
-  merged[, cases_averted := sum(cases_averted), by= 'age']
-  merged<- unique(merged, by = 'age')
+  merged_2085 <- merged |>
+    dplyr::filter(year>=2085) |>
+    dplyr::group_by(age) |>
+    dplyr::summarise(cases_averted=sum(cases_averted),
+                     deaths_averted=sum(deaths_averted),
+                     dalys_averted=sum(dalys_averted))
   
-  ggplot(data= merged, mapping= aes(x= age, y= cases_averted))+
+  merged_2025 <- merged |>
+    dplyr::filter(year>=2025 & year<=2040) |>
+    dplyr::group_by(age) |>
+    dplyr::summarise(cases_averted=sum(cases_averted),
+                     deaths_averted=sum(deaths_averted),
+                     dalys_averted=sum(dalys_averted))
+  
+  p1 <- ggplot(data= merged_2085, mapping= aes(x= age, y= cases_averted))+
     geom_col() +
     plotting_theme +
     labs(title= paste0('Cases averted by age for site: ', site_name, ' ', ur),
-         x= 'Age (years',
+         x= 'Age (years)',
          y= 'Cases averted, 2085-2100')
+  
+  p2 <- ggplot(data= merged_2085, mapping= aes(x= age, y= deaths_averted))+
+    geom_col() +
+    plotting_theme +
+    labs(title= paste0('Deaths averted by age for site: ', site_name, ' ', ur),
+         x= 'Age (years)',
+         y= 'Deaths averted, 2085-2100')
+  
+  p3 <- ggplot(data= merged_2085, mapping= aes(x= age, y= dalys_averted))+
+    geom_col() +
+    plotting_theme +
+    labs(title= paste0('DALYs averted by age for site: ', site_name, ' ', ur),
+         x= 'Age (years)',
+         y= 'DALYS averted, 2085-2100')
+  
+  w1 <- ggplot(data= merged_2025, mapping= aes(x= age, y= cases_averted))+
+    geom_col() +
+    plotting_theme +
+    labs(title= paste0('Cases averted by age for site: ', site_name, ' ', ur),
+         x= 'Age (years)',
+         y= 'Cases averted, 2025-2040')
+  
+  w2 <- ggplot(data= merged_2025, mapping= aes(x= age, y= deaths_averted))+
+    geom_col() +
+    plotting_theme +
+    labs(title= paste0('Deaths averted by age for site: ', site_name, ' ', ur),
+         x= 'Age (years)',
+         y= 'Deaths averted, 2025-2040')
+  
+  w3 <- ggplot(data= merged_2025, mapping= aes(x= age, y= dalys_averted))+
+    geom_col() +
+    plotting_theme +
+    labs(title= paste0('DALYs averted by age for site: ', site_name, ' ', ur),
+         x= 'Age (years)',
+         y= 'DALYS averted, 2025-2040')
+  
+  plots <- ggarrange(p1, w1, p2, w2, p3, w3, nrow=3, ncol=2)
+  return(plots)
 }
 
 
@@ -446,4 +593,183 @@ population_diagnostic<- function(site){
   plots<- ggarrange(p1, p2, ncol= 2)
   
   return(plots)         
+}
+
+
+pull_doses_output <- function(raw_output, processed_output) {
+  scenario <- raw_output$scenario[1]
+  raw_output$year <- floor(raw_output$timestep / 365) + 2000
+  
+  ## Pull out doses before 2040 and over all time
+  # N fully vaccinated children are the number receiving the last dose.
+  
+  if(grepl("rts4", scenario) | grepl("r4", scenario)) {  ## for the booster scenarios
+    
+    doses_per_year <-raw_output |>
+      dplyr::group_by(year) |>
+      dplyr::summarise(n_model=mean(n_365_729),    ## average number of people in the eligible age grp (?best way to do this)
+                       doses_model=sum(n_pev_epi_booster_1)) |>
+      mutate(rate_dosing = doses_model/n_model)
+    
+    ### Merge in VIMC pop in eligible age gp.
+    vimc_cohort <- processed_output |>
+      dplyr::filter(age==1) |>
+      dplyr::select(year, cohort_size)
+    
+    doses_per_year <- left_join(doses_per_year, vimc_cohort, by="year") |>
+      mutate(doses = rate_dosing * cohort_size)
+    
+  } else {   ## for the dose 3 without booster scenarios
+    
+    doses_per_year <-raw_output |>
+      dplyr::group_by(year) |>
+      dplyr::summarise(n_model=mean(n_0_364),    ## average number of people in the eligible age grp (?best way to do this)
+                       doses_model=sum(n_pev_epi_dose_3)) |>
+      mutate(rate_dosing = doses_model/n_model)
+    
+    ### Merge in VIMC pop in eligible age gp.
+    vimc_cohort <- processed_output |>
+      dplyr::filter(age==0) |>
+      dplyr::select(year, cohort_size)
+    
+    doses_per_year <- left_join(doses_per_year, vimc_cohort, by="year") |>
+      mutate(doses = rate_dosing * cohort_size)  %>%
+      select(-c(n_model, doses_model)) %>%
+      filter(year<=2100)
+    
+  }
+  return(doses_per_year)
+}
+
+plot_tot_cases_averted_time<- function(dt){
+  
+  
+  site_name<- unique(dt$site_name)
+  ur<- unique(dt$urban_rural)
+  
+  intvn<- dt|> subset(scenario %like% 'malaria')
+  intvn<- intvn |> 
+    rename(cases_intvn = cases,
+           dalys_intvn = dalys,
+           deaths_intvn = deaths)
+  
+  bl<- dt|> subset(scenario== 'no-vaccination')
+  
+  merged<- merge(intvn, bl, by= c('year', 'age'))
+  
+  merged<- merged |>
+    mutate(cases_averted = cases - cases_intvn,
+           deaths_averted = deaths - deaths_intvn,
+           dalys_averted = dalys - dalys_intvn) |>
+    group_by(year) |>
+    summarise(cases_averted=sum(cases_averted),
+              deaths_averted=sum(deaths_averted),
+              dalys_averted=sum(dalys_averted))
+  
+  # merged<- data.table(merged)
+  # merged[, cases_averted := sum(cases_averted), by= 'year']
+  # merged<- unique(merged, by = 'year')
+  # 
+  p1 <- ggplot(data= merged, mapping= aes(x= year, y= cases_averted))+
+    geom_col() +
+    plotting_theme +
+    labs(title= paste0('Cases averted by year for site: ', site_name, ' ', ur),
+         x= 'Years',
+         y= 'Cases averted per year')
+  
+  p2 <- ggplot(data= merged, mapping= aes(x= year, y= deaths_averted))+
+    geom_col() +
+    plotting_theme +
+    labs(title= paste0('Deaths averted by year for site: ', site_name, ' ', ur),
+         x= 'Years',
+         y= 'Deaths averted per year')
+  
+  p3 <- ggplot(data= merged, mapping= aes(x= year, y= dalys_averted))+
+    geom_col() +
+    plotting_theme +
+    labs(title= paste0('DALYs averted by year for site: ', site_name, ' ', ur),
+         x= 'Years',
+         y= 'DALYs averted per year')
+  
+  plots<- ggarrange(p1, p2, p3, nrow= 3)
+  return(plots)
+  
+}
+pull_outcomes_averted_per_100k_vacc <- function(raw_output, dt) {
+  
+  doses_per_year <- pull_doses_output(raw_output, dt)
+  
+  tot_doses_b4_2040 <- doses_per_year |>
+    dplyr::filter(year<=2040) |>
+    summarise(lastdose = sum(doses))|>
+    pull(lastdose)
+  
+  tot_doses <- doses_per_year |>
+    dplyr::filter(year<=2100) |>
+    summarise(lastdose = sum(doses))|>
+    pull(lastdose)
+  
+  ### Now pull cases averted up to 2040 and over all time from processed output
+  intvn<- dt|> subset(scenario %like% 'malaria')
+  intvn<- intvn |> 
+    rename(cases_intvn = cases,
+           dalys_intvn = dalys,
+           deaths_intvn = deaths)
+  
+  bl<- dt|> subset(scenario== 'no-vaccination')
+  
+  merged<- merge(intvn, bl, by= c('year', 'age'))
+  
+  merged<- merged |>
+    mutate(cases_averted = cases - cases_intvn,
+           deaths_averted = deaths - deaths_intvn,
+           dalys_averted = dalys - dalys_intvn)
+  
+  
+  outcomes_2040 <- merged |>
+    dplyr::filter(year<=2040) |>
+    dplyr::summarise(cases_averted=sum(cases_averted),
+                     deaths_averted=sum(deaths_averted),
+                     dalys_averted=sum(dalys_averted))
+  
+  outcomes <- merged |>
+    dplyr::summarise(cases_averted=sum(cases_averted),
+                     deaths_averted=sum(deaths_averted),
+                     dalys_averted=sum(dalys_averted))
+  
+  res <-cbind(timeframe=c("<2100", "<2040"),
+              rbind(100000*outcomes/tot_doses,
+                    100000*outcomes_2040 / tot_doses_b4_2040))
+  
+  return(res)
+}
+pull_tot_cases_averted <-function(dt) {
+  
+  intvn<- dt|> subset(scenario %like% 'malaria')
+  intvn<- intvn |> 
+    rename(cases_intvn = cases,
+           dalys_intvn = dalys,
+           deaths_intvn = deaths)
+  
+  bl<- dt|> subset(scenario== 'no-vaccination')
+  
+  merged<- merge(intvn, bl, by= c('year', 'age'))
+  
+  merged<- merged |>
+    mutate(cases_averted = cases - cases_intvn,
+           deaths_averted = deaths - deaths_intvn,
+           dalys_averted = dalys - dalys_intvn)
+  
+  merged_2030 <- merged |>
+    dplyr::filter(year>=2029 & year<=2031) |>
+    dplyr::summarise(cases_averted=mean(cases_averted),
+                     deaths_averted=mean(deaths_averted),
+                     dalys_averted=mean(dalys_averted))
+  
+  merged<-  merged |> 
+    dplyr::summarise(cases_averted=sum(cases_averted),
+                     deaths_averted=sum(deaths_averted),
+                     dalys_averted=sum(dalys_averted))
+  
+  return(list(merged, merged_2030))
 }

@@ -61,18 +61,18 @@ update_coverage_values<- function(site, coverage_data, scenario){
   
   site$interventions<- intvns # keep in mind these booster values will not be fed into the model
   
-  if(scenario %like% 'rts-3-rts4-bluesky'){
+  if(scenario == 'malaria-rts3-rts4-bluesky'){
     
     site$interventions$scenario_type<- 'bluesky'
   }
   
-  if(scenario %like% 'default'){
+  if(scenario == 'malaria-r3-r4-default' | scenario == 'malaria-rts3-rts4-default'){
     
     site$interventions$scenario_type<- 'routine'
     
   }
 
-  if (scenario == 'malaria-rts3-default' | scenario == 'malaria-r3-default'){
+  if (scenario == 'malaria-rts3-default' | scenario == 'malaria-r3-default' | scenario == 'malaria-rts3-blueky'){
     
     site$interventions$scenario_type<- 'single_dose'
   }

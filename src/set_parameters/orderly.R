@@ -2,7 +2,7 @@
 orderly2::orderly_parameters(iso3c = NULL, 
                              site_name = NULL,
                              ur = NULL,
-                             description = NULL ,
+                             description =  NULL,
                              population = NULL,
                              scenario = NULL,
                              parameter_draw = NULL,

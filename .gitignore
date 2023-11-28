@@ -10,6 +10,8 @@
 raw_data/
 data/
 contexts/
+ctxs/
+ctxs2/
 pkgs/
 archive/
 .outpack/

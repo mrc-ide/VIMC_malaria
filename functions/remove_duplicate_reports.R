@@ -2,7 +2,7 @@ remove_duplicate_reports<- function(report_name, parameter_map){
   # check if you have run this report before; if so remove from list of parameters to run
   # note you may want to rerun a report with the same parameters if you have changed source code; in that case do not use this function
   
-  meta <- orderly2::orderly_metadata_extract(name = report_name, options = orderly2::orderly_search_options(allow_remote = TRUE))
+  meta <- orderly2::orderly_metadata_extract(name = report_name, extract= c('time', 'parameters'), options = orderly2::orderly_search_options(allow_remote = TRUE))
   
   unique(lapply(meta$parameters, names))
   nms <- names(meta$parameters[[1]])

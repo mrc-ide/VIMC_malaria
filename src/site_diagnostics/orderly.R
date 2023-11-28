@@ -7,7 +7,7 @@ orderly2::orderly_parameters(iso3c = NULL,
                              burnin = NULL,
                              parameter_draw = NULL,
                              scenario = NULL,
-                             quick_run= NULL)
+                             quick_run = NULL)
 
 
 orderly2::orderly_description('Produce diagnostic report for site')
@@ -94,6 +94,21 @@ site_data<-extract_site(site_file = site_data,
                                  site_name = site_name,
                                  ur = ur)
 
+# make summary output for all ages
+agg_output<- processed_output |>
+  group_by(year, scenario) |>
+  summarise(cases = sum(cases),
+            dalys = sum(dalys),
+            deaths = sum(deaths),
+            cohort_size = sum(cohort_size)) |>
+  mutate(mortality = deaths/cohort_size,
+         clinical = cases/ cohort_size,
+         dalys_pp = dalys/ cohort_size) 
+
+
+key_outcomes<-pull_outcomes_averted_per_100k_vacc(raw_output, processed_output)
+
+# summarize outputs by age as wee
 # render report
 rmarkdown::render(input= 'diagnostic_report.Rmd',
                   output_file = 'site_diagnostic_report',
@@ -109,7 +124,9 @@ rmarkdown::render(input= 'diagnostic_report.Rmd',
                                'model_input' = model_input,
                                'raw_output' = raw_output,
                                'processed_output' = processed_output,
+                               'agg_output' = agg_output,
                                'site_data' = site_data,
                                'coverage_data' = coverage_data,
+                               'key_outcomes' = key_outcomes,
                                'mort' = mort))
 

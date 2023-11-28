@@ -17,8 +17,7 @@ orderly2::orderly_artefact('model output', 'raw_model_output.rds')
 library(postie)
 library(dplyr)
 library(data.table)
-library(dplyr)
-
+library(countrycode)
 # read inputs ------------------------------------------------------------------
 # model input
 orderly2::orderly_dependency("launch_models",
@@ -230,3 +229,8 @@ dt <- dt |>
 saveRDS(dt, 'processed_output.rds')
 
 
+if(scenario!="no-vaccination") {
+  doses_per_year <- pull_doses_output(raw_output, dt)
+  
+  saveRDS(doses_per_year, 'doses_per_year.rds')
+}
