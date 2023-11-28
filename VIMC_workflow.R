@@ -62,7 +62,7 @@ country_map<- maps$country_map
 countries<- purrr::map(.x = 1:nrow(country_map), .f= ~ country_map[.x,])
 
 # # cluster setup ----------------------------------------------------------------
-ctx <- context::context_save("ctxs", sources= 'functions/run_report.R')
+ctx <- context::context_save("ctxs2", sources= 'functions/run_report.R')
 config <- didehpc::didehpc_config(
   use_rrq = FALSE,
   cores = 1,
@@ -87,7 +87,7 @@ pkgs<- c('mrc-ide/orderly2@mrc-4724',
 
 for (pkg in pkgs){
 
-  obj$install_packages('countrycode')
+  obj$install_packages(pkg)
 
 }
 

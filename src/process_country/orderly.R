@@ -1,5 +1,5 @@
 # process country --------------------------------------------------------------
-orderly2::orderly_parameters(iso3c =  NULL,
+orderly2::orderly_parameters(iso3c = NULL,
                              description = NULL,
                              population = NULL,
                              burnin = NULL,
@@ -12,17 +12,22 @@ library(postie)
 library(dplyr)
 library(data.table)
 
+source('remove_zero_eirs.R')
 orderly2::orderly_description('Process model outputs')
 orderly2::orderly_artefact('Processed output', 'country_output.rds')
 
 
 # read in model outputs for all sites in country
 orderly2::orderly_dependency("process_inputs",
-                             "latest(parameter:iso3c == this:iso3c )",
+                             "latest(parameter:iso3c == this:iso3c)",
                              c(site_file.rds = "site_file.rds"))
+
+
 site_data <- readRDS('site_file.rds')
 sites<- site_data$sites
-  
+
+sites<- remove_zero_eirs(iso3c, sites, site_data$eir)
+
 output<- data.table()
   
 for (i in 1:nrow(sites)) {
@@ -83,13 +88,13 @@ dt<- dt|>
 
 # # scale outputs based on cases from WMR from 2000-2020
 # # first sum cases by year in model output and compare
-# pre_scale<- dt |>
-#   group_by(year) |>
-#   summarise(cases = sum(cases)) 
-#   
-# scaling<- merge(pre_scale, site_data$cases_deaths[, c('year', 'wmr_cases')], by= 'year') 
-# scaling<- scaling |>
-#   mutate(ratio = wmr_cases / cases)
+pre_scale<- dt |>
+  group_by(year) |>
+  summarise(cases = sum(cases))
+
+scaling<- merge(pre_scale, site_data$cases_deaths[, c('year', 'wmr_cases')], by= 'year')
+scaling<- scaling |>
+  mutate(ratio = wmr_cases / cases) # for the last three years observed (take an average)
 
 # save outputs  ----------------------------------------------------------------
 saveRDS(dt, 'country_output.rds')
