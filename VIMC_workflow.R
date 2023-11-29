@@ -49,14 +49,14 @@ maps<- make_parameter_maps(
 )
 
 # remove duplicate reports before launching
-site_map<- remove_duplicate_reports(report_name = 'process_site', 
+site_map<- remove_duplicate_reports(report_name = 'site_diagnostics', 
                                     parameter_map = maps$site_map)
 
 # check that the preceding report has completed before you launch next report in chronology
-site_map<- generate_parameter_map_for_next_report(report_name = 'launch_models', 
+site_map<- generate_parameter_map_for_next_report(report_name = 'process_site', 
                                                   parameter_map = site_map)
 
-sites<- purrr::map(.x = c(1:300), .f= ~ site_map[.x,])
+sites<- purrr::map(.x = c(601:610), .f= ~ site_map[.x,])
 
 country_map<- maps$country_map
 countries<- purrr::map(.x = 1:nrow(country_map), .f= ~ country_map[.x,])
@@ -66,9 +66,8 @@ ctx <- context::context_save("ctxs2", sources= 'functions/run_report.R')
 config <- didehpc::didehpc_config(
   use_rrq = FALSE,
   cores = 1,
-  cluster = "wpia-hn" ,#"fi--dideclusthn", # , "fi--didemrchnb""fi--didemrchnb"
-  template = "AllNodes",  ## use for the wpia cluster
-  parallel = FALSE)
+  cluster = "fi--didemrchnb") #"fi--dideclusthn", # , "fi--didemrchnb""fi--didemrchnb"
+  #template = "AllNodes")
 
 obj <- didehpc::queue_didehpc(ctx, config = config)
 
@@ -81,11 +80,27 @@ pkgs<- c('mrc-ide/orderly2@mrc-4724',
          'extrafont',
          'wesanderson',
          'ggpubr',
+         'ggplot2',
          'ggforce',
          'mrc-ide/postie@dalys',
          'countrycode')
 
-for (pkg in pkgs){
+# packages you need for postprocessing
+pp<- c('mrc-ide/postie@dalys',
+       'data.table',
+       'dplyr',
+       'countrycode',
+       'mrc-ide/orderly2',
+       'extrafont',
+       'ggpubr',
+       'wesanderson',
+       'scales',
+       'ggforce',
+       'mrc-ide/scene',
+       'ggpubr',
+       'ggplot2')
+
+for (pkg in pp){
 
   obj$install_packages(pkg)
 
@@ -103,14 +118,14 @@ lapply(
 
 
 # or launch on cluster
-processing<- obj$lapply(
+diags6<- obj$lapply(
   sites,
   run_report,
-  report_name = 'process_site',
+  report_name = 'site_diagnostics',
   path = dir
 )
   
-# run report for all countries locally  ----------------------------------------
+ # run report for all countries locally  ----------------------------------------
 lapply(
   countries,
   run_report_country,

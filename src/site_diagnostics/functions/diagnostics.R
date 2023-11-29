@@ -239,7 +239,7 @@ plot_model_against_prevalence<- function(dt, intro_yr){
   site_name<- unique(dt$site_name)
   ur<- unique(dt$urban_rural)
   
-  prevalence<- as.data.table(site_data$prevalence)
+  prevalence<- data.table::data.table(site_data$prevalence)
   
   prevalence<- prevalence[name_1== site_name & urban_rural== ur]
   
@@ -464,7 +464,7 @@ library(tidyr)
 # cases and deaths  ------------------------------------------------------------
 cases_deaths_diagnostic<- function(site){
   
-  dt<- data.table(site$cases_deaths)
+  dt<- data.table::data.table(site$cases_deaths)
   
   site_name<- site$sites$name_1
   ur<- site$sites$urban_rural
@@ -533,7 +533,7 @@ cases_deaths_diagnostic<- function(site){
 # prevalence -------------------------------------------------------------------
 prevalence_diagnostic<- function(site){
   
-  dt<- melt(data.table(site$prevalence), measure.vars= c('pfpr', 'pvpr'))
+  dt<- melt(data.table::data.table(site$prevalence), measure.vars= c('pfpr', 'pvpr'))
   
   site_name<- site$sites$name_1
   ur<- site$sites$urban_rural

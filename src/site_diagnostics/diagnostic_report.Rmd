@@ -43,7 +43,7 @@ Total cases in the country in WMR 2020 were `r formatC(site_data$cases_deaths$wm
 ```{r inputs}
 
 plot_vaccine_coverage(model_input)
-intvns<- data.table(model_input$interventions)
+intvns<- data.table::data.table(model_input$interventions)
 
 intro_yr<- min(intvns[rtss_coverage!= 0 | r21_coverage!= 0, year])
 

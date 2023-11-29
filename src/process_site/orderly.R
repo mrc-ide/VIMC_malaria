@@ -18,6 +18,9 @@ library(postie)
 library(dplyr)
 library(data.table)
 library(countrycode)
+
+
+source('functions/pull_doses_output.R')
 # read inputs ------------------------------------------------------------------
 # model input
 orderly2::orderly_dependency("launch_models",
@@ -55,8 +58,8 @@ pop_single_yr<- readRDS('population_input_single_yr.rds')
 message('read inputs successfully')
 
 # calculate rates --------------------------------------------------------------
-output<- drop_burnin(output, burnin= burnin* 365)
-saveRDS(output, 'raw_model_output.rds') # save for diagnostics
+raw_output<- drop_burnin(output, burnin= burnin* 365)
+saveRDS(raw_output, 'raw_model_output.rds') # save for diagnostics
 
 output <- postie::get_rates(
   output,

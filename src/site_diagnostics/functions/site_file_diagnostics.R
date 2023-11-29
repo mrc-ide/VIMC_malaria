@@ -11,7 +11,7 @@ library(tidyr)
 # cases and deaths  ------------------------------------------------------------
 cases_deaths_diagnostic<- function(site){
   
-  dt<- data.table(site$cases_deaths)
+  dt<- data.table::data.table(site$cases_deaths)
   
   site_name<- site$sites$name_1
   ur<- site$sites$urban_rural
@@ -80,7 +80,7 @@ cases_deaths_diagnostic<- function(site){
 # prevalence -------------------------------------------------------------------
 prevalence_diagnostic<- function(site){
   
-  dt<- melt(data.table(site$prevalence), measure.vars= c('pfpr', 'pvpr'))
+  dt<- melt(data.table::data.table(site$prevalence), measure.vars= c('pfpr', 'pvpr'))
   
   site_name<- site$sites$name_1
   ur<- site$sites$urban_rural
@@ -113,7 +113,7 @@ prevalence_diagnostic<- function(site){
 
 population_diagnostic<- function(site){
   
-  dt<- melt(data.table(site$population), measure.vars = c('par_pf', 'par_pv'))
+  dt<- melt(data.table::data.table(site$population), measure.vars = c('par_pf', 'par_pv'))
   
   p1<- ggplot(data=dt)+
     geom_col(position = 'stack', mapping= aes(x= year, y= value, fill= variable)) +
@@ -127,7 +127,7 @@ population_diagnostic<- function(site){
     scale_y_continuous(labels= comma)
   
   
-  dt<- melt(data.table(site$population), measure.vars = c('pop', 'par'))
+  dt<- melt(data.table::data.table(site$population), measure.vars = c('pop', 'par'))
   
   p2<- ggplot(data=dt)+
     geom_line(mapping= aes(x= year, y= value, color= variable)) +

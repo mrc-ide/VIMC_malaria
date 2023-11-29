@@ -13,6 +13,8 @@ orderly2::orderly_parameters(iso3c = NULL,
 orderly2::orderly_description('Produce diagnostic report for site')
 
 library(dplyr)
+library(data.table)
+
 lapply(list.files('functions/', full.names = T), source)
 
 # pull processed output
