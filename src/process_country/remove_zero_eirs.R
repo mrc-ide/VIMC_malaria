@@ -5,6 +5,7 @@ remove_zero_eirs<- function(iso3c, sites, eirs){
   eirs<- eirs[spp == 'pf' & eir == 0]
   remove<- eirs[, c('name_1', 'urban_rural')]
   
+  sites<- data.table::data.table(sites)
   if(nrow(remove) > 0){
     for (i in 1:nrow(remove)){
       

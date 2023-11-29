@@ -49,14 +49,14 @@ maps<- make_parameter_maps(
 )
 
 # remove duplicate reports before launching
-site_map<- remove_duplicate_reports(report_name = 'site_diagnostics', 
+site_map<- remove_duplicate_reports(report_name = 'process_site', 
                                     parameter_map = maps$site_map)
 
 # check that the preceding report has completed before you launch next report in chronology
-site_map<- generate_parameter_map_for_next_report(report_name = 'process_site', 
+site_map<- generate_parameter_map_for_next_report(report_name = 'launch_models', 
                                                   parameter_map = site_map)
 
-sites<- purrr::map(.x = c(601:610), .f= ~ site_map[.x,])
+sites<- purrr::map(.x = c(1:2), .f= ~ site_map[.x,])
 
 country_map<- maps$country_map
 countries<- purrr::map(.x = 1:nrow(country_map), .f= ~ country_map[.x,])
@@ -102,7 +102,7 @@ pp<- c('mrc-ide/postie@dalys',
 
 for (pkg in pp){
 
-  obj$install_packages(pkg)
+  obj$install_packages('countrycode')
 
 }
 
@@ -118,10 +118,10 @@ lapply(
 
 
 # or launch on cluster
-diags6<- obj$lapply(
+postprocess4<- obj$lapply(
   sites,
   run_report,
-  report_name = 'site_diagnostics',
+  report_name = 'process_site',
   path = dir
 )
   
