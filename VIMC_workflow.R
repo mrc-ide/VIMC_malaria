@@ -38,7 +38,7 @@ dir<- getwd()
 
 
 # PARAMETERS TO CHANGE FOR REPORTS ---------------------------------------------
-maps<- make_parameter_maps(
+  maps<- make_parameter_maps(
   iso3cs = iso3cs,                                                              # Pick 10 countries to begin with
   #scenarios= c('malaria-rts3-rts4-bluesky', 'malaria-r3-bluesky'),             # if you only want to run reports for certain scenarios. Default is all 7
   population = 100000,                                                          # population size
@@ -56,7 +56,7 @@ site_map<- remove_duplicate_reports(report_name = 'process_site',
 site_map<- generate_parameter_map_for_next_report(report_name = 'launch_models', 
                                                   parameter_map = site_map)
 
-sites<- purrr::map(.x = c(1:2), .f= ~ site_map[.x,])
+sites<- purrr::map(.x = c(1:nrow(sites)), .f= ~ site_map[.x,])
 
 country_map<- maps$country_map
 countries<- purrr::map(.x = 1:nrow(country_map), .f= ~ country_map[.x,])
@@ -102,7 +102,7 @@ pp<- c('mrc-ide/postie@dalys',
 
 for (pkg in pp){
 
-  obj$install_packages('countrycode')
+  obj$install_packages('mrc-ide/malariasimulation')
 
 }
 
@@ -111,17 +111,17 @@ for (pkg in pp){
 lapply(
   sites,
   run_report,
-  report_name = 'process_site',
+  report_name = 'set_parameters',
   path = dir
 )
 
 
 
 # or launch on cluster
-postprocess4<- obj$lapply(
+models<- obj$lapply(
   sites,
   run_report,
-  report_name = 'process_site',
+  report_name = 'launch_models',
   path = dir
 )
   

@@ -72,7 +72,7 @@ update_coverage_values<- function(site, coverage_data, scenario){
     
   }
 
-  if (scenario == 'malaria-rts3-default' | scenario == 'malaria-r3-default' | scenario == 'malaria-rts3-blueky'){
+  if (scenario == 'malaria-rts3-default' | scenario == 'malaria-r3-default' | scenario == 'malaria-rts3-bluesky'){
     
     site$interventions$scenario_type<- 'single_dose'
   }
