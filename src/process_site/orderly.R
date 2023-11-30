@@ -237,3 +237,17 @@ if(scenario!="no-vaccination") {
   
   saveRDS(doses_per_year, 'doses_per_year.rds')
 }
+
+
+### pull out prevalence
+prev <- postie::get_prevalence(raw_output, time_divisor = 365, baseline_t = 1999,
+                               age_divisor = 365) 
+prev$n_2_10 <- raw_output |>
+  mutate(year = floor(timestep/365)) |>
+  group_by(year) |>
+  summarise(n_2_10 = mean(n_730_3649)) |>
+  filter(year<=100) |>
+  pull(n_2_10)
+
+
+saveRDS(prev, 'prevalence_per_year.rds')

@@ -39,8 +39,8 @@ dir<- getwd()
 
 # PARAMETERS TO CHANGE FOR REPORTS ---------------------------------------------
   maps<- make_parameter_maps(
-  iso3cs = 'ETH',                                                              # Pick 10 countries to begin with
-  scenarios= c('malaria-rts3-rts4-bluesky'),             # if you only want to run reports for certain scenarios. Default is all 7
+  iso3cs = iso3cs,                                                              # Pick 10 countries to begin with
+  #scenarios= c('malaria-rts3-rts4-bluesky'),             # if you only want to run reports for certain scenarios. Default is all 7
   population = 100000,                                                          # population size
   description = 'complete_run',                                                 # reason for model run (change this for every run if you do not want to overwrite outputs)
   parameter_draw = 0,                                                           # parameter draw to run (0 for central runs)
@@ -48,14 +48,15 @@ dir<- getwd()
   quick_run = FALSE                                                             # boolean, T or F. If T, makes age groups larger and runs model through 2035.
 )
 
-site_map<- remove_duplicate_reports(report_name = 'site_diagnostics', 
+site_map<- remove_duplicate_reports(report_name = 'process_site', 
                                     parameter_map = maps$site_map)
 
 # check that the preceding report has completed before you launch next report in chronology
 cty_map<- generate_parameter_map_for_next_report(report_name = 'process_country', 
                                                   parameter_map = cty_map)
 
-sites<- purrr::map(.x = c(1:nrow(site_map)), .f= ~ site_map[.x,])
+site_map<- maps$site_map
+sites<- purrr::map(.x = c(1:200), .f= ~ site_map[.x,])
 
 country_map<- cty_map
 countries<- purrr::map(.x = 1:nrow(country_map), .f= ~ country_map[.x,])
