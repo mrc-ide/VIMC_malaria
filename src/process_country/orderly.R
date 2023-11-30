@@ -142,8 +142,10 @@ ratio<- average_value/output_cases$cases
 
 # test this scaling with an extra column and review
 dt<- dt |>
-  mutate(cases_scaled = cases * ratio)
+  mutate(pre_scaled_cases = cases)
 
+dt<- dt |>
+  mutate(cases = cases * ratio)
 
 dt<- dt|>
   mutate(clinical= cases/cohort_size,

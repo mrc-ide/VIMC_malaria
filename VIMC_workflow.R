@@ -23,6 +23,7 @@ iso3cs<- unique(coverage$country_code)
 
 dir<- getwd()
 
+# SDN, BDI
 # if you have not already, initialize the orderly repository
 #orderly2::orderly_init(path = dir)
 ################################################################################
@@ -39,7 +40,7 @@ dir<- getwd()
 
 # PARAMETERS TO CHANGE FOR REPORTS ---------------------------------------------
   maps<- make_parameter_maps(
-  iso3cs = iso3cs,                                                              # Pick 10 countries to begin with
+  iso3cs = 'SDN',                                                              # Pick 10 countries to begin with
   #scenarios= c('malaria-rts3-rts4-bluesky'),             # if you only want to run reports for certain scenarios. Default is all 7
   population = 100000,                                                          # population size
   description = 'complete_run',                                                 # reason for model run (change this for every run if you do not want to overwrite outputs)
@@ -56,9 +57,10 @@ cty_map<- generate_parameter_map_for_next_report(report_name = 'process_country'
                                                   parameter_map = cty_map)
 
 site_map<- maps$site_map
-sites<- purrr::map(.x = c(1:200), .f= ~ site_map[.x,])
+sites<- purrr::map(.x = c(1:nrow(site_map)), .f= ~ site_map[.x,])
 
-country_map<- cty_map
+# ended at 700
+country_map<- maps$country_map
 countries<- purrr::map(.x = 1:nrow(country_map), .f= ~ country_map[.x,])
 
 # # cluster setup ----------------------------------------------------------------
@@ -66,7 +68,7 @@ ctx <- context::context_save("ctxs2", sources= 'functions/run_report.R')
 config <- didehpc::didehpc_config(
   use_rrq = FALSE,
   cores = 1,
-  cluster = "fi--didemrchnb") #"fi--dideclusthn", # , "fi--didemrchnb""fi--didemrchnb"
+  cluster = "wpia-hn") #"fi--dideclusthn", # , "fi--didemrchnb""fi--didemrchnb"
   #template = "AllNodes")
 
 obj <- didehpc::queue_didehpc(ctx, config = config)
@@ -118,7 +120,7 @@ lapply(
 
 
 # or launch on cluster
-postprocess1<- obj$lapply(
+postprocess5<- obj$lapply(
   sites,
   run_report,
   report_name = 'process_site',
@@ -129,15 +131,15 @@ postprocess1<- obj$lapply(
 lapply(
   countries,
   run_report_country,
-  report_name = 'country_diagnostics',
+  report_name = 'process_country',
   path = dir
 )
 
 # or launch cluster
-jobs<- obj$lapply(
+jobs2<- obj$lapply(
   countries,
   run_report_country,
-  report_name = 'country_diagnostics',
+  report_name = 'process_country',
   path = dir
 )
 
