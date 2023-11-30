@@ -1,11 +1,11 @@
 # produce country diagnostic report ------------------------------------------------------------------
-orderly2::orderly_parameters(iso3c = NULL,
-                             description = NULL,
-                             population = NULL,
-                             burnin = NULL,
-                             parameter_draw = NULL,
-                             scenario = NULL,
-                             quick_run= NULL)
+orderly2::orderly_parameters(iso3c = 'SDN',
+                             description = 'complete_run',
+                             population = 100000,
+                             burnin = 15,
+                             parameter_draw = 0,
+                             scenario = 'malaria-rts3-rts4-default',
+                             quick_run= FALSE)
 
 
 orderly2::orderly_description('Produce country diagnostic report for site')
@@ -74,6 +74,18 @@ processed_output<- rbind(baseline_output, intvn_output, fill = T)
 processed_output<- data.table(processed_output)
 processed_output<- processed_output[scenario!= TRUE]
 
+# make summary output for all ages
+agg_output<- processed_output |>
+  group_by(year, scenario) |>
+  summarise(cases = sum(cases),
+            dalys = sum(dalys),
+            deaths = sum(deaths),
+            pre_scaled_cases = sum(pre_scaled_cases),
+            cohort_size = sum(cohort_size)) |>
+  mutate(mortality = deaths/cohort_size,
+         clinical = cases/ cohort_size,
+         dalys_pp = dalys/ cohort_size) 
+
 
 # subset VIMC inputs to country of interest ------------------------------------
 intvn_scenario<- scenario
@@ -123,5 +135,6 @@ rmarkdown::render(input= 'diagnostic_report_country.Rmd',
                                'coverage_data' = coverage_data,
                                'population_data' = population_data,
                                'outcomes_averted' = outcomes_averted,
+                               'agg_output' = agg_output,
                                'mort' = mort))
 

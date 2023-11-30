@@ -12,7 +12,7 @@ knitr::opts_chunk$set(echo = FALSE, warning = FALSE)
 library(scene)
 library(ggpubr)
 library(data.table)
-
+options(scipen = 999)
 site<- site_data
 
 # source plotting code for report
@@ -116,6 +116,8 @@ population_diagnostic_vimc(population_data)
 ## Modelled outputs
 
 ```{r population, echo=FALSE, fig.height=10, fig.width= 15}
+population_diagnostic_model(agg_output, pg= 1, intro_yr = intro_yr, summary = T)
+
 
 population_diagnostic_model(processed_output, pg= 1, intro_yr = intro_yr)
 population_diagnostic_model(processed_output, pg= 2, intro_yr = intro_yr)
@@ -127,7 +129,9 @@ population_diagnostic_model(processed_output, pg= 4, intro_yr = intro_yr)
 
 # Incident cases
 ```{r incident cases, echo=FALSE, fig.height=10, fig.width= 15}
+incident_cases_diagnostic(agg_output, pg= 1, intro_yr = intro_yr, summary = T)
 
+scaling_diagnostic(agg_output)
 
 incident_cases_diagnostic(processed_output, pg= 1, intro_yr = intro_yr)
 incident_cases_diagnostic(processed_output, pg= 2, intro_yr = intro_yr)
@@ -139,6 +143,8 @@ incident_cases_diagnostic(processed_output, pg= 4, intro_yr = intro_yr)
 
 #   Incidence rate 
 ```{r incidence rate, echo = FALSE, fig.height=10, fig.width= 10}
+incidence_rate_diagnostic(agg_output, pg= 1, intro_yr = intro_yr, summary = T)
+
   
 incidence_rate_diagnostic(processed_output, pg= 1, intro_yr = intro_yr)
 incidence_rate_diagnostic(processed_output, pg= 2, intro_yr = intro_yr)
@@ -150,6 +156,7 @@ incidence_rate_diagnostic(processed_output, pg= 4, intro_yr = intro_yr)
 # Deaths
 
 ```{r deaths, echo=FALSE, fig.height=10, fig.width= 15}
+mortality_diagnostic(agg_output, pg= 1, intro_yr = intro_yr, summary = T)
 
 mortality_diagnostic(processed_output, pg= 1, intro_yr = intro_yr)
 mortality_diagnostic(processed_output, pg= 2, intro_yr = intro_yr)
@@ -160,6 +167,7 @@ mortality_diagnostic(processed_output, pg= 4, intro_yr = intro_yr)
 
 # Mortality rate 
 ```{r mort rate, echo=FALSE, fig.height=10, fig.width= 15}
+mortality_rate_diagnostic(agg_output, pg= 1, intro_yr = intro_yr, summary = T)
 
   
 mortality_rate_diagnostic(processed_output, pg= 1, intro_yr = intro_yr)
@@ -171,6 +179,7 @@ mortality_rate_diagnostic(processed_output, pg= 4, intro_yr = intro_yr)
 
 # DALYs
 ```{r dalys, echo = FALSE, fig.height=10, fig.width= 15}
+daly_diagnostic(agg_output, pg = 1, intro_yr = intro_yr, summary = T)
 
 
 daly_diagnostic(processed_output, pg = 1, intro_yr = intro_yr)
