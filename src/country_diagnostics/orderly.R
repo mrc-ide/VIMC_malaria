@@ -10,7 +10,14 @@ orderly2::orderly_parameters(iso3c = NULL,
 
 orderly2::orderly_description('Produce country diagnostic report for site')
 
+
+print("Country ISO = ")
+print(iso3c)
+print("Scenario = ")
+print(scenario)
+
 library(dplyr)
+library(data.table)
 lapply(list.files('functions/', full.names = T), source)
 
 # pull processed output
@@ -67,9 +74,11 @@ population_data<- population_data |>
 message('read inputs successfully')
 
 
+# Cases averted per 100,000 vaccinated were:
+# outcomes_averted <- round(pull_outcomes_averted_per_100k_vacc(intvn_output , baseline_output , doses_output ))
 
 # render report
-rmarkdown::render(input= 'M:/Lydia/VIMC_malaria/src/country_diagnostics/diagnostic_report_country.Rmd',
+rmarkdown::render(input= 'diagnostic_report_country.Rmd',
                   output_file = 'country_diagnostic_report',
                   output_format = 'html_document',
                   params= list('iso3c' = iso3c,

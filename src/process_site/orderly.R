@@ -62,7 +62,7 @@ raw_output<- drop_burnin(output, burnin= burnin* 365)
 saveRDS(raw_output, 'raw_model_output.rds') # save for diagnostics
 
 output <- postie::get_rates(
-  output,
+  raw_output,
   time_divisor = 365,
   baseline_t = 1999,
   age_divisor = 365,

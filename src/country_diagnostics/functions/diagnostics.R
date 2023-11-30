@@ -18,15 +18,15 @@ plotting_theme<- theme_bw(base_size = 12) +
 population_diagnostic_model<- function(dt, pg, intro_yr, rows= 5, cols = 5){
   
   p<-   ggplot(data= dt, mapping = aes(x= year, y= cohort_size, color= scenario, fill= scenario))+
-    geom_line(alpha= 0.5)  +
+    geom_line()  +
     facet_wrap_paginate(~age, ncol= cols, nrow= rows, page = pg) +
     geom_vline(xintercept= intro_yr, linetype= "dotted") +
     labs(x= 'Time (in years)', 
          y= 'Population',
          title= paste0('Population over time: site ', unique(dt$iso3c), ', ', description),
          color= 'Scenario', fill= 'Scenario') +
-    scale_color_manual(values= wes_palette('Royal2', n= 2)) +
-    scale_fill_manual(values= wes_palette('Royal2', n= 2))  +
+    scale_color_manual(values= wes_palette('Darjeeling1', n= 2)) +
+    scale_fill_manual(values= wes_palette('Darjeeling1', n= 2))  +
     plotting_theme
   
   return(p)
@@ -36,7 +36,7 @@ population_diagnostic_model<- function(dt, pg, intro_yr, rows= 5, cols = 5){
 incident_cases_diagnostic<- function(dt, pg, intro_yr, cols= 5, rows= 5){
   
   p<-   ggplot(data= dt, mapping = aes(x= year, y= cases, color= scenario, fill= scenario))+
-    geom_line(alpha= 0.5)  +
+    geom_line()  +
     facet_wrap_paginate(~age, scales= 'free',
                         ncol= cols, nrow= rows, 
                         page = pg) +
@@ -44,8 +44,8 @@ incident_cases_diagnostic<- function(dt, pg, intro_yr, cols= 5, rows= 5){
     labs(x= 'Time (in years)', y= 'Clinical cases', 
          title= paste0('Incident clinical cases over time: site ', unique(dt$iso3c), ', ', description),
          color= 'Scenario', fill= 'Scenario') +
-    scale_color_manual(values= wes_palette('Royal2', n= 2)) +
-    scale_fill_manual(values= wes_palette('Royal2', n= 2))  +
+    scale_color_manual(values= wes_palette('Darjeeling1', n= 2)) +
+    scale_fill_manual(values= wes_palette('Darjeeling1', n= 2))  +
     plotting_theme
   
   return(p)
@@ -55,7 +55,7 @@ incident_cases_diagnostic<- function(dt, pg, intro_yr, cols= 5, rows= 5){
 incidence_rate_diagnostic<- function(dt, pg, intro_yr, cols= 5, rows= 5){
   
   p<-  ggplot(data= dt, mapping = aes(x= year, y= clinical, color= scenario, fill= scenario))+
-    geom_line(alpha= 0.5)  +
+    geom_line()  +
     facet_wrap_paginate(~age,  nrow= rows, ncol= cols, page = pg) +
     labs(x= 'Time (in years)', 
          y= 'Incidence rate', 
@@ -63,8 +63,8 @@ incidence_rate_diagnostic<- function(dt, pg, intro_yr, cols= 5, rows= 5){
          color= 'Scenario', 
          fill= 'Scenario') +
     geom_vline(xintercept= intro_yr, linetype= "dotted") +
-    scale_color_manual(values= wes_palette('Royal2', n= 2)) +
-    scale_fill_manual(values= wes_palette('Royal2', n= 2))  +
+    scale_color_manual(values= wes_palette('Darjeeling1', n= 2)) +
+    scale_fill_manual(values= wes_palette('Darjeeling1', n= 2))  +
     plotting_theme
   
   return(p)
@@ -75,7 +75,7 @@ incidence_rate_diagnostic<- function(dt, pg, intro_yr, cols= 5, rows= 5){
 mortality_diagnostic<- function(dt, pg, intro_yr, cols= 5, rows= 5){
   
   p<- ggplot(data= dt, mapping = aes(x= year, y= deaths, color= scenario, fill= scenario))+
-    geom_line(alpha= 0.5)  +
+    geom_line()  +
     geom_vline(xintercept= intro_yr, linetype= "dotted") +
     facet_wrap_paginate(~age, scales = 'free', ncol= cols, nrow= rows, page = pg) +
     labs(x= 'Time (in years)', 
@@ -83,8 +83,8 @@ mortality_diagnostic<- function(dt, pg, intro_yr, cols= 5, rows= 5){
          title= paste0('Deaths over time: ', unique(dt$iso3c), ', ', description),
          color= 'Scenario', 
          fill= 'Scenario') +
-    scale_color_manual(values= wes_palette('Royal2', n= 2)) +
-    scale_fill_manual(values= wes_palette('Royal2', n= 2)) +
+    scale_color_manual(values= wes_palette('Darjeeling1', n= 2)) +
+    scale_fill_manual(values= wes_palette('Darjeeling1', n= 2)) +
     plotting_theme
   
   return(p)
@@ -93,7 +93,7 @@ mortality_diagnostic<- function(dt, pg, intro_yr, cols= 5, rows= 5){
 mortality_rate_diagnostic<- function(dt, pg, intro_yr, rows= 5, cols= 5){
   
   p<- ggplot(data= dt, mapping = aes(x= year, y= mortality, color= scenario, fill= scenario))+
-    geom_line(alpha= 0.5) +
+    geom_line() +
     geom_vline(xintercept= 2023, linetype= "dotted") +
     facet_wrap_paginate(~age, ncol= cols, nrow= rows, page= pg) +
     labs(x= 'Time (in years)',
@@ -101,8 +101,8 @@ mortality_rate_diagnostic<- function(dt, pg, intro_yr, rows= 5, cols= 5){
          title= paste0('Mortality rate over time: ', unique(dt$iso3c)),
          color= 'Scenario', 
          fill= 'Scenario') +
-    scale_color_manual(values= wes_palette('Royal2', n= 2)) +
-    scale_fill_manual(values= wes_palette('Royal2', n= 2)) +
+    scale_color_manual(values= wes_palette('Darjeeling1', n= 2)) +
+    scale_fill_manual(values= wes_palette('Darjeeling1', n= 2)) +
     plotting_theme
   
   return(p)
@@ -113,14 +113,14 @@ mortality_rate_diagnostic<- function(dt, pg, intro_yr, rows= 5, cols= 5){
 daly_diagnostic<- function(dt, pg, intro_yr, rows= 5, cols =5){
   
   p<- ggplot(data= dt, mapping = aes(x= year, y= dalys, color= scenario, fill= scenario))+
-    geom_line(alpha= 0.5)  +
+    geom_line()  +
     facet_wrap_paginate(~age,scales = 'free', ncol= cols, nrow= rows, page = pg) +
     geom_vline(xintercept= intro_yr, linetype= "dotted") +
     labs(x= 'Time (in years)', y= 'DALYs', title= paste0('DALYs over time: ', unique(dt$iso3c), ', ', description),
          color= 'Scenario', fill= 'Scenario') +
     theme_minimal()+
-    scale_color_manual(values= wes_palette('Royal2', n= 2)) +
-    scale_fill_manual(values= wes_palette('Royal2', n= 2)) +
+    scale_color_manual(values= wes_palette('Darjeeling1', n= 2)) +
+    scale_fill_manual(values= wes_palette('Darjeeling1', n= 2)) +
     plotting_theme
   
   return(p)
@@ -232,8 +232,8 @@ cases_deaths_diagnostic<- function(site){
     ) +
     facet_wrap( ~ variable, ncol = 4) +
     scale_y_continuous(labels = comma) +
-    scale_color_manual(values = wes_palette('Royal2', n = 4)) +
-    scale_fill_manual(values = wes_palette('Royal2', n = 4))  +
+    scale_color_manual(values = wes_palette('Darjeeling1', n = 4)) +
+    scale_fill_manual(values = wes_palette('Darjeeling1', n = 4))  +
     plotting_theme +
     labs(
       y = 'Value',
@@ -275,7 +275,7 @@ population_diagnostic<- function(site){
   
   p1<- ggplot(data=dt)+
     geom_col(position = 'stack', mapping= aes(x= year, y= value, fill= variable)) +
-    scale_fill_manual(values = wes_palette('Royal2', n = 2))  +
+    scale_fill_manual(values = wes_palette('Darjeeling1', n = 2))  +
     geom_line(mapping= aes(x= year, y=par)) +
     plotting_theme+
     labs(title= 'Population at risk over time', 
@@ -299,3 +299,60 @@ population_diagnostic<- function(site){
   
   return(plots)         
 }
+
+
+# cases averted per fully vaccinated child
+pull_outcomes_averted_per_100k_vacc <- function(intvn_output, baseline_output, doses) {
+  
+  tot_doses <-sum(doses$doses)
+  
+  merged <- calculate_cases_averted(intvn_output, baseline_output)
+  outcomes <- merged |>
+    dplyr::summarise(cases_averted=sum(cases_averted),
+                     deaths_averted=sum(deaths_averted),
+                     dalys_averted=sum(dalys_averted))
+  
+  res <-100000*outcomes/tot_doses
+  
+  return(res)
+}
+
+
+calculate_cases_averted <- function(intvn_output, baseline_output) {
+  
+  intvn_output<- intvn_output |> 
+    rename(cases_intvn = cases,
+           dalys_intvn = dalys,
+           deaths_intvn = deaths)
+  
+  merged<- merge(intvn_output, baseline_output, by= c('year', 'age'))
+  
+  merged<- merged |>
+    mutate(cases_averted = cases - cases_intvn,
+           deaths_averted = deaths - deaths_intvn,
+           dalys_averted = dalys - dalys_intvn)
+  
+  return(merged)
+}
+
+plot_cases_averted<- function(intvn_output, baseline_output){
+  
+  merged <- calculate_cases_averted(intvn_output, baseline_output)
+  iso3c<- unique(baseline_output$country)
+  
+  
+  merged<- data.table(merged)
+  merged[, cases_averted := sum(cases_averted), by= 'age']
+  merged<- unique(merged, by = 'age')
+  
+  ggplot(data= merged, mapping= aes(x= age, y= cases_averted))+
+    geom_col() +
+    plotting_theme +
+    labs(title= paste0('Cases averted by age for country: ', iso3c),
+         x= 'Age (years',
+         y= 'Cases averted up to 2100')
+}
+format_number <- function(number, digits=0) {
+  formatC(number, format="f", big.mark=",", digits=digits)
+}
+
