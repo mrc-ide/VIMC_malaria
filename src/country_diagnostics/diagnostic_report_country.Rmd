@@ -23,8 +23,21 @@ lapply(list.files('functions/', full.names = T), source, local= knitr::knit_glob
 
 ## VIMC country-level diagnostic report
 
+
 This is a diagnostic report for VIMC outputs for `r iso3c`, `r site_data$sites$country[1]`. 
 The description for this model run is `r description`. The scenario ran was `r scenario`. The population size of this model run was `r population`. The burn-in time was `r burnin` years. For this run, quick_run was `r quick_run` .
+
+Total cases in the country in WMR 2020 were `r format_number(cases_wmr_2020)`.
+Total modelled cases in 2020 were `r format_number(cases_mod_2020)`.
+
+Up to 2100, `r percent_cases_averted_2100` % of cases were averted by vaccine.
+ 
+Cases averted per 100,000 vaccinated were: `r format_number(outcomes_averted$cases_averted)`.
+
+Deaths averted per 100,000 vaccinated were: `r format_number(outcomes_averted$deaths_averted)`.
+
+DALYs averted per 100,000 vaccinated were: `r format_number(outcomes_averted$dalys_averted)`.
+
 
 
 ## Vaccine coverage specified for scenario

@@ -30,7 +30,8 @@ sites<- site_data$sites
 sites<- remove_zero_eirs(iso3c, sites, site_data$eir)
 
 output<- data.table()
-  
+doses<-data.table()
+
 for (i in 1:nrow(sites)) {
     
     site<- sites[i,]
@@ -53,6 +54,25 @@ for (i in 1:nrow(sites)) {
     dt<- readRDS(metadata$files$here)
     output<- rbind(output, dt, fill = T)
     
+    
+    scenario<-dt$scenario[1]
+    
+    if(scenario!="no-vaccination") {
+      metadata<-orderly2::orderly_dependency("process_site", quote(latest(parameter:iso3c == this:iso3c &&
+                                                                            parameter:description == this:description &&
+                                                                            parameter:population == this:population &&
+                                                                            parameter:scenario == this:scenario &&
+                                                                            parameter:burnin == this:burnin &&
+                                                                            parameter:site_name == environment:site_name &&
+                                                                            parameter:ur == environment:ur &&
+                                                                            parameter:parameter_draw == this:parameter_draw &&
+                                                                            parameter:quick_run == this:quick_run)),
+                                             c('doses_per_year_${site_name}_${ur}.rds' = "doses_per_year.rds"))
+      
+      doses_site<- readRDS(metadata$files$here)
+      doses<- rbind(doses, doses_site, fill = T)
+      
+    }
 }
 
 
@@ -131,6 +151,14 @@ dt<- dt|>
          dalys_pp = dalys/ cohort_size) |>
   select(-site_name, -urban_rural)
 
+if(scenario!="no-vaccination") {
+  doses_per_year <- doses |>
+    dplyr::group_by(year) |>
+    summarise(doses=sum(doses)) |>
+    mutate(scenario=scenario)
+  
+  saveRDS(doses_per_year, 'country_doses_per_year.rds')
+}
 
 # save outputs  ----------------------------------------------------------------
 saveRDS(dt, 'country_output.rds')

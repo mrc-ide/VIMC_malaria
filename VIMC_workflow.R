@@ -71,57 +71,57 @@ config <- didehpc::didehpc_config(
 
 obj <- didehpc::queue_didehpc(ctx, config = config)
 
-# # if you have not already, install packages:
-pkgs<- c('mrc-ide/orderly2@mrc-4724',
-         'mrc-ide/malariasimulation',
-         'mrc-ide/site_vimc',
-         'data.table',
-         'dplyr',
-         'extrafont',
-         'wesanderson',
-         'ggpubr',
-         'ggplot2',
-         'ggforce',
-         'mrc-ide/postie@dalys',
-         'countrycode')
-
-# packages you need for postprocessing
-pp<- c('mrc-ide/postie@dalys',
-       'data.table',
-       'dplyr',
-       'countrycode',
-       'mrc-ide/orderly2',
-       'extrafont',
-       'ggpubr',
-       'wesanderson',
-       'scales',
-       'ggforce',
-       'mrc-ide/scene',
-       'ggpubr',
-       'ggplot2')
-
-for (pkg in pp){
-
-  obj$install_packages('mrc-ide/malariasimulation')
-
-}
+# # if you have not already, install packages:  --------------------------------
+# pkgs<- c('mrc-ide/orderly2@mrc-4724',
+#          'mrc-ide/malariasimulation',
+#          'mrc-ide/site_vimc',
+#          'data.table',
+#          'dplyr',
+#          'extrafont',
+#          'wesanderson',
+#          'ggpubr',
+#          'ggplot2',
+#          'ggforce',
+#          'mrc-ide/postie@dalys',
+#          'countrycode')
+# 
+# # packages you need for postprocessing
+# pp<- c('mrc-ide/postie@dalys',
+#        'data.table',
+#        'dplyr',
+#        'countrycode',
+#        'mrc-ide/orderly2',
+#        'extrafont',
+#        'ggpubr',
+#        'wesanderson',
+#        'scales',
+#        'ggforce',
+#        'mrc-ide/scene',
+#        'ggpubr',
+#        'ggplot2')
+# 
+# for (pkg in pp){
+# 
+#   obj$install_packages('mrc-ide/malariasimulation')
+# 
+# }
 
 
 # run report for all sites locally ---------------------------------------------
 lapply(
   sites,
   run_report,
-  report_name = 'site_diagnostics',
+  report_name = 'process_site',
   path = dir
 )
 
 
 
 # or launch on cluster
-models<- obj$lapply(
+postprocess1<- obj$lapply(
   sites,
   run_report,
-  report_name = 'launch_models',
+  report_name = 'process_site',
   path = dir
 )
   
