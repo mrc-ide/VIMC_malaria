@@ -13,7 +13,6 @@ library(orderly2)
 library(site)
 library(data.table)
 library(dplyr)
-
 lapply(list.files('functions/', full.names = T), source)
 
 # obtain list of countries to run model for
@@ -22,7 +21,6 @@ iso3cs<- unique(coverage$country_code)
 
 dir<- getwd()
 
-# SDN, BDI
 # if you have not already, initialize the orderly repository
 #orderly2::orderly_init(path = dir)
 ################################################################################
@@ -39,7 +37,7 @@ dir<- getwd()
 
 # PARAMETERS TO CHANGE FOR REPORTS ---------------------------------------------
   maps<- make_parameter_maps(
-  #iso3cs = 'SDN',                                                              # Pick 10 countries to begin with
+  iso3cs =  iso3cs,                                                              # Pick 10 countries to begin with
   #scenarios= c('malaria-rts3-rts4-bluesky'),             # if you only want to run reports for certain scenarios. Default is all 7
   population = 100000,                                                          # population size
   description = 'complete_run',                                                 # reason for model run (change this for every run if you do not want to overwrite outputs)
@@ -47,23 +45,28 @@ dir<- getwd()
   burnin= 15,                                                                   # burn-in in years            
   quick_run = FALSE                                                             # boolean, T or F. If T, makes age groups larger and runs model through 2035.
 )
-# 
-# site_map<- remove_duplicate_reports(report_name = 'process_site', 
-#                                     parameter_map = maps$site_map)
-# 
-# # check that the preceding report has completed before you launch next report in chronology
-# # cty_map<- generate_parameter_map_for_next_report(report_name = 'process_country', 
-# #                                                   parameter_map = cty_map)
+
+# deduplicate
+site_map<- remove_duplicate_reports(report_name = 'process_site',
+                                    parameter_map = maps$site_map, day= 20231130)
+ 
+
+country_map<- remove_duplicate_reports(report_name = 'process_country',
+                                    parameter_map = maps$country_map, day= 20231130)
+
+
+# check that the preceding report has completed before you launch next report in chronology
+country_map<- generate_parameter_map_for_next_report(report_name = 'process_country',
+                                                  parameter_map = country_map)
 
 site_map<- maps$site_map
-sites<- purrr::map(.x = c(129:nrow(site_map)), .f= ~ site_map[.x,])
+sites<- purrr::map(.x = c(1:nrow(site_map)), .f= ~ site_map[.x,])
 
-# ended at 700
 country_map<- maps$country_map
 countries<- purrr::map(.x = 1:nrow(country_map), .f= ~ country_map[.x,])
 
 # # cluster setup ----------------------------------------------------------------
-ctx <- context::context_save("ctxs2", sources= 'functions/run_report.R')
+ctx <- context::context_save("ctxs3", sources= 'functions/run_report.R')
 config <- didehpc::didehpc_config(
   use_rrq = FALSE,
   cores = 1,
@@ -103,7 +106,7 @@ obj <- didehpc::queue_didehpc(ctx, config = config)
 # 
 # for (pkg in pp){
 # 
-#   obj$install_packages('mrc-ide/malariasimulation')
+  obj$install_packages('retry')
 # 
 # }
 
@@ -119,23 +122,23 @@ lapply(
 
 
 # or launch on cluster
-postprocess5<- obj$lapply(
+models<- obj$lapply(
   sites,
   run_report,
-  report_name = 'process_site',
+  report_name = 'launch_models',
   path = dir
 )
   
- # run report for all countries locally  ----------------------------------------
+ # run report for all countries locally  ---------------------------------------
 lapply(
   countries,
   run_report_country,
-  report_name = 'country_diagnostics',
+  report_name = 'process_country',
   path = dir
 )
 
-# or launch cluster
-jobs2<- obj$lapply(
+# or launch cluster ------------------------------------------------------------
+retry<- obj$lapply(
   countries,
   run_report_country,
   report_name = 'process_country',

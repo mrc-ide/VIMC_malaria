@@ -11,6 +11,7 @@ orderly2::orderly_parameters(iso3c = NULL,
 library(postie)
 library(dplyr)
 library(data.table)
+library(retry)
 
 source('remove_zero_eirs.R')
 
@@ -25,9 +26,16 @@ orderly2::orderly_dependency("process_inputs",
 
 
 site_data <- readRDS('site_file.rds')
+
+
 sites<- site_data$sites
 
+
+
 sites<- remove_zero_eirs(iso3c, sites, site_data$eir)
+
+Encoding(sites$name_1) <- "UTF-8"
+sites$name_1<- iconv(sites$name_1, from="UTF-8", to="ASCII//TRANSLIT")
 
 output<- data.table()
 doses<-data.table()
@@ -50,7 +58,6 @@ for (i in 1:nrow(sites)) {
                                                                    parameter:parameter_draw == this:parameter_draw &&
                                                                    parameter:quick_run == this:quick_run)),
                                            c('processed_output_${site_name}_${ur}.rds' = "processed_output.rds"))
-    
     dt<- readRDS(metadata$files$here)
     output<- rbind(output, dt, fill = T)
     

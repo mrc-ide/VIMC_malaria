@@ -1,10 +1,21 @@
-remove_duplicate_reports<- function(report_name, parameter_map){
+remove_duplicate_reports<- function(report_name, parameter_map, day= NULL){
   # check if you have run this report before; if so remove from list of parameters to run
   # note you may want to rerun a report with the same parameters if you have changed source code; in that case do not use this function
   
-  meta <- orderly2::orderly_metadata_extract(name = report_name, options = orderly2::orderly_search_options(allow_remote = TRUE))
+  meta <- orderly2::orderly_metadata_extract(name = report_name, extract = c('time', 'parameters'), options = orderly2::orderly_search_options(allow_remote = TRUE))
+  
+  meta<- meta|>
+    tidyr::separate(col = id, into = c('date', 'other'), sep = '-')|>
+    mutate(date= as.numeric(date))
+  
+  if(day){
+    
+    meta<- meta |>
+      filter(date >= day)
+  }
   
   unique(lapply(meta$parameters, names))
+  
   nms <- names(meta$parameters[[1]])
   pars <- do.call("data.frame", setNames(lapply(nms, function(nm) sapply(meta$parameters, function(x) x[[nm]])), nms))
   

@@ -34,11 +34,11 @@ orderly2::orderly_dependency("launch_models",
                              c(model_output.rds = "model_output.rds"))
 # site file
 orderly2::orderly_dependency("process_inputs",
-                             "latest(parameter:iso3c == this:iso3c )",
+                             "latest(parameter:iso3c == this:iso3c)",
                              c(site_file.rds = "site_file.rds"))
 # life expectancy
 orderly2::orderly_dependency("process_inputs",
-                             "latest(parameter:iso3c == this:iso3c )",
+                             "latest(parameter:iso3c == this:iso3c)",
                              c(le_input.rds = "le_input.rds"))
 # population
 orderly2::orderly_dependency("process_inputs",
