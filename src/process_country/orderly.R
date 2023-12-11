@@ -11,7 +11,6 @@ orderly2::orderly_parameters(iso3c = NULL,
 library(postie)
 library(dplyr)
 library(data.table)
-library(retry)
 
 source('remove_zero_eirs.R')
 
@@ -29,8 +28,6 @@ site_data <- readRDS('site_file.rds')
 
 
 sites<- site_data$sites
-
-
 
 sites<- remove_zero_eirs(iso3c, sites, site_data$eir)
 

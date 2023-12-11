@@ -30,11 +30,21 @@ remove_duplicate_reports<- function(report_name, parameter_map, day= NULL){
 
 
 
-generate_parameter_map_for_next_report<- function(report_name, parameter_map){
+generate_parameter_map_for_next_report<- function(report_name, parameter_map, day= NULL){
   
   # before you run a report, check that the preceding reports have already been run
   
-  meta <- orderly2::orderly_metadata_extract(name = report_name, options = orderly2::orderly_search_options(allow_remote = TRUE))
+  meta <- orderly2::orderly_metadata_extract(name = report_name, extract = c('time', 'parameters'),  options = orderly2::orderly_search_options(allow_remote = TRUE))
+  
+  meta<- meta|>
+    tidyr::separate(col = id, into = c('date', 'other'), sep = '-')|>
+    mutate(date= as.numeric(date))
+  
+  if(day){
+    
+    meta<- meta |>
+      filter(date >= day)
+  }
   
   unique(lapply(meta$parameters, names))
   nms <- names(meta$parameters[[1]])
@@ -50,11 +60,12 @@ generate_parameter_map_for_next_report<- function(report_name, parameter_map){
 
 
 
-check_completion<- function(report_name, parameter_map){
+check_completion<- function(report_name, parameter_map, day = NULL){
   
   # check that all the reports for a country + scenario have completed
   
   meta <- orderly2::orderly_metadata_extract(name = report_name, options = orderly2::orderly_search_options(allow_remote = TRUE))
+
   
   unique(lapply(meta$parameters, names))
   nms <- names(meta$parameters[[1]])

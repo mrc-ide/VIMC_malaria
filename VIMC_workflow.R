@@ -34,44 +34,50 @@ dir<- getwd()
 #     root = dir)
 # }
 
-
 # PARAMETERS TO CHANGE FOR REPORTS ---------------------------------------------
-  maps<- make_parameter_maps(
-  iso3cs =  iso3cs,                                                              # Pick 10 countries to begin with
-  #scenarios= c('malaria-rts3-rts4-bluesky'),             # if you only want to run reports for certain scenarios. Default is all 7
-  population = 100000,                                                          # population size
-  description = 'complete_run',                                                 # reason for model run (change this for every run if you do not want to overwrite outputs)
-  parameter_draw = 0,                                                           # parameter draw to run (0 for central runs)
-  burnin= 15,                                                                   # burn-in in years            
-  quick_run = FALSE                                                             # boolean, T or F. If T, makes age groups larger and runs model through 2035.
+maps<- make_parameter_maps(
+  iso3cs =  iso3cs,                                                                       # Pick 10 countries to begin with
+  scenarios= c('malaria-r3-default', 'malaria-rts3-bluesky', 'malaria-rts3-default'),     # if you only want to run reports for certain scenarios. Default is all 7
+  population = 100000,                                                                    # population size
+  description = 'complete_run',                                                           # reason for model run (change this for every run if you do not want to overwrite outputs)
+  parameter_draw = 0,                                                                     # parameter draw to run (0 for central runs)
+  burnin= 15,                                                                             # burn-in in years            
+  quick_run = FALSE                                                                       # boolean, T or F. If T, makes age groups larger and runs model through 2035.
 )
 
 # deduplicate
-site_map<- remove_duplicate_reports(report_name = 'process_site',
-                                    parameter_map = maps$site_map, day= 20231130)
- 
 
-country_map<- remove_duplicate_reports(report_name = 'process_country',
-                                    parameter_map = maps$country_map, day= 20231130)
+site_map<- remove_duplicate_reports(report_name = 'process_site',
+                                    parameter_map = site_map, day= 20231203)
+
+# check that the preceding report has completed before you launch next report in chronology
+site_map<- generate_parameter_map_for_next_report(report_name = 'process_site',
+                                                  parameter_map = maps$site_map, 
+                                                  day= 20231203)
+
+# 
+# 
+# country_map<- remove_duplicate_reports(report_name = 'process_country',
+#                                     parameter_map = maps$country_map, day= 20231130)
 
 
 # check that the preceding report has completed before you launch next report in chronology
-country_map<- generate_parameter_map_for_next_report(report_name = 'process_country',
-                                                  parameter_map = country_map)
+# country_map<- generate_parameter_map_for_next_report(report_name = 'process_country',
+#                                                   parameter_map = country_map)
 
 site_map<- maps$site_map
-sites<- purrr::map(.x = c(1:nrow(site_map)), .f= ~ site_map[.x,])
+sites<- purrr::map(.x = c(2400:nrow(site_map)), .f= ~ site_map[.x,])
 
 country_map<- maps$country_map
 countries<- purrr::map(.x = 1:nrow(country_map), .f= ~ country_map[.x,])
-
-# # cluster setup ----------------------------------------------------------------
-ctx <- context::context_save("ctxs3", sources= 'functions/run_report.R')
+# 
+# # # cluster setup ------------------------------------------------------------
+ctx <- context::context_save("ctxs4", sources= 'functions/run_report.R')
 config <- didehpc::didehpc_config(
   use_rrq = FALSE,
   cores = 1,
-  cluster = "wpia-hn") #"fi--dideclusthn", # , "fi--didemrchnb""fi--didemrchnb"
-  #template = "AllNodes")
+  cluster = "wpia-hn", #"fi--dideclusthn", # , "fi--didemrchnb""fi--didemrchnb"
+  template = "AllNodes")
 
 obj <- didehpc::queue_didehpc(ctx, config = config)
 
@@ -86,64 +92,67 @@ obj <- didehpc::queue_didehpc(ctx, config = config)
 #          'ggpubr',
 #          'ggplot2',
 #          'ggforce',
+#           'openxlsx'
 #          'mrc-ide/postie@dalys',
 #          'countrycode')
 # 
-# # packages you need for postprocessing
-# pp<- c('mrc-ide/postie@dalys',
-#        'data.table',
-#        'dplyr',
-#        'countrycode',
-#        'mrc-ide/orderly2',
-#        'extrafont',
-#        'ggpubr',
-#        'wesanderson',
-#        'scales',
-#        'ggforce',
-#        'mrc-ide/scene',
-#        'ggpubr',
-#        'ggplot2')
-# 
-# for (pkg in pp){
-# 
-  obj$install_packages('retry')
-# 
-# }
+# packages you need for postprocessing
+pp<- c('mrc-ide/postie@dalys',
+       'data.table',
+       'dplyr',
+       'countrycode',
+       'mrc-ide/orderly2',
+       'extrafont',
+       'ggpubr',
+       'wesanderson',
+       'scales',
+       'openxlsx',
+       'ggforce',
+       'mrc-ide/scene',
+       'ggpubr',
+       'ggplot2')
+
+for (pkg in pp){
+
+  obj$install_packages('mrc-ide/malariasimulation')
+
+}
 
 
 # run report for all sites locally ---------------------------------------------
 lapply(
   sites,
   run_report,
-  report_name = 'process_site',
+  report_name = 'site_diagnostics',
   path = dir
 )
 
 
-
-# or launch on cluster
-models<- obj$lapply(
+# 
+# # or launch on cluster
+diagsmore<- obj$lapply(
   sites,
   run_report,
-  report_name = 'launch_models',
-  path = dir
-)
-  
- # run report for all countries locally  ---------------------------------------
-lapply(
-  countries,
-  run_report_country,
-  report_name = 'process_country',
+  report_name = 'site_diagnostics',
   path = dir
 )
 
-# or launch cluster ------------------------------------------------------------
+#  # run report for all countries locally  -------------------------------------
+# lapply(
+#   countries,
+#   run_report_country,
+#   report_name = 'process_country',
+#   path = dir
+# )
+# 
+# # or launch cluster ----------------------------------------------------------
 retry<- obj$lapply(
   countries,
   run_report_country,
-  report_name = 'process_country',
+  report_name = 'country_diagnostics',
   path = dir
 )
+
 
 
 

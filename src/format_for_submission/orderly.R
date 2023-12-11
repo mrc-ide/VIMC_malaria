@@ -2,6 +2,8 @@
 orderly2::orderly_parameters(scenario = NULL,
                              description = NULL)
 
+coverage<- read.csv('N:/Lydia/VIMC_malaria/src/process_inputs/vimc_inputs/vaccine_coverage/coverage_202310gavi-1_malaria-r3-default.csv')
+iso3cs<- unique(coverage$country_code)
 
 
 output<- data.table()
