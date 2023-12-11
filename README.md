@@ -9,20 +9,20 @@ Install orderly2, if you have not already, with the command `install_github('mrc
 You may need to initialize this repository by setting your working directory to the repository and running the command `orderly2::orderly_init()`. This will install supplemental folders in the repository that are not tracked via Git but are essential to run orderly reports.
 
 ###  Install site package
-This workflow uses a modified version of the site package [(link here)](https://github.com/mrc-ide/VIMC_malaria/blob/main/site_0.2.2.tar.gz), which is used to translate site files into malariasimulation model paramters. The key change is that this version allows the user to parameterize the R21 vaccine, and also implements flat booster coverage of 90% for the routine scenarios and 100% for the blue sky scenarios. The modified version of this package should be installed prior to running this workflow using the following command:
-`install.packages('VIMC_malaria/site_0.2.2.tar.gz')`. For access to source code, contact Lydia.
+This workflow uses a modified version of the site package [(link here)](https://github.com/mrc-ide/site_vimc), which is used to translate site files into malariasimulation model paramters. The key change is that this version allows the user to parameterize the R21 vaccine, and also implements flat booster coverage of 90% for the routine scenarios and 100% for the blue sky scenarios. The modified version of this package should be installed prior to running this workflow using the following command:
+`install_github('mrc-ide/site_vimc')`. 
 
 ### Install dalys branch of postie package
-This workflow uses the postie package to postprocess outputs, with DALY functionality for postie is currently on the [DALYs](https://github.com/mrc-ide/postie/tree/dalys/R) repository branch; you will need to install this version of the postie package to run this code using the function call `install.packages('mrc-ide/postie@dalys')`. 
+This workflow uses the postie package to postprocess outputs, with DALY functionality for postie is currently on the [DALYs](https://github.com/mrc-ide/postie/tree/dalys/R) repository branch; you will need to install this version of the postie package to run this code using the function call `install_github('mrc-ide/postie@dalys')`. 
 
 ### Save input files
 VIMC model inputs are saved locally and not tracked on this repository due to large size and privacy issues. VIMC inputs and site files should be saved under `/src/process_inputs/vimc_inputs` and `/src/process_inputs/site_files`, respectively. Contact Lydia for access to these files.
 
 ### Run process inputs report
-The code to run this report is found [here](https://github.com/mrc-ide/VIMC_malaria/blob/main/VIMC_workflow.R#L29-L39). This only needs to be run one time, if VIMC inputs and site files do not change.
+This only needs to be run one time, if VIMC inputs and site files do not change.
 
 ###  Change input parameters
-The following parameters must be changed for each run (on the [following lines](https://github.com/mrc-ide/VIMC_malaria/blob/main/VIMC_workflow.R#L42-L49)):
+The following parameters must be changed for each run:
 * **iso3c:** country/countries you would like to run models for
 - **draw:** draw value for model run. For median parameter values, set to 0.
 - **population:** population size for model run.
@@ -44,8 +44,7 @@ The `make_parameter_maps` function will create input parameter data frames (at t
   
 ### Run set_parameters, launch_models, and process_site, and site_diagnostics for all sites
 This reports must be run in chronological order for all of the sites in a country for the vaccine scenario of interest. The code to run these reports can be found [here](https://github.com/mrc-ide/VIMC_malaria/blob/main/VIMC_workflow.R#L71-L78). 
-
-Note that given long run time, you will likely prefer to launch models on the cluster. The clode to do so is linked [here](https://github.com/mrc-ide/VIMC_malaria/blob/main/VIMC_workflow.R#L92-L111)-- ensure orderly2, malariasimulation, dplyr, and data.table are installed in your cluster environment before launching models or they will fail.
+Note that given long run time, you will likely prefer to launch models on the cluster. Ensure orderly2, malariasimulation, dplyr, and data.table are installed in your cluster environment before launching models or they will fail.
 
 ### Run process_country and country_diagnostics for all countries
 Run these reports using the code linked [here](https://github.com/mrc-ide/VIMC_malaria/blob/main/VIMC_workflow.R#L93-L104). 
@@ -73,70 +72,7 @@ R21 vaccine profile parameters are obtained from the pre-print ["The Public Heal
 
 We additionally carry over intervention coverage from the last observed year (typically 2023) out to 2100, assuming constant values for the remainder of the simulation period. Note that insecticide-treated net (ITN) usage follows a 3-year cyclical pattern based on administrated and time-based waning of net efficacy-- the pattern of the last 3 year cycle observed is carried out for the remainder of the simulation period, to capture this temporal trend. 
 
-We utilize a modified version of the site package to translate site file inputs into malariasimulation parameters. The base version of the site package is found [here](https://github.com/mrc-ide/site). The `add_interventions()` function in the site file was modified to impose flat booster coverage depending on scenario and pull in median R21 vaccine profile parameters in addition to RTS,S. The modified source code for this function is found below: 
-
-```
-#' Add pre-erythrocytic vaccine
-#'
-#' @inheritParams add_interventions
-#'
-#' @return modified parameter list
-add_pev_epi <- function(p, interventions){
-  
-
-  month <- 365 / 12
-  timesteps <- 1 + (interventions$year - p$baseline_year) * 365
-
-  # pull correct coverage values for input parameters depending on vaccine type
-  interventions <- interventions |>
-    dplyr::mutate(
-      coverage = ifelse(vaccine == 'R21', r21_coverage, rtss_coverage),
-      booster_coverage = ifelse(vaccine == 'R21', r21_booster_coverage, rtss_coverage)
-    )
-  
-
-  if (unique(interventions$vaccine)== 'R21'){
-
-    initial_profile<- profile$r21_profile
-    booster_profile<- profile$r21_booster_profile
-
-  }else {
-    
-    initial_profile<- malariasimulation::rtss_profile
-    booster_profile<- malariasimulation::rtss_booster_profile
-  }
-  
-  # specify flat booster coverage scenarios (90% for routine and 100% for blue sky)
-  
-  if(unique(interventions$scenario_type) == 'bluesky'){
-    
-    booster_cov<- 1
-    
-  }else if (unique(interventions$scenario_type) == 'routine'){
-    
-    booster_cov<- 0.9
-  }
-  
-  p <- malariasimulation::set_pev_epi(
-    parameters = p,
-    profile = initial_profile,
-    timesteps = timesteps,
-    coverages = interventions$coverage,
-    age = round(6 * month),
-    min_wait = 0,
-    booster_timestep = round(12 * month),
-    booster_profile = list(booster_profile),
-    booster_coverage = booster_cov
-  )
-  
-
-  return(p)
-}
-
-
-```
-
-Note that this report can not be launched on the HPC cluster, because of package dependency issues. Should only take a few seconds to run, so preferable to run locally in an lapply.
+We utilize a modified version of the site package to translate site file inputs into malariasimulation parameters. The package is found [here](https://github.com/mrc-ide/site_vimc). The `add_interventions()` function in the site file was modified to impose flat booster coverage depending on scenario and pull in median R21 vaccine profile parameters in addition to RTS,S. The modified source code for this function is found below: 
 
 ## Launch model
 Run malariasimulation model [("launch_models")](https://github.com/mrc-ide/VIMC_malaria/blob/main/src/launch_models/orderly.R). If you would like to obtain an estimate of model run time, test this report locally before launching on the cluster.
