@@ -36,7 +36,7 @@ dir<- getwd()
 
 # PARAMETERS TO CHANGE FOR REPORTS ---------------------------------------------
 maps<- make_parameter_maps(
-  iso3cs =  c('SOM'),                                                                       # Pick 10 countries to begin with
+  iso3cs =  iso3cs,                                                                       # Pick 10 countries to begin with
   #scenarios= c('malaria-r3-default', 'malaria-rts3-bluesky', 'malaria-rts3-default'),     # if you only want to run reports for certain scenarios. Default is all 7
   population = 100000,                                                                    # population size
   description = 'complete_run',                                                           # reason for model run (change this for every run if you do not want to overwrite outputs)
@@ -46,7 +46,7 @@ maps<- make_parameter_maps(
 )
 
 # deduplicate
-site_map<- remove_duplicate_reports(report_name = 'process_site',
+site_map<- remove_duplicate_reports(report_name = 'launch_models',
                                     parameter_map = maps$site_map, day= 20231203)
 
 # check that the preceding report has completed before you launch next report in chronology
