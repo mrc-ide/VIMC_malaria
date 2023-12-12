@@ -36,8 +36,8 @@ dir<- getwd()
 
 # PARAMETERS TO CHANGE FOR REPORTS ---------------------------------------------
 maps<- make_parameter_maps(
-  iso3cs =  iso3cs,                                                                       # Pick 10 countries to begin with
-  scenarios= c('malaria-r3-default', 'malaria-rts3-bluesky', 'malaria-rts3-default'),     # if you only want to run reports for certain scenarios. Default is all 7
+  iso3cs =  c('SOM'),                                                                       # Pick 10 countries to begin with
+  #scenarios= c('malaria-r3-default', 'malaria-rts3-bluesky', 'malaria-rts3-default'),     # if you only want to run reports for certain scenarios. Default is all 7
   population = 100000,                                                                    # population size
   description = 'complete_run',                                                           # reason for model run (change this for every run if you do not want to overwrite outputs)
   parameter_draw = 0,                                                                     # parameter draw to run (0 for central runs)
@@ -46,19 +46,18 @@ maps<- make_parameter_maps(
 )
 
 # deduplicate
-
 site_map<- remove_duplicate_reports(report_name = 'process_site',
-                                    parameter_map = site_map, day= 20231203)
+                                    parameter_map = maps$site_map, day= 20231203)
 
 # check that the preceding report has completed before you launch next report in chronology
 site_map<- generate_parameter_map_for_next_report(report_name = 'process_site',
                                                   parameter_map = maps$site_map, 
-                                                  day= 20231203)
+                                                  day= 20231211)
 
 # 
 # 
-# country_map<- remove_duplicate_reports(report_name = 'process_country',
-#                                     parameter_map = maps$country_map, day= 20231130)
+country_map<- remove_duplicate_reports(report_name = 'process_country',
+                                    parameter_map = maps$country_map, day= 20231203)
 
 
 # check that the preceding report has completed before you launch next report in chronology
@@ -66,7 +65,7 @@ site_map<- generate_parameter_map_for_next_report(report_name = 'process_site',
 #                                                   parameter_map = country_map)
 
 site_map<- maps$site_map
-sites<- purrr::map(.x = c(2400:nrow(site_map)), .f= ~ site_map[.x,])
+sites<- purrr::map(.x = c(801:nrow(site_map)), .f= ~ site_map[.x,])
 
 country_map<- maps$country_map
 countries<- purrr::map(.x = 1:nrow(country_map), .f= ~ country_map[.x,])
@@ -130,26 +129,26 @@ lapply(
 
 # 
 # # or launch on cluster
-diagsmore<- obj$lapply(
+processing4<- obj$lapply(
   sites,
   run_report,
-  report_name = 'site_diagnostics',
+  report_name = 'process_site',
   path = dir
 )
 
 #  # run report for all countries locally  -------------------------------------
 # lapply(
 #   countries,
-#   run_report_country,
+#   run_repooprt_country,
 #   report_name = 'process_country',
 #   path = dir
 # )
 # 
 # # or launch cluster ----------------------------------------------------------
-retry<- obj$lapply(
+somalia<- obj$lapply(
   countries,
   run_report_country,
-  report_name = 'country_diagnostics',
+  report_name = 'process_country',
   path = dir
 )
 

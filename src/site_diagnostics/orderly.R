@@ -102,7 +102,6 @@ agg_output<- processed_output |>
   summarise(cases = sum(cases),
             dalys = sum(dalys),
             deaths = sum(deaths),
-            pre_scaled_cases = sum(pre_scaled_cases),
             cohort_size = sum(cohort_size)) |>
   mutate(mortality = deaths/cohort_size,
          clinical = cases/ cohort_size,
