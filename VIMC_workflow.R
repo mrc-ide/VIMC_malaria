@@ -36,7 +36,7 @@ dir<- getwd()
 
 # PARAMETERS TO CHANGE FOR REPORTS ---------------------------------------------
 maps<- make_parameter_maps(
-  iso3cs =  iso3cs,                                                                       # Pick 10 countries to begin with
+  iso3cs = iso3cs,                                                                       # Pick 10 countries to begin with
   #scenarios= c('malaria-r3-default', 'malaria-rts3-bluesky', 'malaria-rts3-default'),     # if you only want to run reports for certain scenarios. Default is all 7
   population = 100000,                                                                    # population size
   description = 'complete_run',                                                           # reason for model run (change this for every run if you do not want to overwrite outputs)
@@ -46,16 +46,14 @@ maps<- make_parameter_maps(
 )
 
 # deduplicate
-site_map<- remove_duplicate_reports(report_name = 'launch_models',
-                                    parameter_map = maps$site_map, day= 20231203)
+site_map<- remove_duplicate_reports(report_name = 'set_parameters',
+                                    parameter_map = maps$site_map, day= 20231124)
 
 # check that the preceding report has completed before you launch next report in chronology
-site_map<- generate_parameter_map_for_next_report(report_name = 'process_site',
+site_map<- generate_parameter_map_for_next_report(report_name = 'set_parameters',
                                                   parameter_map = maps$site_map, 
-                                                  day= 20231211)
+                                                  day= 20231203)
 
-# 
-# 
 country_map<- remove_duplicate_reports(report_name = 'process_country',
                                     parameter_map = maps$country_map, day= 20231203)
 
@@ -65,7 +63,7 @@ country_map<- remove_duplicate_reports(report_name = 'process_country',
 #                                                   parameter_map = country_map)
 
 site_map<- maps$site_map
-sites<- purrr::map(.x = c(801:nrow(site_map)), .f= ~ site_map[.x,])
+sites<- purrr::map(.x = c(1:300), .f= ~ site_map[.x,])
 
 country_map<- maps$country_map
 countries<- purrr::map(.x = 1:nrow(country_map), .f= ~ country_map[.x,])
@@ -95,6 +93,8 @@ obj <- didehpc::queue_didehpc(ctx, config = config)
 #          'mrc-ide/postie@dalys',
 #          'countrycode')
 # 
+
+
 # packages you need for postprocessing
 pp<- c('mrc-ide/postie@dalys',
        'data.table',
@@ -122,14 +122,14 @@ for (pkg in pp){
 lapply(
   sites,
   run_report,
-  report_name = 'site_diagnostics',
+  report_name = 'process_site',
   path = dir
 )
 
 
 # 
 # # or launch on cluster
-processing4<- obj$lapply(
+processing<- obj$lapply(
   sites,
   run_report,
   report_name = 'process_site',
@@ -145,7 +145,7 @@ processing4<- obj$lapply(
 # )
 # 
 # # or launch cluster ----------------------------------------------------------
-somalia<- obj$lapply(
+uga<- obj$lapply(
   countries,
   run_report_country,
   report_name = 'process_country',
