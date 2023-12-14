@@ -26,18 +26,18 @@ dir<- getwd()
 ################################################################################
 # 1 prepare and save inputs
 # unless inputs change, this only needs to be run once for all countries
-# for (iso3c in iso3cs){
-# 
-#   orderly2::orderly_run(
-#     'process_inputs',
-#     list(iso3c = iso3c),
-#     root = dir)
-# }
+for (iso3c in iso3cs){
 
+  orderly2::orderly_run(
+    'process_inputs',
+    list(iso3c = iso3c),
+    root = dir)
+}
+sub<- reruns[scenarios == 'malaria-rts3-rts4-default']
 # PARAMETERS TO CHANGE FOR REPORTS ---------------------------------------------
 maps<- make_parameter_maps(
-  iso3cs = iso3cs,                                                                       # Pick 10 countries to begin with
-  #scenarios= c('malaria-r3-default', 'malaria-rts3-bluesky', 'malaria-rts3-default'),     # if you only want to run reports for certain scenarios. Default is all 7
+  iso3cs = sub$iso3c,                                                           # Pick 10 countries to begin with
+  scenarios= 'malaria-rts3-rts4-default',     # if you only want to run reports for certain scenarios. Default is all 7
   population = 100000,                                                                    # population size
   description = 'complete_run',                                                           # reason for model run (change this for every run if you do not want to overwrite outputs)
   parameter_draw = 0,                                                                     # parameter draw to run (0 for central runs)
@@ -46,16 +46,16 @@ maps<- make_parameter_maps(
 )
 
 # deduplicate
-site_map<- remove_duplicate_reports(report_name = 'set_parameters',
-                                    parameter_map = maps$site_map, day= 20231124)
-
-# check that the preceding report has completed before you launch next report in chronology
-site_map<- generate_parameter_map_for_next_report(report_name = 'set_parameters',
-                                                  parameter_map = maps$site_map, 
-                                                  day= 20231203)
-
-country_map<- remove_duplicate_reports(report_name = 'process_country',
-                                    parameter_map = maps$country_map, day= 20231203)
+# site_map<- remove_duplicate_reports(report_name = 'set_parameters',
+#                                     parameter_map = maps$site_map, day= 20231124)
+# 
+# # check that the preceding report has completed before you launch next report in chronology
+# site_map<- generate_parameter_map_for_next_report(report_name = 'set_parameters',
+#                                                   parameter_map = maps$site_map, 
+#                                                   day= 20231203)
+# 
+# country_map<- remove_duplicate_reports(report_name = 'process_country',
+#                                     parameter_map = maps$country_map, day= 20231203)
 
 
 # check that the preceding report has completed before you launch next report in chronology
@@ -63,7 +63,7 @@ country_map<- remove_duplicate_reports(report_name = 'process_country',
 #                                                   parameter_map = country_map)
 
 site_map<- maps$site_map
-sites<- purrr::map(.x = c(1:300), .f= ~ site_map[.x,])
+sites<- purrr::map(.x = c(401:714), .f= ~ site_map[.x,])
 
 country_map<- maps$country_map
 countries<- purrr::map(.x = 1:nrow(country_map), .f= ~ country_map[.x,])
@@ -129,7 +129,7 @@ lapply(
 
 # 
 # # or launch on cluster
-processing<- obj$lapply(
+reports7<- obj$lapply(
   sites,
   run_report,
   report_name = 'process_site',
@@ -139,13 +139,13 @@ processing<- obj$lapply(
 #  # run report for all countries locally  -------------------------------------
 # lapply(
 #   countries,
-#   run_repooprt_country,
+#   run_report_country,
 #   report_name = 'process_country',
 #   path = dir
 # )
 # 
 # # or launch cluster ----------------------------------------------------------
-uga<- obj$lapply(
+rts3_rts4_default<- obj$lapply(
   countries,
   run_report_country,
   report_name = 'process_country',
