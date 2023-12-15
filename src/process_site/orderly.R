@@ -1,13 +1,13 @@
 # process site --------------------------------------------------------------
-orderly2::orderly_parameters(iso3c = NULL,
-                             description = NULL,
-                             site_name = NULL,
-                             ur = NULL,
-                             population = NULL,
-                             burnin = NULL,
-                             parameter_draw = NULL,
-                             scenario = NULL,
-                             quick_run = NULL)
+orderly2::orderly_parameters(iso3c = 'GIN',
+                             description = 'complete_run',
+                             site_name = 'Conakry',
+                             ur = 'rural',
+                             population = 100000,
+                             burnin = 15,
+                             parameter_draw = 0,
+                             scenario = 'malaria-rts3-default',
+                             quick_run = FALSE)
 
 orderly2::orderly_description('Process model outputs')
 orderly2::orderly_artefact('Processed output', 'processed_output.rds')

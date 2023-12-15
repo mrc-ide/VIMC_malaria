@@ -18,6 +18,7 @@ ctxs4/
 pkgs/
 archive/
 .outpack/
+montagu/
 draft/
 src/process_inputs/vimc_inputs/
 src/process_inputs/site_files/
