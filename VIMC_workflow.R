@@ -37,7 +37,7 @@ sub<- reruns[scenarios == 'malaria-rts3-rts4-default']
 # PARAMETERS TO CHANGE FOR REPORTS ---------------------------------------------
 maps<- make_parameter_maps(
   iso3cs = 'SDN',                                                           # Pick 10 countries to begin with
-  scenarios= 'malaria-rts3-bluesky',     # if you only want to run reports for certain scenarios. Default is all 7
+  #scenarios= 'malaria-rts3-bluesky',     # if you only want to run reports for certain scenarios. Default is all 7
   population = 100000,                                                                    # population size
   description = 'complete_run',                                                           # reason for model run (change this for every run if you do not want to overwrite outputs)
   parameter_draw = 0,                                                                     # parameter draw to run (0 for central runs)
@@ -137,13 +137,13 @@ diags2<- obj$lapply(
 )
 
 #  # run report for all countries locally  -------------------------------------
-# lapply(
-#   countries,
-#   run_report_country,
-#   report_name = 'process_country',
-#   path = dir
-# )
-# 
+lapply(
+  countries,
+  run_report_country,
+  report_name = 'process_country',
+  path = dir
+)
+
 # # or launch cluster ----------------------------------------------------------
 rts3_rts4_default<- obj$lapply(
   countries,
@@ -153,6 +153,6 @@ rts3_rts4_default<- obj$lapply(
 )
 
 
-
+run_report_country(countries[[7]], report_name='process_country', path=dir)
 
 
