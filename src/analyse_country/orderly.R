@@ -16,8 +16,6 @@ invisible(lapply(pkgs, library, character.only = TRUE))
 # functions
 source('site_functions.R')
 source('summary_functions.')
-
-
 # read in dependencies  --------------------------------------------------------
 orderly2::orderly_dependency("process_inputs", "latest(parameter:iso3c == this:iso3c)", c(vimc_input.rds = "vimc_input.rds"))
 orderly2::orderly_dependency("process_inputs", "latest(parameter:iso3c == this:iso3c)", c(site_file.rds = "site_file.rds"))
@@ -45,11 +43,11 @@ output<- rbindlist(lapply( c(1:length(site_info)),
                   site_df= site_info))
                   
 
+
+
 # aggregate outputs up to country level
 dt<- aggregate_outputs(output, pop)
-
-
-# produce country diagnostics --------------------------------------------------
+dt<- scale_cases(dt, site_data)
 
 
 
