@@ -6,6 +6,19 @@ orderly2::orderly_parameters(iso3c = 'BDI',
                              description =  'refactor_testing')
 
 # dependencies  ----
+library(vimcmalaria)
+library(site)
+library(data.table)
+library(dplyr)
+library(malariasimulation)
+library(openxlsx)
+library(ggplot2)
+library(tidyr)
+library(tibble)
+library(postie)
+library(data.table)
+library(countrycode)
+
 bl_scenario<- 'no-vaccination'
 
 orderly2::orderly_dependency("process_inputs", "latest(parameter:iso3c == this:iso3c)", c(vimc_input.rds = "vimc_input.rds"))
@@ -53,9 +66,9 @@ dt<- dt[scenario!= TRUE]
 # scale cases up to 2020 values based on ratio from no-vaccination scenario
 output<- scale_cases(dt, site_data)
 
-# plot outputs
+# format outputs for plotting
 descriptive_dt<- format_descriptive_data()
-input_data<- format_input_data
+input_data<- format_input_data()
 
 # render report ------
 rmarkdown::render(input= 'diagnostic_report_country.Rmd',

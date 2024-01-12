@@ -14,6 +14,7 @@ run_report<- function(site, report_name){
   
   
 }
+
 make_parameter_map<- function(iso3cs,
                               scenarios =  c('no-vaccination',
                                              'malaria-r3-default', 

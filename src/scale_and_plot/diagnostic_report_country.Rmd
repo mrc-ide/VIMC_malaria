@@ -12,28 +12,45 @@ knitr::opts_chunk$set(echo = FALSE, warning = FALSE)
 library(scene)
 library(ggpubr)
 library(data.table)
-options(scipen = 999)
-site<- site_data
+library(dplyr)
 
-# source plotting code for report
-lapply(list.files('functions/', full.names = T), source, local= knitr::knit_global())
+#options(scipen = 999)
+
+source('diagnostics.R')
+
+descriptive_dt<- readRDS('descriptive_dt.rds')
+input_data<- readRDS('input_data.rds')
 
 # read in parameters
+iso3c<- descriptive_dt$iso3c
+scenario<- descriptive_dt$scenario
+quick_run<- descriptive_dt$quick_run
+parameter_draw<- descriptive_dt$parameter_draw
+description<- descriptive_dt$description
 
+message('reading input')
+processed_output<- input_data$processed_output
+agg_output<- input_data$agg_output
+coverage_data<- input_data$coverage_data
+population_data<- input_data$population_data
+outcomes_averted<- input_data$outcomes_averted
+site_data<- input_data$site_data
+case_metrics<- input_data$case_metrics
 
-
+#find year where vaccine is introduced
+intro_yr<- min(coverage_data[coverage!= 0, year])
 ```
 
 ## VIMC country-level diagnostic report
 
 
 This is a diagnostic report for VIMC outputs for `r iso3c`, `r site_data$sites$country[1]`. 
-The description for this model run is `r description`. The scenario ran was `r scenario`. The population size of this model run was `r population`. The burn-in time was `r burnin` years. For this run, quick_run was `r quick_run` .
+The description for this model run is `r description`. The scenario ran was `r scenario`. For this run, quick_run was `r quick_run` .
 
-Total cases in the country in WMR 2020 were `r format_number(cases_wmr_2020)`.
-Total modelled cases in 2020 were `r format_number(cases_mod_2020)`.
+Total cases in the country in WMR 2020 were `r format_number(case_metrics$cases_wmr_2020)`.
+Total modelled cases in 2020 were `r format_number(case_metrics$cases_mod_2020)`.
 
-Up to 2100, `r percent_cases_averted_2100` % of cases were averted by vaccine.
+Up to 2100, `r case_metrics$percent_cases_averted_2100` % of cases were averted by vaccine.
  
 Cases averted per 100,000 vaccinated were: `r format_number(outcomes_averted$cases_averted)`.
 
@@ -47,7 +64,7 @@ DALYs averted per 100,000 vaccinated were: `r format_number(outcomes_averted$dal
 ```{r inputs}
 
 plot_vaccine_coverage(coverage_data)
-intro_yr<- min(coverage_data[coverage!= 0, year])
+
 
 ```
 
@@ -85,76 +102,76 @@ population_diagnostic_vimc(population_data)
 ## Modelled outputs
 
 ```{r population, echo=FALSE, fig.height=10, fig.width= 15}
-population_diagnostic_model(agg_output, pg= 1, intro_yr = intro_yr, summary = T)
+output_diagnostic(agg_output, pg= 1, variable = 'cohort_size', intro_yr = intro_yr, summary = T)
 
 
-population_diagnostic_model(processed_output, pg= 1, intro_yr = intro_yr)
-population_diagnostic_model(processed_output, pg= 2, intro_yr = intro_yr)
-population_diagnostic_model(processed_output, pg= 3, intro_yr = intro_yr)
-population_diagnostic_model(processed_output, pg= 4, intro_yr = intro_yr)
+output_diagnostic(processed_output,variable = 'cohort_size', pg= 1, intro_yr = intro_yr)
+output_diagnostic(processed_output,variable = 'cohort_size', pg= 2, intro_yr = intro_yr)
+output_diagnostic(processed_output,variable = 'cohort_size', pg= 3, intro_yr = intro_yr)
+output_diagnostic(processed_output,variable = 'cohort_size', pg= 4, intro_yr = intro_yr)
 
 
 ```
 
 # Incident cases
 ```{r incident cases, echo=FALSE, fig.height=10, fig.width= 15}
-incident_cases_diagnostic(agg_output, pg= 1, intro_yr = intro_yr, summary = T)
+output_diagnostic(agg_output,variable = 'cases', pg= 1, intro_yr = intro_yr, summary = T)
 
 scaling_diagnostic(agg_output)
 
-incident_cases_diagnostic(processed_output, pg= 1, intro_yr = intro_yr)
-incident_cases_diagnostic(processed_output, pg= 2, intro_yr = intro_yr)
-incident_cases_diagnostic(processed_output, pg= 3, intro_yr = intro_yr)
-incident_cases_diagnostic(processed_output, pg= 4, intro_yr = intro_yr)
+output_diagnostic(processed_output, variable = 'cases', pg= 1, intro_yr = intro_yr)
+output_diagnostic(processed_output, variable = 'cases', pg= 2, intro_yr = intro_yr)
+output_diagnostic(processed_output, variable = 'cases', pg= 3, intro_yr = intro_yr)
+output_diagnostic(processed_output, variable = 'cases', pg= 4, intro_yr = intro_yr)
 
 
 ```
 
 #   Incidence rate 
 ```{r incidence rate, echo = FALSE, fig.height=10, fig.width= 10}
-incidence_rate_diagnostic(agg_output, pg= 1, intro_yr = intro_yr, summary = T)
+output_diagnostic(agg_output, variable = 'clinical', pg= 1, intro_yr = intro_yr, summary = T)
 
   
-incidence_rate_diagnostic(processed_output, pg= 1, intro_yr = intro_yr)
-incidence_rate_diagnostic(processed_output, pg= 2, intro_yr = intro_yr)
-incidence_rate_diagnostic(processed_output, pg= 3, intro_yr = intro_yr)
-incidence_rate_diagnostic(processed_output, pg= 4, intro_yr = intro_yr)
+output_diagnostic(processed_output, variable = 'clinical', pg= 1, intro_yr = intro_yr)
+output_diagnostic(processed_output, variable = 'clinical', pg= 2, intro_yr = intro_yr)
+output_diagnostic(processed_output, variable = 'clinical', pg= 3, intro_yr = intro_yr)
+output_diagnostic(processed_output, variable = 'clinical', pg= 4, intro_yr = intro_yr)
 
 ```
 
 # Deaths
 
 ```{r deaths, echo=FALSE, fig.height=10, fig.width= 15}
-mortality_diagnostic(agg_output, pg= 1, intro_yr = intro_yr, summary = T)
+output_diagnostic(agg_output, variable = 'deaths', pg= 1, intro_yr = intro_yr, summary = T)
 
-mortality_diagnostic(processed_output, pg= 1, intro_yr = intro_yr)
-mortality_diagnostic(processed_output, pg= 2, intro_yr = intro_yr)
-mortality_diagnostic(processed_output, pg= 3, intro_yr = intro_yr)
-mortality_diagnostic(processed_output, pg= 4, intro_yr = intro_yr)
+output_diagnostic(processed_output,variable = 'deaths', pg= 1, intro_yr = intro_yr)
+output_diagnostic(processed_output,variable = 'deaths', pg= 2, intro_yr = intro_yr)
+output_diagnostic(processed_output,variable = 'deaths', pg= 3, intro_yr = intro_yr)
+output_diagnostic(processed_output,variable = 'deaths', pg= 4, intro_yr = intro_yr)
 
 ```
 
 # Mortality rate 
 ```{r mort rate, echo=FALSE, fig.height=10, fig.width= 15}
-mortality_rate_diagnostic(agg_output, pg= 1, intro_yr = intro_yr, summary = T)
+output_diagnostic(agg_output, variable = 'mortality', pg= 1, intro_yr = intro_yr, summary = T)
 
-  
-mortality_rate_diagnostic(processed_output, pg= 1, intro_yr = intro_yr)
-mortality_rate_diagnostic(processed_output, pg= 2, intro_yr = intro_yr)
-mortality_rate_diagnostic(processed_output, pg= 3, intro_yr = intro_yr)
-mortality_rate_diagnostic(processed_output, pg= 4, intro_yr = intro_yr)
+
+output_diagnostic(processed_output,variable = 'mortality',  pg= 1, intro_yr = intro_yr)
+output_diagnostic(processed_output,variable = 'mortality',  pg= 2, intro_yr = intro_yr)
+output_diagnostic(processed_output,variable = 'mortality',  pg= 3, intro_yr = intro_yr)
+output_diagnostic(processed_output,variable = 'mortality',  pg= 4, intro_yr = intro_yr)
 
 ```
 
 # DALYs
 ```{r dalys, echo = FALSE, fig.height=10, fig.width= 15}
-daly_diagnostic(agg_output, pg = 1, intro_yr = intro_yr, summary = T)
+output_diagnostic(agg_output, variable = 'dalys', pg = 1, intro_yr = intro_yr, summary = T)
 
 
-daly_diagnostic(processed_output, pg = 1, intro_yr = intro_yr)
-daly_diagnostic(processed_output, pg = 2, intro_yr = intro_yr)
-daly_diagnostic(processed_output, pg = 3, intro_yr = intro_yr)
-daly_diagnostic(processed_output, pg = 4, intro_yr = intro_yr)
+output_diagnostic(processed_output, variable = 'dalys', pg = 1, intro_yr = intro_yr)
+output_diagnostic(processed_output,variable = 'dalys',  pg = 2, intro_yr = intro_yr)
+output_diagnostic(processed_output,variable = 'dalys',  pg = 3, intro_yr = intro_yr)
+output_diagnostic(processed_output,variable = 'dalys',  pg = 4, intro_yr = intro_yr)
 
 ```
 
@@ -162,6 +179,9 @@ daly_diagnostic(processed_output, pg = 4, intro_yr = intro_yr)
 # Cases averted by age
 
 ```{r cases averted, echo =FALSE, fig.height=10, fig.width= 15}
+intvn_output<- processed_output[scenario == scenario]
+baseline_output<- processed_output[scenario == 'no-vaccination']
+
 plot_cases_averted(intvn_output, baseline_output)
 
 ```

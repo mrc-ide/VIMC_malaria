@@ -5,11 +5,10 @@
 ################################################################################
 
 # initialize orderly repository
-setwd('J:/VIMC/')
 source('workflow_functions.R')
 orderly2::orderly_init()
 
-# process inputs for each country modelled  (must onlee be run once)  ----------
+# process inputs for each country modelled  (must only be run once)  ----------
 coverage<- read.csv('src/process_inputs/vimc_inputs/vaccine_coverage/coverage_202310gavi-1_malaria-r3-default.csv')
 iso3cs<- unique(coverage$country_code)
 dir<- getwd()
@@ -30,7 +29,6 @@ map<- make_parameter_map(iso3cs= 'BDI',
                           quick_run= T)
 
 inputs<- purrr::map(.x = c(1:nrow(map)), .f= ~ map[.x,])
-
 
 test<- lapply(inputs, run_report, report_name = 'process_country')
 
