@@ -18,6 +18,9 @@ site<- site_data
 # source plotting code for report
 lapply(list.files('functions/', full.names = T), source, local= knitr::knit_global())
 
+# read in parameters
+
+
 
 ```
 
@@ -61,40 +64,6 @@ plot_interventions_combined(
 
 ```
 
-<!-- # Mortality rates -->
-
-<!-- ```{r mortality rate} -->
-
-<!-- plotting_theme<- theme_bw(base_size = 12) + -->
-<!--   theme( legend.position = 'bottom', -->
-<!--          strip.text.x = element_text(size = rel(0.8)), -->
-<!--          axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1.1),  -->
-<!--          text = element_text(family= 'Arial Narrow'), -->
-<!--          axis.ticks.y= element_blank(),  -->
-<!--          panel.grid.major = element_blank(), panel.grid.minor = element_blank())  -->
-
-
-
-<!-- p1<- ggplot(data = site$demography, mapping = aes(x= age_upper, y= mortality_rate))+ -->
-<!--   geom_point()+ -->
-<!--   ylim(0, 1.2) + -->
-<!--   plotting_theme + -->
-<!--   labs(title= 'Site file mortality rate inputs (2000-2500))', -->
-<!--        xlab= 'age', -->
-<!--        ylab= 'mortality rate') -->
-
-
-<!-- p2<-ggplot(data = mort, mapping = aes(x= age_to, y= value))+ -->
-<!--   geom_point()+ -->
-<!--   ylim(0, 1.2)+ -->
-<!--   plotting_theme+ -->
-<!--   labs(title= 'VIMC mortality rate inputs (2000-2100))', -->
-<!--        xlab= 'age', -->
-<!--        ylab= 'mortality rate') -->
-
-<!-- ggarrange(p1, p2, ncol= 2) -->
-
-<!-- ``` -->
 
 ### Site file cases and deaths
 ```{r cases_deaths, echo=FALSE}
