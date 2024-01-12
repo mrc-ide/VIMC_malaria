@@ -3,7 +3,10 @@ This repository contains code used to estimate the impact of malaria vaccines on
 The helper functions developed for this workflow can be found in the [vimcmalaria](https://github.com/mrc-ide/vimcmalaria) package.
 
 ##  Quick Start
-In order to run this workflow, run the ["workflow.R"](https://github.com/mrc-ide/VIMC_malaria/blob/main/VIMC_workflow.R) script. Carry out the following steps:
+In order to run this workflow, run the ["workflow.R"](https://github.com/mrc-ide/VIMC_malaria/blob/main/VIMC_workflow.R) script. 
+- Process_inputs formats the input files needed for this workflow.
+- Process_country parameterizes, models, and postprocesses outputs used to estimate vaccine impact.
+- Scale_and_plot scales outputs based on World Malaria Report estimates, then plots outputs.
 
 ### Save input files
 VIMC model inputs are saved locally and not tracked on this repository due to large size and privacy issues. VIMC inputs and site files should be saved under `/src/process_inputs/vimc_inputs` and `/src/process_inputs/site_files`, respectively. Contact Lydia for access to these files.
