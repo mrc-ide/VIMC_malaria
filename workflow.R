@@ -6,6 +6,8 @@
 
 # initialize orderly repository
 source('workflow_functions.R')
+library(data.table)
+library(dplyr)
 orderly2::orderly_init()
 
 # process inputs for each country modelled  (must only be run once)  ----------
@@ -30,5 +32,5 @@ map<- make_parameter_map(iso3cs= 'BDI',
 
 inputs<- purrr::map(.x = c(1:nrow(map)), .f= ~ map[.x,])
 
-test<- lapply(inputs, run_report, report_name = 'process_country')
+test<- lapply(inputs, run_report, report_name = 'scale_and_plot')
 

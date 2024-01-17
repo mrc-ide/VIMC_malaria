@@ -6,6 +6,7 @@ orderly2::orderly_parameters(iso3c = 'BDI',
                              description =  'refactor_testing')
 
 # dependencies  ----
+source('diagnostics.R')
 library(vimcmalaria)
 library(site)
 library(data.table)
@@ -65,7 +66,7 @@ dt<- dt[scenario!= TRUE]
 
 # scale cases up to 2020 values based on ratio from no-vaccination scenario
 output<- scale_cases(dt, site_data)
-
+processed_output<- output
 # format outputs for plotting
 descriptive_dt<- format_descriptive_data()
 input_data<- format_input_data()

@@ -33,7 +33,6 @@ make_parameter_map<- function(iso3cs,
   # expand grid out to include input parameters-
   country_map<- country_map |>
     mutate(description = description,
-           parameter_draw = parameter_draw,
            quick_run = quick_run)
   
   

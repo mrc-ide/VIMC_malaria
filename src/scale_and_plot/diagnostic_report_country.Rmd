@@ -18,8 +18,8 @@ library(dplyr)
 
 source('diagnostics.R')
 
-descriptive_dt<- readRDS('descriptive_dt.rds')
-input_data<- readRDS('input_data.rds')
+#descriptive_dt<- readRDS('descriptive_dt.rds')
+#input_data<- readRDS('input_data.rds')
 
 # read in parameters
 iso3c<- descriptive_dt$iso3c
