@@ -32,12 +32,9 @@ The `make_parameter_map` function will create input parameter data frames (at th
 
 
 
-### Run process country for all countries, parameter draws, and scenarios of interest
+### Run process country and scale_and_plot for all countries, parameter draws, and scenarios of interest
 This reports must be run in chronological order for all of the sites in a country for the vaccine scenario of interest. The code to run these reports can be found [here](https://github.com/mrc-ide/VIMC_malaria/blob/main/VIMC_workflow.R#L71-L78). 
-Note that given long run time, you will likely prefer to launch models on the cluster. Ensure orderly2, malariasimulation, dplyr, and data.table are installed in your cluster environment before launching models or they will fail.
-
-### Run process_country and country_diagnostics for all countries
-Run these reports using the code linked [here](https://github.com/mrc-ide/VIMC_malaria/blob/main/VIMC_workflow.R#L93-L104). 
+Note that given long run time, you will likely prefer to launch models on the cluster. Ensure orderly2, malariasimulation, dplyr, and data.table are installed in your cluster environment before launching models or they will fail. 
 
 ### Other notes
 This workflow can be quite space-intensive (particularly when running models for all sites in the 31 VIMC input countries). It is worthwhile to monitor the size of this repository and regularly clean out non-final reports. 
