@@ -70,3 +70,28 @@ reformat_output<- function(output){
   
 }
 
+reformat_output<- function(output){
+  
+  processed_results<- data.table()
+  doses_full<- data.table()
+  prev_full<- data.table()
+  
+  for(item in c(1:length(output))){
+    
+    subset<- output[[item]]
+    
+    processed<- subset$processed_output
+    doses<- subset$doses
+    prev<- subset$prevalence
+    
+    processed_results<- rbind(processed, processed_results, fill =T)
+    doses_full<- rbind(doses, doses_full, fill= T)
+    prev_full<- rbind(prev, prev_full, fill = T)
+    
+  }
+  
+  return(list('processed_full' = processed_results, 
+              'doses_full' = doses_full, 
+              'prev_full' = prev_full))
+  
+}

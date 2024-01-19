@@ -51,5 +51,10 @@ saveRDS(vimc_input, 'vimc_input.rds')
 
 # pull site data  --------------------------------------------------------------
 site_data <- readRDS(paste0('site_files/', iso3c, '.rds'))
+
+# turn SMC off as this will be modified with site package
+site_data$interventions <- site_data$interventions |>
+  mutate(smc_cov=0)
+
 saveRDS(site_data, 'site_file.rds')
 

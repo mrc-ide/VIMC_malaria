@@ -3,10 +3,10 @@
 .Rdata
 .httr-oauth
 .DS_Store
-.csv
-.xlsx
-.rds
-.RDS
+*.csv
+*.xlsx
+*.rds
+*.RDS
 2022/
 raw_data/
 data/

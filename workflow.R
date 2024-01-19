@@ -24,7 +24,7 @@ dir<- getwd()
 # }
 
 # run analysis for each country + scenario + parameter set
-map<- make_parameter_map(iso3cs= 'BDI',
+map<- make_parameter_map(iso3cs= 'SLE',
                          scenarios = c('malaria-rts3-rts4-default', 'no-vaccination'),
                           description = 'refactor_testing',
                           parameter_draws = c(2),
@@ -33,4 +33,8 @@ map<- make_parameter_map(iso3cs= 'BDI',
 inputs<- purrr::map(.x = c(1:nrow(map)), .f= ~ map[.x,])
 
 test<- lapply(inputs, run_report, report_name = 'scale_and_plot')
+
+
+
+# cluster setup ------
 
