@@ -1,0 +1,15 @@
+mrc-ide/vimcmalaria
+mrc-ide/site@vimc
+mrc-ide/malariasimulation
+mrc-ide/postie@dalys
+mrc-ide/scene
+mrc-ide/orderly2
+
+data.table
+dplyr
+openxlsx
+ggplot2
+tidyr
+tibble
+data.table
+countrycode

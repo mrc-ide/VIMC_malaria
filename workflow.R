@@ -16,7 +16,7 @@ iso3cs<- unique(coverage$country_code)
 dir<- getwd()
 
 # for (iso3c in iso3cs){
-#   
+#
 #   orderly2::orderly_run(
 #     'process_inputs',
 #     list(iso3c = iso3c),
@@ -28,13 +28,75 @@ map<- make_parameter_map(iso3cs= 'SLE',
                          scenarios = c('malaria-rts3-rts4-default', 'no-vaccination'),
                           description = 'refactor_testing',
                           parameter_draws = c(2),
-                          quick_run= T)
+                          quick_run= TRUE)
 
-inputs<- purrr::map(.x = c(1:nrow(map)), .f= ~ map[.x,])
+inputs<- purrr::map(.x = c(1:nrow(map)), .f= ~ as.list(map[.x,]))
 
-test<- lapply(inputs, run_report, report_name = 'scale_and_plot')
+test<- lapply(inputs, run_report, report_name = 'process_country')
 
 
 
 # cluster setup ------
+hipercow::hipercow_init(driver = 'windows')
+hipercow::hipercow_provision()
+hipercow::hipercow_environment_create(sources= 'workflow_functions.R')
 
+hipercow::hipercow_configuration()
+
+id <- hipercow::task_create_expr(orderly2::orderly_run(name = "process_country", parameters = inputs[[1]]))
+hipercow::task_status(id)
+hipercow::task_result(id)
+hipercow::task_log_show(id)
+hipercow::task_info(id)
+hipercow::task_log_watch(id)
+hipercow::task_wait(id)
+
+id <- hipercow::task_create_expr(foo(2, 4))
+hipercow::task_wait(id)
+hipercow::task_result(id)
+
+d <- data.frame(x = 1:10, y = runif(10))
+b <- hipercow::task_create_bulk_expr(foo(x, y), d)
+hipercow::hipercow_bundle_status(b, reduce = TRUE)
+
+b <- hipercow::task_create_bulk_expr(
+  orderly2::orderly_run(
+    "process_country",
+    parameters = list(iso3c = iso3c,
+                      description = description,
+                      quick_run = quick_run,
+                      scenario = scenario,
+                      parameter_draw = parameter_draw)),
+  map)
+
+b <- hipercow::task_create_bulk_call(
+  inputs,
+  orderly2::orderly_run,
+  report_name = "process_country")
+
+
+
+## furrr
+## doParallel
+## parallel
+
+id <- hipercow::task_create_expr(orderly2::orderly_run(name = "process_country", parameters = inputs[[1]]),
+                                 resources = hipercow::hipercow_resources(cores = 32))
+hipercow::task_log_watch(id)
+
+
+
+
+invisible(parallel::clusterCall(context_cache$cl, context_start, ctx$root,
+                                ctx$id))
+parallel::setDefaultCluster(context_cache$cl)
+
+
+parallel::clusterApply(cl, 1:4, function(x) Sys.getpid())
+
+Sys.sleep(2)
+lapply(1:4, function(x) Sys.sleep(2))
+parallel::clusterApply(cl, 1:4, function(x) Sys.sleep(2))
+
+
+Sys.getpid()

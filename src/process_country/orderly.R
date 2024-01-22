@@ -1,6 +1,6 @@
 # analyse country  -------------------------------------------------------------
 # orderly metadata  ----
-orderly2::orderly_parameters(iso3c = 'SLE', 
+orderly2::orderly_parameters(iso3c = 'SLE',
                              scenario = 'malaria-rts3-rts4-default',
                              quick_run = TRUE,
                              parameter_draw = 0,
@@ -10,11 +10,18 @@ orderly2::orderly_description('Analyze vaccine impact at the site level')
 orderly2::orderly_artefact('Processed output', 'outputs.rds')
 
 # packages and functions ----
-pkgs <- c( 'site', 'data.table',  'dplyr', 'scene', 'malariasimulation', 'openxlsx', 'ggplot2', 'tidyr', 'tibble', 'postie', 'data.table', 'countrycode')
-invisible(lapply(pkgs, library, character.only = TRUE))
+library(site)
+library(data.table)
+library(dplyr)
+library(scene)
+library(malariasimulation)
+library(tidyr)
+library(tibble)
+library(postie)
+library(data.table)
+library(countrycode)
+library(vimcmalaria)
 
-function_files<- list.files('J:/vimcmalaria/R/', full.names = T)
-invisible(lapply(function_files, source))
 
 # functions ----
 source('analyse_site.R')
@@ -24,7 +31,7 @@ source('analyse_site.R')
 orderly2::orderly_dependency("process_inputs", "latest(parameter:iso3c == this:iso3c)", c(vimc_input.rds = "vimc_input.rds"))
 orderly2::orderly_dependency("process_inputs", "latest(parameter:iso3c == this:iso3c)", c(site_file.rds = "site_file.rds"))
 
-vimc_input<- readRDS('vimc_input.rds') 
+vimc_input<- readRDS('vimc_input.rds')
 site_data <- readRDS('site_file.rds')
 
 # vimc inputs ----
@@ -35,13 +42,35 @@ pop_single_yr<- vimc_input$population_input_single_yr
 
 # make a map of input parameters for site function
 site_df<- remove_zero_eirs(iso3c, site_data)
-map<- make_analysis_map(site_df, test = FALSE)
+map<- make_analysis_map(site_df, test = TRUE)
 
 # run analysis function for each site + urban/rural combination ----
-output<- (lapply(map,
-                  analyse_site,
-                  site_data= site_data,
-                  coverage_data=coverage_data))
+cluster_cores <- Sys.getenv("CCP_NUMCPUS")
+if (cluster_cores == "") {
+  message("running in serial (on a laptop?)")
+  output<- lapply(map,
+                   analyse_site,
+                   site_data= site_data,
+                   coverage_data=coverage_data)
+} else {
+  message(sprintf("running in parallel on %s (on the cluster?)", cluster_cores))
+  cl <- parallel::makeCluster(as.integer(cluster_cores))
+  invisible(parallel::clusterCall(cl, ".libPaths", .libPaths()))
+  parallel::clusterCall(cl, function() {
+    library(vimcmalaria)
+    library(data.table)
+    source("analyse_site.R")
+    TRUE
+  })
+  output<- parallel::clusterApply(cl,
+                                  map,
+                                  analyse_site,
+                                  site_data= site_data,
+                                  coverage_data=coverage_data)
+  parallel::stopCluster(cl)
+}
+
+
 
 # reformat outputs into separate data frames
 test<- reformat_output(output)
@@ -57,7 +86,7 @@ if (scenario != 'no-vaccination'){
   doses_full<- aggregate_doses(doses_full)
 }
 
-#save every output to one list 
+#save every output to one list
 outputs<- list('country_output' = dt, 'site_output' = output, 'doses' = doses_full, 'prevalence' = prev_full)
 
 

@@ -20,6 +20,7 @@ pkgs/
 archive/
 .outpack/
 montagu/
+hipercow/
 draft/
 src/process_inputs/vimc_inputs/
 src/process_inputs/site_files/
