@@ -1,4 +1,4 @@
-# analyse country  -------------------------------------------------------------
+# process country  -------------------------------------------------------------
 # orderly metadata  ----
 orderly2::orderly_parameters(iso3c = 'SLE',
                              scenario = 'malaria-rts3-rts4-default',
@@ -20,13 +20,13 @@ library(tibble)
 library(postie)
 library(data.table)
 library(countrycode)
-library(vimcmalaria)
-
 
 # functions ----
 source('analyse_site.R')
 
+files<- list.files('functions/', full.names = T)
 
+invisible(lapply(files, source))
 # read in dependencies  ----
 orderly2::orderly_dependency("process_inputs", "latest(parameter:iso3c == this:iso3c)", c(vimc_input.rds = "vimc_input.rds"))
 orderly2::orderly_dependency("process_inputs", "latest(parameter:iso3c == this:iso3c)", c(site_file.rds = "site_file.rds"))
@@ -51,14 +51,23 @@ if (cluster_cores == "") {
   output<- lapply(map,
                    analyse_site,
                    site_data= site_data,
-                   coverage_data=coverage_data)
+                   vimc_input=vimc_input)
 } else {
   message(sprintf("running in parallel on %s (on the cluster?)", cluster_cores))
   cl <- parallel::makeCluster(as.integer(cluster_cores))
   invisible(parallel::clusterCall(cl, ".libPaths", .libPaths()))
   parallel::clusterCall(cl, function() {
-    library(vimcmalaria)
+    message('running')
     library(data.table)
+    source('functions/aggregate.R')
+    source('functions/diagnostics.R')
+    source('functions/model.R')
+    source('functions/parameterize.R')
+    source('functions/postprocess.R')
+    source('functions/scale.R')
+    source('functions/site_file.R')
+    source('functions/workflow.R')
+
     source("analyse_site.R")
     TRUE
   })
@@ -66,7 +75,7 @@ if (cluster_cores == "") {
                                   map,
                                   analyse_site,
                                   site_data= site_data,
-                                  coverage_data=coverage_data)
+                                  vimc_input=vimc_input)
   parallel::stopCluster(cl)
 }
 

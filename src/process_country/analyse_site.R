@@ -1,17 +1,23 @@
 
 analyse_site<- function(site,
                         site_data,
-                        coverage_data){
+                        vimc_input){
 
   model_input<- pull_input_params(site_name = site$site_name,
                                   ur = site$ur,
                                   site_data = site_data,
-                                  coverage_data = coverage_data,
+                                  coverage_data = vimc_input$coverage_input,
                                   scenario = site$scenario,
                                   parameter_draw = site$parameter_draw,
                                   quick_run = site$quick_run)
   model<- run_model(model_input)
-  output<- process_output(model, site_name = site$site_name, ur = site$ur, scenario = site$scenario)
+  output<- process_output(model,
+                                       vimc_input,
+                                       site_data = site_data,
+                                       site_name = site$site_name,
+                                       ur = site$ur,
+                                       iso3c = site$iso3c,
+                                       scenario = site$scenario)
 
   return(output)
 }
@@ -20,7 +26,7 @@ analyse_site<- function(site,
 make_analysis_map<- function(site_data,
                              test= F){
 
-  site_info<- data.table('site_name' = site_data$sites$name_1, 'ur' = site_data$sites$urban_rural)
+  site_info<- data.table('site_name' = site_data$sites$name_1, 'ur' = site_data$sites$urban_rural, 'iso3c' = site_data$sites$iso3c)
   site_info<- site_info |>
     mutate(scenario = scenario,
            quick_run = quick_run,
