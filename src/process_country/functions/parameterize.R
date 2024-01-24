@@ -48,6 +48,7 @@ pull_age_groups_time_horizon<- function(quick_run){
 #' @export
 pull_input_params<- function(site_name,
                              ur,
+                             iso3c,
                              site_data,
                              coverage_data,
                              scenario,
@@ -67,6 +68,7 @@ pull_input_params<- function(site_name,
   site<- expand_intervention_coverage(site,
                                       terminal_year = run_params$term_yr)
   site<- update_coverage_values(site,
+                                iso3c = iso3c,
                                 coverage_data,
                                 scenario_name = scenario)
 
@@ -136,7 +138,7 @@ parameterize_stochastic_run<- function(params, parameter_draw){
 #' @param scenario_name scenario for vaccine forecast
 #' @returns site file with additional variables 'rtss_coverage', 'rtss_booster_coverage', 'r21_coverage', 'r21_booster_coverage'
 #' @export
-update_coverage_values<- function(site, coverage_data, scenario_name){
+update_coverage_values<- function(site, iso3c, coverage_data, scenario_name){
 
   if(scenario_name == 'no-vaccination'){
 

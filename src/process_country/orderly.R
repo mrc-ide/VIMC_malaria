@@ -1,10 +1,10 @@
 # process country  -------------------------------------------------------------
 # orderly metadata  ----
-orderly2::orderly_parameters(iso3c = 'SLE',
-                             scenario = 'malaria-rts3-rts4-default',
-                             quick_run = TRUE,
-                             parameter_draw = 0,
-                             description =  'runtime_test')
+orderly2::orderly_parameters(iso3c = NULL,
+                             scenario = NULL,
+                             quick_run = NULL,
+                             parameter_draw = NULL,
+                             description =  NULL)
 
 orderly2::orderly_description('Analyze vaccine impact at the site level')
 orderly2::orderly_artefact('Processed output', 'outputs.rds')
@@ -18,7 +18,6 @@ library(malariasimulation)
 library(tidyr)
 library(tibble)
 library(postie)
-library(data.table)
 library(countrycode)
 
 # functions ----
@@ -42,7 +41,7 @@ pop_single_yr<- vimc_input$population_input_single_yr
 
 # make a map of input parameters for site function
 site_df<- remove_zero_eirs(iso3c, site_data)
-map<- make_analysis_map(site_df, test = TRUE)
+map<- make_analysis_map(site_df, test = FALSE)
 
 # run analysis function for each site + urban/rural combination ----
 cluster_cores <- Sys.getenv("CCP_NUMCPUS")
@@ -59,6 +58,14 @@ if (cluster_cores == "") {
   parallel::clusterCall(cl, function() {
     message('running')
     library(data.table)
+    library(dplyr)
+    library(scene)
+    library(malariasimulation)
+    library(tidyr)
+    library(tibble)
+    library(postie)
+    library(countrycode)
+
     source('functions/aggregate.R')
     source('functions/diagnostics.R')
     source('functions/model.R')
@@ -67,7 +74,6 @@ if (cluster_cores == "") {
     source('functions/scale.R')
     source('functions/site_file.R')
     source('functions/workflow.R')
-
     source("analyse_site.R")
     TRUE
   })

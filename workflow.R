@@ -28,7 +28,7 @@ map<- make_parameter_map(iso3cs= 'SLE',
                          scenarios = c('malaria-rts3-rts4-default', 'no-vaccination'),
                           description = 'refactor_testing',
                           parameter_draws = c(2),
-                          quick_run= TRUE)
+                          quick_run= FALSE)
 
 inputs<- purrr::map(.x = c(1:nrow(map)), .f= ~ as.list(map[.x,]))
 
@@ -43,7 +43,8 @@ hipercow::hipercow_environment_create(sources= 'workflow_functions.R')
 
 hipercow::hipercow_configuration()
 
-id <- hipercow::task_create_expr(orderly2::orderly_run(name = "process_country", parameters = inputs[[1]]))
+id <- hipercow::task_create_expr(orderly2::orderly_run(name = "process_country", parameters = inputs[[1]]),
+                                                       resources = hipercow::hipercow_resources(cores = 32))
 hipercow::task_status(id)
 hipercow::task_result(id)
 hipercow::task_log_show(id)
@@ -76,27 +77,3 @@ b <- hipercow::task_create_bulk_call(
 
 
 
-## furrr
-## doParallel
-## parallel
-
-id <- hipercow::task_create_expr(orderly2::orderly_run(name = "process_country", parameters = inputs[[1]]),
-                                 resources = hipercow::hipercow_resources(cores = 32))
-hipercow::task_log_watch(id)
-
-
-
-
-invisible(parallel::clusterCall(context_cache$cl, context_start, ctx$root,
-                                ctx$id))
-parallel::setDefaultCluster(context_cache$cl)
-
-
-parallel::clusterApply(cl, 1:4, function(x) Sys.getpid())
-
-Sys.sleep(2)
-lapply(1:4, function(x) Sys.sleep(2))
-parallel::clusterApply(cl, 1:4, function(x) Sys.sleep(2))
-
-
-Sys.getpid()

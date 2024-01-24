@@ -8,16 +8,19 @@ analyse_site<- function(site,
                                   site_data = site_data,
                                   coverage_data = vimc_input$coverage_input,
                                   scenario = site$scenario,
+                                  iso3c = site$iso3c,
                                   parameter_draw = site$parameter_draw,
                                   quick_run = site$quick_run)
   model<- run_model(model_input)
   output<- process_output(model,
-                                       vimc_input,
+                         vimc_input,
                                        site_data = site_data,
                                        site_name = site$site_name,
                                        ur = site$ur,
                                        iso3c = site$iso3c,
-                                       scenario = site$scenario)
+                                       scenario = site$scenario,
+                          quick_run = site$quick_run,
+                         description= site$description)
 
   return(output)
 }

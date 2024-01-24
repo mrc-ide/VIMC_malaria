@@ -5,7 +5,7 @@
 #' @param scenario vaccine scenario
 #' @returns list of parameters for all model runs
 #' @export
-process_output<- function(model, vimc_input, site_data, site_name, ur, iso3c, scenario){
+process_output<- function(model, vimc_input, site_data, site_name, ur, iso3c, scenario, quick_run, description){
 
   message('postprocessing')
   # calculate rates
@@ -27,11 +27,12 @@ process_output<- function(model, vimc_input, site_data, site_name, ur, iso3c, sc
                         iso3c= iso3c,
                         site_data,
                         vimc_pop= vimc_input$population_input_all_age,
+                        quick_run = quick_run,
                         pop_single_yr= vimc_input$population_input_single_yr)
 
 
   # final formatting  ------------------------------------------------------------
-  output<- format_outputs(dt, iso3c = iso3c, site_name = site_name, ur= ur)
+  output<- format_outputs(dt, iso3c = iso3c, site_name = site_name, ur= ur, scenario = scenario, description = description)
 
   if(scenario!="no-vaccination") {
 
@@ -59,7 +60,7 @@ process_output<- function(model, vimc_input, site_data, site_name, ur, iso3c, sc
 #' expand VIMC life expectancy data frame to single yea
 #' @param le   VIMC life expectacy input
 #' @export
-expand_life_expectancy<- function(le){
+expand_life_expectancy<- function(le, iso3c){
 
   le<- le |>
     filter(country_code == iso3c,
@@ -88,11 +89,12 @@ expand_life_expectancy<- function(le){
 #' @param iso3c countrycode
 #' @param site_data site file
 #' @param site_name name of site
+#' @param quick_run quick_run
 #' @param ur urbanicity
 #' @param vimc_population VIMC population input
 #' @param pop_single_yr VIMC population input (single year age groups)
 #' @export
-vimc_postprocess<- function(output, le, iso3c, site_data, site_name, ur, vimc_pop, pop_single_yr){
+vimc_postprocess<- function(output, le, iso3c, site_data, site_name, ur, vimc_pop, pop_single_yr, quick_run){
 
   # fill rates out to single year age groups
   output<- output |>
@@ -116,7 +118,7 @@ vimc_postprocess<- function(output, le, iso3c, site_data, site_name, ur, vimc_po
 
 
   # merge in inputs for expected remaining years of life (to calculate YLLs)  ------
-  le<- expand_life_expectancy(le)
+  le<- expand_life_expectancy(le, iso3c)
 
   # calculate ylls_pp + dalys per person
   dt<- merge(output, le, by = c('year', 'age_lower'), all.x = TRUE)
@@ -139,6 +141,7 @@ vimc_postprocess<- function(output, le, iso3c, site_data, site_name, ur, vimc_po
     mutate(
       cases = round(.data$clinical * .data$vimc_site_population * .data$prop_n),
       deaths = round(.data$mortality * .data$vimc_site_population * .data$prop_n),
+      ylls = round(.data$ylls_pp * .data$vimc_site_population * .data$prop_n),
       dalys = round(.data$dalys_pp * .data$vimc_site_population * .data$prop_n),
       population = round(.data$vimc_site_population * .data$prop_n)) |>
     select(-prop_n)
@@ -152,7 +155,7 @@ vimc_postprocess<- function(output, le, iso3c, site_data, site_name, ur, vimc_po
 #' @param site_name name of site
 #' @param ur urbanicity
 #' @export
-format_outputs<- function(dt, iso3c, site_name, ur){
+format_outputs<- function(dt, iso3c, site_name, ur, scenario, description){
   dt <- dt |>
     mutate(
       disease = 'Malaria',
@@ -177,10 +180,11 @@ format_outputs<- function(dt, iso3c, site_name, ur){
       .data$site_name,
       .data$urban_rural,
       .data$scenario,
-      .data$description,
+       description,
       .data$cohort_size,
       .data$cases,
       .data$dalys,
+      .data$ylls,
       .data$deaths,
       .data$clinical,
       .data$mortality,
