@@ -25,16 +25,15 @@ dir<- getwd()
 
 # run analysis for each country + scenario + parameter set
 map<- make_parameter_map(iso3cs= 'SLE',
-                         scenarios = c('malaria-rts3-rts4-default', 'no-vaccination'),
+                         #scenarios = c('malaria-rts3-rts4-default', 'no-vaccination'),
                           description = 'refactor_testing',
                           parameter_draws = c(2),
                           quick_run= FALSE)
 
 inputs<- purrr::map(.x = c(1:nrow(map)), .f= ~ as.list(map[.x,]))
 
-test<- lapply(inputs, run_report, report_name = 'process_country')
 
-
+orderly2::orderly_run(name = "process_country", parameters = inputs[[1]])
 
 # cluster setup ------
 hipercow::hipercow_init(driver = 'windows')
@@ -56,9 +55,6 @@ id <- hipercow::task_create_expr(foo(2, 4))
 hipercow::task_wait(id)
 hipercow::task_result(id)
 
-d <- data.frame(x = 1:10, y = runif(10))
-b <- hipercow::task_create_bulk_expr(foo(x, y), d)
-hipercow::hipercow_bundle_status(b, reduce = TRUE)
 
 b <- hipercow::task_create_bulk_expr(
   orderly2::orderly_run(
@@ -68,7 +64,8 @@ b <- hipercow::task_create_bulk_expr(
                       quick_run = quick_run,
                       scenario = scenario,
                       parameter_draw = parameter_draw)),
-  map)
+  map,
+  resources = hipercow::hipercow_resources(cores = 32))
 
 b <- hipercow::task_create_bulk_call(
   inputs,

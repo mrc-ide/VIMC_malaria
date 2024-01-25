@@ -9,8 +9,13 @@ run_model<- function(model_input){
   params$progress_bar <- TRUE
   timesteps <<- model_input$param_list$timesteps
 
-  model <- malariasimulation::run_simulation(timesteps = params$timesteps,
-                                             parameters = params)
+  model <- retry::retry(
+    malariasimulation::run_simulation(timesteps = params$timesteps,
+                                      parameters = params),
+    max_tries = 5,
+    when = 'error reading from connection|embedded nul|unknown type',
+    interval = 3
+  )
 
   # add identifying information to output
   model <- model |>

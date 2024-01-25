@@ -14,7 +14,7 @@ analyse_site<- function(site,
   model<- run_model(model_input)
   output<- process_output(model,
                          vimc_input,
-                                       site_data = site_data,
+                          site_data = site_data,
                                        site_name = site$site_name,
                                        ur = site$ur,
                                        iso3c = site$iso3c,
