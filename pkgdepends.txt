@@ -1,6 +1,5 @@
-mrc-ide/vimcmalaria
 mrc-ide/site@vimc
-mrc-ide/malariasimulation:@dev
+mrc-ide/malariasimulation@dev
 mrc-ide/postie@dalys
 mrc-ide/scene
 mrc-ide/orderly2

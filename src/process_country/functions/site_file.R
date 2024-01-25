@@ -4,7 +4,7 @@
 #' @return sites component of site file with only sites that will be modelled
 #' @export
 remove_zero_eirs<- function(iso3c, sites){
-  eirs<- sites$eir  # sites for country of interest
+  eirs<- data.table(sites$eir)  # sites for country of interest
   eirs<- eirs[eirs$spp == 'pf' & eirs$eir == 0, ]
   remove<- eirs[, c('name_1', 'urban_rural')]
 
@@ -17,7 +17,7 @@ remove_zero_eirs<- function(iso3c, sites){
   } else{
     message('No zero eir sites to remove')
   }
-  return(sites)
+  return(site)
 }
 
 #' Check that the EIR of the site of interest is not zero

@@ -29,7 +29,7 @@ analyse_site<- function(site,
 make_analysis_map<- function(site_data,
                              test= F){
 
-  site_info<- data.table('site_name' = site_data$sites$name_1, 'ur' = site_data$sites$urban_rural, 'iso3c' = site_data$sites$iso3c)
+  site_info<- data.table('site_name' = site_data$name_1, 'ur' = site_data$urban_rural, 'iso3c' = site_data$iso3c)
   site_info<- site_info |>
     mutate(scenario = scenario,
            quick_run = quick_run,

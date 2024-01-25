@@ -4,6 +4,7 @@
 ## purpose  run models for VIMC
 ################################################################################
 
+
 # initialize orderly repository
 source('workflow_functions.R')
 library(data.table)
@@ -24,16 +25,16 @@ dir<- getwd()
 # }
 
 # run analysis for each country + scenario + parameter set
-map<- make_parameter_map(iso3cs= 'SLE',
+map<- make_parameter_map(iso3cs= c('KEN', 'UGA'),
                          #scenarios = c('malaria-rts3-rts4-default', 'no-vaccination'),
-                          description = 'refactor_testing',
+                          description = 'quick_quick_run',
                           parameter_draws = c(2),
-                          quick_run= FALSE)
+                          quick_run= TRUE)
 
 inputs<- purrr::map(.x = c(1:nrow(map)), .f= ~ as.list(map[.x,]))
 
 
-orderly2::orderly_run(name = "process_country", parameters = inputs[[1]])
+orderly2::orderly_run(name = "process_country", parameters = inputs[[11]])
 
 # cluster setup ------
 hipercow::hipercow_init(driver = 'windows')
@@ -66,11 +67,5 @@ b <- hipercow::task_create_bulk_expr(
                       parameter_draw = parameter_draw)),
   map,
   resources = hipercow::hipercow_resources(cores = 32))
-
-b <- hipercow::task_create_bulk_call(
-  inputs,
-  orderly2::orderly_run,
-  report_name = "process_country")
-
 
 
