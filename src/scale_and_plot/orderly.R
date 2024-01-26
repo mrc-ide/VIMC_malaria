@@ -1,5 +1,5 @@
 # scale and plot  --------------------------------------------------------------
-orderly2::orderly_parameters(iso3c = 'BDI', 
+orderly2::orderly_parameters(iso3c = 'BDI',
                              scenario = 'malaria-rts3-rts4-default',
                              quick_run = TRUE,
                              parameter_draw = 2,
@@ -7,7 +7,6 @@ orderly2::orderly_parameters(iso3c = 'BDI',
 
 # dependencies  ----
 source('diagnostics.R')
-library(vimcmalaria)
 library(site)
 library(data.table)
 library(dplyr)
@@ -20,6 +19,10 @@ library(postie)
 library(data.table)
 library(countrycode)
 
+files<- list.files('functions/', full.names = T)
+
+invisible(lapply(files, source))
+
 bl_scenario<- 'no-vaccination'
 
 orderly2::orderly_dependency("process_inputs", "latest(parameter:iso3c == this:iso3c)", c(vimc_input.rds = "vimc_input.rds"))
@@ -29,14 +32,14 @@ orderly2::orderly_dependency("process_country", "latest(parameter:iso3c == this:
                                                  parameter:scenario == this:scenario &&
                                                  parameter:quick_run == this:quick_run &&
                                                  parameter:description == this:description &&
-                                                 parameter:parameter_draw == this:parameter_draw)", 
+                                                 parameter:parameter_draw == this:parameter_draw)",
                              c(outputs.rds = "outputs.rds"))
 
 orderly2::orderly_dependency("process_country", "latest(parameter:iso3c == this:iso3c &&
                                                  parameter:scenario == environment:bl_scenario &&
                                                  parameter:quick_run == this:quick_run &&
                                                  parameter:description == this:description &&
-                                                 parameter:parameter_draw == this:parameter_draw)", 
+                                                 parameter:parameter_draw == this:parameter_draw)",
                              c(bl_output.rds = "outputs.rds"))
 
 
@@ -51,7 +54,7 @@ doses<- intvn_output$doses
 int_prev<- intvn_output$prevalence
 
 # vimc inputs ----
-vimc_input<- readRDS('vimc_input.rds') 
+vimc_input<- readRDS('vimc_input.rds')
 site_data <- readRDS('site_file.rds')
 
 coverage_data<- vimc_input$coverage_input
@@ -62,7 +65,7 @@ pop_data<- vimc_input$population_input_all_age
 
 # bind intervention and baseline outputs together
 dt<- rbind(bl_results, intvn_results,fill= T)
-dt<- dt[scenario!= TRUE] 
+dt<- dt[scenario!= TRUE]
 
 # scale cases up to 2020 values based on ratio from no-vaccination scenario
 output<- scale_cases(dt, site_data)

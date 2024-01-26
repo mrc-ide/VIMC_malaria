@@ -25,22 +25,32 @@ dir<- getwd()
 # }
 
 # run analysis for each country + scenario + parameter set
-map<- make_parameter_map(iso3cs= c('KEN', 'UGA'),
+map<- make_parameter_map(iso3cs= iso3cs,
                          #scenarios = c('malaria-rts3-rts4-default', 'no-vaccination'),
-                          description = 'quick_quick_run',
-                          parameter_draws = c(2),
-                          quick_run= TRUE)
+                          description = 'full_parameter_run',
+                          parameter_draws = c(0:5),
+                          quick_run= FALSE)
+
+completed<- completed_reports('process_country')
+map<- check_reports_completed('process_country', map)
+map<- check_not_a_rerun('scale_and_plot', map)
 
 inputs<- purrr::map(.x = c(1:nrow(map)), .f= ~ as.list(map[.x,]))
 
+# launch many reports locally
+lapply(inputs, function(x) {
+  orderly2::orderly_run(name = 'scale_and_plot', parameters = x)
+})
 
-orderly2::orderly_run(name = "process_country", parameters = inputs[[11]])
+# launch one report locally
+orderly2::orderly_run(name = "scale_and_plot", parameters = inputs[[2]])
+
+
 
 # cluster setup ------
 hipercow::hipercow_init(driver = 'windows')
 hipercow::hipercow_provision()
 hipercow::hipercow_environment_create(sources= 'workflow_functions.R')
-
 hipercow::hipercow_configuration()
 
 id <- hipercow::task_create_expr(orderly2::orderly_run(name = "process_country", parameters = inputs[[1]]),
@@ -56,8 +66,8 @@ id <- hipercow::task_create_expr(foo(2, 4))
 hipercow::task_wait(id)
 hipercow::task_result(id)
 
-
-b <- hipercow::task_create_bulk_expr(
+subset<- map[1:200]
+b2 <- hipercow::task_create_bulk_expr(
   orderly2::orderly_run(
     "process_country",
     parameters = list(iso3c = iso3c,
@@ -65,7 +75,7 @@ b <- hipercow::task_create_bulk_expr(
                       quick_run = quick_run,
                       scenario = scenario,
                       parameter_draw = parameter_draw)),
-  map,
+  subset,
   resources = hipercow::hipercow_resources(cores = 32))
 
 
