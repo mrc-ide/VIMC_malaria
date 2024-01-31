@@ -41,7 +41,7 @@ pop_single_yr<- vimc_input$population_input_single_yr
 
 # make a map of input parameters for site function
 site_df<- remove_zero_eirs(iso3c, site_data)
-map<- make_analysis_map(site_df, test = FALSE)
+map<- make_analysis_map(site_df, test = TRUE)
 
 # run analysis function for each site + urban/rural combination ----
 cluster_cores <- Sys.getenv("CCP_NUMCPUS")
@@ -65,7 +65,7 @@ if (cluster_cores == "") {
     library(tibble)
     library(postie)
     library(countrycode)
-
+    library(site)
     source('functions/aggregate.R')
     source('functions/diagnostics.R')
     source('functions/model.R')

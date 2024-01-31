@@ -35,6 +35,12 @@ make_analysis_map<- function(site_data,
            quick_run = quick_run,
            parameter_draw = parameter_draw)
 
+  Encoding(site_info$site_name) <- "UTF-8"
+
+  site_info$site_name<- iconv(site_info$site_name, from="UTF-8", to="ASCII//TRANSLIT")
+
+
+
   if (test) {
 
     site_info<- site_info[1:2]

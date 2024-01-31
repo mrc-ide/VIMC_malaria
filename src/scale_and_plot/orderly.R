@@ -1,9 +1,11 @@
 # scale and plot  --------------------------------------------------------------
-orderly2::orderly_parameters(iso3c = 'BDI',
-                             scenario = 'malaria-rts3-rts4-default',
-                             quick_run = TRUE,
-                             parameter_draw = 2,
-                             description =  'refactor_testing')
+orderly2::orderly_parameters(iso3c = NULL,
+                             scenario = NULL,
+                             quick_run = NULL,
+                             parameter_draw = NULL,
+                             description =  NULL,
+                             plot= NULL)
+
 
 # dependencies  ----
 source('diagnostics.R')
@@ -18,13 +20,14 @@ library(tibble)
 library(postie)
 library(data.table)
 library(countrycode)
+orderly2::orderly_artefact('Final output', 'processed_output.rds')
 
 files<- list.files('functions/', full.names = T)
 
 invisible(lapply(files, source))
 
 bl_scenario<- 'no-vaccination'
-
+scenario_name <- scenario
 orderly2::orderly_dependency("process_inputs", "latest(parameter:iso3c == this:iso3c)", c(vimc_input.rds = "vimc_input.rds"))
 orderly2::orderly_dependency("process_inputs", "latest(parameter:iso3c == this:iso3c)", c(site_file.rds = "site_file.rds"))
 
@@ -70,15 +73,31 @@ dt<- dt[scenario!= TRUE]
 # scale cases up to 2020 values based on ratio from no-vaccination scenario
 output<- scale_cases(dt, site_data)
 processed_output<- output
-# format outputs for plotting
-descriptive_dt<- format_descriptive_data()
-input_data<- format_input_data()
 
-# render report ------
-rmarkdown::render(input= 'diagnostic_report_country.Rmd',
-                  output_file = 'country_diagnostic_report',
-                  output_format = 'html_document',
-                  params= list('descriptive_data' = descriptive_dt,
-                               'input_data' = input_dt))
+processed_output<- processed_output |>
+  filter(scenario == scenario_name) |>
+  mutate(description = description,
+         parameter_draw = parameter_draw,
+         quick_run = quick_run)
+
+saveRDS(processed_output, 'processed_output.rds')
 
 
+if(scenario== 'malaria-no-vaccination'){
+  plot== FALSE
+}
+if(plot== TRUE){
+  # format outputs for plotting
+  descriptive_dt<- format_descriptive_data()
+  input_data<- format_input_data()
+
+  # render report ------
+  rmarkdown::render(input= 'diagnostic_report_country.Rmd',
+                    output_file = 'country_diagnostic_report',
+                    output_format = 'html_document',
+                    params= list('descriptive_data' = descriptive_dt,
+                                 'input_data' = input_dt))
+
+
+
+}

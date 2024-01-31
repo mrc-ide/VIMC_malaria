@@ -190,9 +190,7 @@ update_coverage_values<- function(site, iso3c, coverage_data, scenario_name){
 
   if(scenario_name == 'malaria-rts3-rts4-bluesky'){
     dt[rtss_booster_coverage== 0.9, rtss_booster_coverage:= 1]
-  }
-
-else{
+  }else{
   for (yr in unique(dt$year)){
 
     dt[year== yr & rtss_coverage!= 0 & rtss_booster_coverage!= 0,
