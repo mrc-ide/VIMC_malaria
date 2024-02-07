@@ -4,7 +4,6 @@
 ## purpose  run models for VIMC
 ################################################################################
 
-
 # initialize orderly repository
 source('workflow_functions.R')
 library(data.table)
@@ -26,18 +25,18 @@ dir<- getwd()
 
 # run analysis for each country + s.cenario + parameter set
 map<- make_parameter_map(iso3cs= iso3cs,
-                         #scenarios = c('malaria-r3-default', 'malaria-r3-r4-default'),
+                         scenarios = c('no-vaccination'),
                           description = 'full_parameter_run',
-                          parameter_draws = c(0),
+                          parameter_draws = c(0:10),
                           quick_run= FALSE)
+map[, plot:= FALSE]
 
-completed<- completed_reports('process_country')
+completed<- completed_reports('scale_and_plot')
 map<- check_reports_completed('process_country', map)
-map<- check_not_a_rerun('scale_and_plot', map)
+map<- check_not_a_rerun('scale', map)
 inputs<- purrr::map(.x = c(1:nrow(map)), .f= ~ as.list(map[.x,]))
 
 # if you are running scale and plot, add a column for whether you want to run diagnostics
-map[, plot:= TRUE]
 
 
 # launch many reports locally
@@ -46,7 +45,7 @@ for(index in c(1:nrow(map))){
 
   message(index)
   params<- as.list(map[index,])
-  orderly2::orderly_run(name = 'scale_and_plot', parameters = params)
+  orderly2::orderly_run(name = 'scale', parameters = params)
 
 }
 
@@ -82,6 +81,8 @@ sub<- merge(subset, site_counts, by = 'iso3c')
 sub1<- sub[site_number < 16]
 sub2<- sub[site_number >= 16]
 
+
+sub6<- sub2[1200:1750]
 bsmall3 <- hipercow::task_create_bulk_expr(
   orderly2::orderly_run(
     "process_country",
@@ -94,7 +95,7 @@ bsmall3 <- hipercow::task_create_bulk_expr(
   resources = hipercow::hipercow_resources(cores = 16))
 
 
-bbig3 <- hipercow::task_create_bulk_expr(
+bbig7 <- hipercow::task_create_bulk_expr(
   orderly2::orderly_run(
     "process_country",
     parameters = list(iso3c = iso3c,
@@ -102,5 +103,5 @@ bbig3 <- hipercow::task_create_bulk_expr(
                       quick_run = quick_run,
                       scenario = scenario,
                       parameter_draw = parameter_draw)),
-  sub2,
+  sub6,
   resources = hipercow::hipercow_resources(cores = 32))

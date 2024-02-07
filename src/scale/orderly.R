@@ -1,14 +1,12 @@
-# scale and plot  --------------------------------------------------------------
+# scale  --------------------------------------------------------------
 orderly2::orderly_parameters(iso3c = NULL,
                              scenario = NULL,
                              quick_run = NULL,
                              parameter_draw = NULL,
-                             description =  NULL,
-                             plot= NULL)
+                             description = NULL)
 
 
 # dependencies  ----
-source('diagnostics.R')
 library(site)
 library(data.table)
 library(dplyr)
@@ -38,18 +36,25 @@ orderly2::orderly_dependency("process_country", "latest(parameter:iso3c == this:
                                                  parameter:parameter_draw == this:parameter_draw)",
                              c(outputs.rds = "outputs.rds"))
 
-orderly2::orderly_dependency("process_country", "latest(parameter:iso3c == this:iso3c &&
+
+
+if(scenario_name != 'no-vaccination'){
+
+  orderly2::orderly_dependency("process_country", "latest(parameter:iso3c == this:iso3c &&
                                                  parameter:scenario == environment:bl_scenario &&
                                                  parameter:quick_run == this:quick_run &&
                                                  parameter:description == this:description &&
                                                  parameter:parameter_draw == this:parameter_draw)",
-                             c(bl_output.rds = "outputs.rds"))
+                               c(bl_output.rds = "outputs.rds"))
+
+  # workflow outputs  ----
+  bl_output<-  readRDS('bl_output.rds')
+  bl_results<- bl_output$country_output
+  bl_prev<- bl_output$prevalence
+
+}
 
 
-# workflow outputs  ----
-bl_output<-  readRDS('bl_output.rds')
-bl_results<- bl_output$country_output
-bl_prev<- bl_output$prevalence
 
 intvn_output<- readRDS('outputs.rds')
 intvn_results<- intvn_output$country_output
@@ -66,13 +71,24 @@ vimc_pop<- vimc_input$population_input_all_age
 pop_single_yr<- vimc_input$population_input_single_yr
 pop_data<- vimc_input$population_input_all_age
 
-# bind intervention and baseline outputs together
-dt<- rbind(bl_results, intvn_results,fill= T)
-dt<- dt[scenario!= TRUE]
+if(scenario_name == 'no-vaccination'){
 
-# scale cases up to 2020 values based on ratio from no-vaccination scenario
-output<- scale_cases(dt, site_data)
-processed_output<- output
+  # scale cases up to 2020 values based on ratio from no-vaccination scenario
+  output<- scale_cases(intvn_results, site_data)
+  processed_output<- output
+
+} else{
+  # bind intervention and baseline outputs together
+  dt<- rbind(bl_results, intvn_results,fill= T)
+  dt<- dt[scenario!= TRUE]
+
+  # scale cases up to 2020 values based on ratio from no-vaccination scenario
+  output<- scale_cases(dt, site_data)
+  processed_output<- output
+
+
+}
+
 
 processed_output<- processed_output |>
   filter(scenario == scenario_name) |>
@@ -83,21 +99,4 @@ processed_output<- processed_output |>
 saveRDS(processed_output, 'processed_output.rds')
 
 
-if(scenario== 'malaria-no-vaccination'){
-  plot== FALSE
-}
-if(plot== TRUE){
-  # format outputs for plotting
-  descriptive_dt<- format_descriptive_data()
-  input_data<- format_input_data()
 
-  # render report ------
-  rmarkdown::render(input= 'diagnostic_report_country.Rmd',
-                    output_file = 'country_diagnostic_report',
-                    output_format = 'html_document',
-                    params= list('descriptive_data' = descriptive_dt,
-                                 'input_data' = input_dt))
-
-
-
-}

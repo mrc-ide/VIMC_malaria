@@ -74,8 +74,8 @@ plot_interventions_combined(
   interventions = site_data$interventions,
   population = site_data$population,
   group_var = c("country", "name_1"),
-  include = c("itn_use", "itn_input_dist", "tx_cov", "smc_cov", "pmc_cov", "rtss_cov"),
-  labels = c("ITN usage", "ITN model input", "Treatment","SMC", "PMC", "RTSS")
+  include = c("itn_use", "itn_input_dist", "tx_cov", "smc_cov",'irs_cov', "pmc_cov", "rtss_cov"),
+  labels = c("ITN usage", "ITN model input", "Treatment","SMC", "IRS", "PMC", "RTSS")
 )
 
 
