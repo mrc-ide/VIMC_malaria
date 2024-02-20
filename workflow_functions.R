@@ -86,33 +86,21 @@ completed_reports<- function(report_name){
 
   meta <- orderly2::orderly_metadata_extract(name = report_name, extract = c('time', 'parameters'),  options = orderly2::orderly_search_options(allow_remote = TRUE))
 
-  ids<- meta$id
-  ids<- data.table(ids)
-  ids[, index:= c(1:.N)]
-
   meta<- meta|>
     tidyr::separate(col = id, into = c('date', 'other'), sep = '-')|>
     mutate(date= as.numeric(date))
-
 
   unique(lapply(meta$parameters, names))
   nms <- names(meta$parameters[[1]])
   pars <- do.call("data.frame", setNames(lapply(nms, function(nm) sapply(meta$parameters, function(x) x[[nm]])), nms))
 
-  pars<- data.table(pars)
-  pars[, index:= c(1:.N)]
-
-  full_table<- merge(ids, pars, by = 'index')
-  return(full_table)
+  return(pars)
 
 }
 
 check_reports_completed<- function(report_name, map){
 
   completed<- completed_reports(report_name)
-  completed<- completed |>
-    select(-index, -ids)
-
   intersection<- intersect(map, completed)
 
   return(intersection)
@@ -122,9 +110,6 @@ check_reports_completed<- function(report_name, map){
 check_not_a_rerun<- function(report_name, map){
 
   completed<- completed_reports(report_name)
-  completed<- completed |>
-    select(-index, -ids)
-
   different<- setdiff(map, completed)
 
   return(different)

@@ -12,5 +12,8 @@ tidyr
 tibble
 data.table
 countrycode
+<<<<<<< HEAD
 retry
 
+=======
+>>>>>>> parent of 2ac2b63 (rearranged a few reports, writing full run diagnostics)
