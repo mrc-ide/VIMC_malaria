@@ -97,6 +97,25 @@ if(scenario_name == 'no-vaccination'){
 
 }
 
+scale_par<- function(processed_output, iso3c){
+
+  pars<- readRDS('par_scaling_vimc.rds')
+  pars<- pars |>
+    filter(iso3c == {{iso3c}}) |>
+    mutate(scaling_ratio = proportion_risk/ model_proportion_risk)
+
+  processed_output<- merge(pars, processed_output, by = 'iso3c')
+
+  processed_output<- processed_output |>
+    mutate(cases = cases * scaling_ratio)    #severe cases / DALYS?
+
+
+  return(processed_output)
+
+
+}
+
+processed_output<- scale_par(processed_output, iso3c)
 
 # format and save
 processed_output<- processed_output |>
