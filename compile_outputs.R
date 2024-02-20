@@ -98,19 +98,19 @@ compile_stochastic_outputs<- function(filepath, description){
 
 output<- compile_stochastic_outputs(filepath = {{filepath}},  description= 'full_parameter_run')
 #
-# for (scen in unique(final$scenario)){
-#
-#   print(scen)
-#
-#   saving<- final |>
-#     filter(scenario == scen) |>
-#     rename(run_id = parameter_draw)
-#   print(length(unique(saving$country)))
-#   saving<- saving |>
-#     select(-scenario)
-#
-#   write.csv(saving, paste0('montagu/', 'stochastic-burden-est-', scen, '.csv'))
-# }
+for (scen in unique(output$to_submit$scenario)){
+
+  print(scen)
+
+  saving<- output$to_submit |>
+    filter(scenario == scen) |>
+    rename(run_id = parameter_draw)
+  print(length(unique(saving$country)))
+  saving<- saving |>
+    select(-scenario)
+
+  write.csv(saving, paste0('montagu/', 'stochastic-burden-est-', scen, '.csv'))
+}
 
 
 
@@ -170,7 +170,7 @@ incidence_over_time<- function(output, scenario, country_name){
     p<-   ggplot()+
     geom_line(data = median_run, mapping = aes(x= year, y= cases, color =scenario))  +
     geom_line(data = stochastic_run, mapping = aes(x= year, y= cases, color = scenario, group = parameter_draw), alpha = 0.2)  +
-    facet_wrap_paginate(~scenario) +
+    #facet_wrap_paginate(~scenario) +
     #geom_vline(xintercept= intro_yr, linetype= "dotted") +
     labs(x= 'Time (in years)', y= 'Cases',
          title= paste0('Cases over time'),

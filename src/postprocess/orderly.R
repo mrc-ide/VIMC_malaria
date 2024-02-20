@@ -1,9 +1,9 @@
-# scale  --------------------------------------------------------------
-orderly2::orderly_parameters(iso3c = NULL,
-                             scenario = NULL,
-                             quick_run = NULL,
-                             parameter_draw = NULL,
-                             description = NULL)
+# postprocess  --------------------------------------------------------------
+orderly2::orderly_parameters(iso3c = 'NGA',
+                             scenario = 'malaria-rts3-rts4-default',
+                             quick_run = FALSE,
+                             parameter_draw = 0,
+                             description = 'full_parameter_run')
 
 orderly2::orderly_artefact('Final output', 'processed_output.rds')
 
@@ -51,6 +51,7 @@ if(scenario_name != 'no-vaccination'){
   bl_output<-  readRDS('bl_output.rds')
   bl_results<- bl_output$country_output
   bl_prev<- bl_output$prevalence
+  processed_sites<- rbindlist(lapply(bl_output$site_output, function(x) return(x$processed_output)))
 
 }
 
@@ -79,6 +80,13 @@ if(scenario_name == 'no-vaccination'){
 
 } else{
   # bind intervention and baseline outputs together
+  low_transmission<- pull_low_transmission_sites(iso3c, processed_sites)
+  intvn_results<- rbind(intvn_results, low_transmission)
+
+  # aggregate up high transmission and low-transmission sites
+  dt<- aggregate_outputs(intvn_results, pop_single_yr)
+
+  # add in baseline results for scaling
   dt<- rbind(bl_results, intvn_results,fill= T)
   dt<- dt[scenario!= TRUE]
 
@@ -90,6 +98,7 @@ if(scenario_name == 'no-vaccination'){
 }
 
 
+# format and save
 processed_output<- processed_output |>
   filter(scenario == scenario_name) |>
   mutate(description = description,

@@ -23,6 +23,7 @@ aggregate_outputs<- function(dt, pop){
     select(year, age, cohort_size)
   dt<- merge(dt, pop, by =c('age', 'year'))
 
+
   # calculate rates --------------------------------------------------------------
   dt[, `:=` (
     clinical = NULL,
@@ -35,11 +36,4 @@ aggregate_outputs<- function(dt, pop){
   return(dt)
 }
 
-aggregate_doses<- function(doses_full){
-  doses_per_year <- doses_full |>
-    dplyr::group_by(year) |>
-    summarise(doses=sum(doses)) |>
-    mutate(scenario=scenario)
 
-  return(doses_per_year)
-}

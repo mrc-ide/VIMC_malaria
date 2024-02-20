@@ -6,9 +6,8 @@ scale_cases<- function(dt, site_data){
 
   pre_scale<- dt |>
     filter(scenario== 'no-vaccination')|>
-    group_by(year, parameter_draw) |>
-    summarise(cases = sum(cases),
-              .groups = 'keep')
+    group_by(year) |>
+    summarise(cases = sum(cases))
 
   #average site file cases across last three years
   site_file_cases<- data.table::data.table(site_data$cases_deaths[, c('year', 'wmr_cases')])
@@ -17,18 +16,17 @@ scale_cases<- function(dt, site_data){
 
   # calculate ratio in comparison to year 2020 cases in output
   output_cases<- pre_scale |>
-    filter(parameter_draw == 0) |>
     filter(year == 2020) |>
-    select(year, cases, parameter_draw)
+    select(cases)
 
-  output_cases$ratio<- average_value/output_cases$cases
+  ratio<- average_value/output_cases$cases
 
-  # add pre-scaled cases to output df as a new columnd
+  # add pre-scaled cases to output df as a new column
   dt<- dt |>
     mutate(pre_scaled_cases = cases)
 
   dt<- dt |>
-    mutate(cases = cases * output_cases$ratio)
+    mutate(cases = cases * ratio)
 
   dt<- dt|>
     mutate(clinical= cases/cohort_size,
@@ -111,6 +109,7 @@ format_descriptive_data<- function(){
   descriptive_dt<- list('iso3c' = iso3c,
                         'scenario' = scenario,
                         'quick_run' = quick_run,
+                        'parameter_draw' = parameter_draw,
                         'description' = description)
 
   return(descriptive_dt)
@@ -122,13 +121,12 @@ format_input_data<- function(){
 
 
   agg_output<- processed_output |>  # aggregated all-age output
-    group_by(year, scenario, parameter_draw) |>
+    group_by(year, scenario) |>
     summarise(cases = sum(cases),
               dalys = sum(dalys),
               deaths = sum(deaths),
               pre_scaled_cases = sum(pre_scaled_cases),
-              cohort_size = sum(cohort_size),
-              .groups = 'keep') |>
+              cohort_size = sum(cohort_size)) |>
     mutate(mortality = deaths/cohort_size,
            clinical = cases/ cohort_size,
            dalys_pp = dalys/ cohort_size,
@@ -139,9 +137,15 @@ format_input_data<- function(){
     filter(scenario == intvn_scenario,
            country_code == iso3c)
 
+  # outcomes averted + other case metrics
+  outcomes_averted <- round(pull_outcomes_averted_per_100k_vacc(intvn_results , bl_results , doses))
+  case_metrics<- pull_other_case_metrics(site_data, intvn_results, bl_results)
+
   return(list('processed_output' = processed_output,
               'site_data' = site_data,
               'coverage_data' = coverage_data,
               'population_data' = pop_data,
-              'agg_output' = agg_output))
+              'outcomes_averted' = outcomes_averted,
+              'agg_output' = agg_output,
+              'case_metrics' = case_metrics))
 }

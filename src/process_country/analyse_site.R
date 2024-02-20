@@ -27,13 +27,29 @@ analyse_site<- function(site,
 
 
 make_analysis_map<- function(site_data,
-                             test= F){
+                             test= F,
+                             scenario){
 
-  site_info<- data.table('site_name' = site_data$name_1, 'ur' = site_data$urban_rural, 'iso3c' = site_data$iso3c)
+  site_info<- readRDS('pfpr10plus_admins.rds')
   site_info<- site_info |>
-    mutate(scenario = scenario,
-           quick_run = quick_run,
-           parameter_draw = parameter_draw)
+    filter(iso3c == {{iso3c}})
+
+  if(scenario == 'no-vaccination'){
+
+    site_info<- site_info |>
+      mutate(run_model = TRUE)
+  }
+
+
+  site_info<- site_info |>
+      filter(run_model == TRUE)
+
+
+  site_info<- site_info |>
+    mutate(scenario = {{scenario}},
+           quick_run = {{quick_run}},
+           parameter_draw = {{parameter_draw}}) |>
+    rename(site_name = name_1)
 
   Encoding(site_info$site_name) <- "UTF-8"
 
@@ -51,62 +67,4 @@ make_analysis_map<- function(site_data,
   return(sites)
 }
 
-aggregate_doses<- function(doses_full){
-  doses_per_year <- doses_full |>
-    dplyr::group_by(year) |>
-    summarise(doses=sum(doses)) |>
-    mutate(scenario=scenario)
 
-  return(doses_per_year)
-}
-reformat_output<- function(output){
-
-  processed_results<- data.table()
-  doses_full<- data.table()
-  prev_full<- data.table()
-
-  for(item in c(1:length(output))){
-
-    subset<- output[[item]]
-
-    processed<- subset$processed_output
-    doses<- subset$doses
-    prev<- subset$prevalence
-
-    processed_results<- rbind(processed, processed_results, fill =T)
-    doses_full<- rbind(doses, doses_full, fill= T)
-    prev_full<- rbind(prev, prev_full, fill = T)
-
-  }
-
-  return(list('processed_full' = processed_results,
-              'doses_full' = doses_full,
-              'prev_full' = prev_full))
-
-}
-
-reformat_output<- function(output){
-
-  processed_results<- data.table()
-  doses_full<- data.table()
-  prev_full<- data.table()
-
-  for(item in c(1:length(output))){
-
-    subset<- output[[item]]
-
-    processed<- subset$processed_output
-    doses<- subset$doses
-    prev<- subset$prevalence
-
-    processed_results<- rbind(processed, processed_results, fill =T)
-    doses_full<- rbind(doses, doses_full, fill= T)
-    prev_full<- rbind(prev, prev_full, fill = T)
-
-  }
-
-  return(list('processed_full' = processed_results,
-              'doses_full' = doses_full,
-              'prev_full' = prev_full))
-
-}

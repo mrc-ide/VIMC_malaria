@@ -318,29 +318,24 @@ pull_doses_output <- function(raw_output, processed_output) {
 }
 
 
+pull_low_transmssion_sites<- function(iso3c, processed_sites){
+  # pull site output for no-vaccination for the low transmission settings
 
-reformat_output<- function(output){
+  site_info<- readRDS('pfpr10plus_admins.rds') |>
+    filter(iso3c == {{iso3c}},
+           run_model == FALSE)
 
-  processed_results<- data.table()
-  doses_full<- data.table()
-  prev_full<- data.table()
+  append<- data.table()
 
-  for(item in c(1:length(output))){
+  for (i in 1:nrow(site_info)){
 
-    subset<- output[[item]]
+    site<- site_info[ i,]
 
-    processed<- subset$processed_output
-    doses<- subset$doses
-    prev<- subset$prevalence
+    add<- processed_sites |>
+      filter(site_name == site$name_1 & urban_rural == site$urban_rural)
 
-    processed_results<- rbind(processed, processed_results, fill =T)
-    doses_full<- rbind(doses, doses_full, fill= T)
-    prev_full<- rbind(prev, prev_full, fill = T)
-
+    append<- rbind(append, add, fill = T)
   }
 
-  return(list('processed_full' = processed_results,
-              'doses_full' = doses_full,
-              'prev_full' = prev_full))
-
+  return(append)
 }

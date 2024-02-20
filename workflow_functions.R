@@ -1,4 +1,16 @@
 # workflow functions  ----------------------------------------------------------
+run_process_inputs<- function(iso3cs){
+  for (iso3c in iso3cs){
+
+    orderly2::orderly_run(
+      'process_inputs',
+      list(iso3c = iso3c),
+      root = dir)
+  }
+  message('done')
+
+}
+
 
 run_report<- function(site, report_name){
 
@@ -58,6 +70,13 @@ full_map<- merge(full_map, site_counts, by = 'iso3c')
 full_map<- setorder(full_map, parameter_draw, -site_number)
 full_map<- full_map |>
   select(-site_number)
+
+
+site_counts<- rbindlist(lapply(iso3cs, pull_site_numbers))
+
+full_map<- merge(full_map, site_counts, by = 'iso3c')
+full_map<- full_map |>
+  mutate(site_number = ifelse(site_number > 32, 32, site_number))
 
   return(full_map)
 }
@@ -120,3 +139,26 @@ pull_site_numbers<- function(iso3c){
 
   return(data.table('iso3c' = iso3c, 'site_number' = site_number))
 }
+
+
+submit_by_core<- function(core, dt){
+
+  dt<- dt |>
+    filter(site_number == core)
+
+  message(unique(dt$site_number))
+
+  hipercow::task_create_bulk_expr(
+    orderly2::orderly_run(
+      "process_country",
+      parameters = list(iso3c = iso3c,
+                        description = description,
+                        quick_run = quick_run,
+                        scenario = scenario,
+                        parameter_draw = parameter_draw)),
+    dt,
+    resources = hipercow::hipercow_resources(cores = unique(dt$site_number)))
+
+  message('submitted')
+}
+

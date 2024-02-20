@@ -1,8 +1,8 @@
 # plot  --------------------------------------------------------------
-orderly2::orderly_parameters(iso3c = 'NGA',
-                             scenario = 'malaria-rts3-rts4-default',
-                             quick_run = FALSE,
-                             description =  'full_parameter_run')
+orderly2::orderly_parameters(iso3c = NULL,
+                             scenario = NULL,
+                             quick_run = NULL,
+                             description = NULL)
 
 
 # dependencies  ----
@@ -41,7 +41,7 @@ draws<- max(completed$parameter_draw)
 intvn<- data.table()
 baseline<-data.table()
 
-for (draw in c(0:draws)){
+for (draw in c(0:5)){
 
   message(draw)
 
