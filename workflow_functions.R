@@ -65,18 +65,18 @@ make_parameter_map<- function(iso3cs,
   }
 
 
-site_counts<- rbindlist(lapply(iso3cs, pull_site_numbers))
-full_map<- merge(full_map, site_counts, by = 'iso3c')
-full_map<- setorder(full_map, parameter_draw, -site_number)
-full_map<- full_map |>
-  select(-site_number)
+  site_counts<- rbindlist(lapply(iso3cs, pull_site_numbers))
+  full_map<- merge(full_map, site_counts, by = 'iso3c')
+  full_map<- setorder(full_map, parameter_draw, -site_number)
+  full_map<- full_map |>
+    select(-site_number)
 
 
-site_counts<- rbindlist(lapply(iso3cs, pull_site_numbers))
+  site_counts<- rbindlist(lapply(iso3cs, pull_site_numbers))
 
-full_map<- merge(full_map, site_counts, by = 'iso3c')
-full_map<- full_map |>
-  mutate(site_number = ifelse(site_number > 32, 32, site_number))
+  full_map<- merge(full_map, site_counts, by = 'iso3c')
+  full_map<- full_map |>
+    mutate(site_number = ifelse(site_number > 32, 32, site_number))
 
   return(full_map)
 }

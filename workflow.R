@@ -19,7 +19,7 @@ dir<- getwd()
 map<- make_parameter_map(iso3cs= iso3cs,
                          #scenarios = c('malaria-r3-default', 'malaria-r3-r4-default'),
                           description = 'full_parameter_run',
-                          parameter_draws = c(0),
+                          parameter_draws = c(6:10),
                           quick_run= FALSE)
 
 completed<- completed_reports('process_country')
@@ -43,7 +43,7 @@ for(index in c(1:nrow(map))){
 
 
 # launch one report locally
-orderly2::orderly_run(name = "scale_and_plot", parameters = inputs[[1]])
+orderly2::orderly_run(name = "process_country", parameters = inputs[[1]])
 
 
 
@@ -53,37 +53,7 @@ hipercow::hipercow_init(driver = 'windows')
 hipercow::hipercow_environment_create(sources= 'workflow_functions.R')
 hipercow::hipercow_configuration()
 
-id <- hipercow::task_create_expr(foo(2, 4))
-hipercow::task_wait(id)
-hipercow::task_result(id)
+cores<- unique(map$site_number)
 
-site_counts<- rbindlist(lapply(iso3cs, pull_site_numbers))
-
-subset<- map
-sub<- merge(subset, site_counts, by = 'iso3c')
-
-sub1<- sub[site_number < 16]
-sub2<- sub[site_number >= 16]
-
-bsmall3 <- hipercow::task_create_bulk_expr(
-  orderly2::orderly_run(
-    "process_country",
-    parameters = list(iso3c = iso3c,
-                      description = description,
-                      quick_run = quick_run,
-                      scenario = scenario,
-                      parameter_draw = parameter_draw)),
-  sub1,
-  resources = hipercow::hipercow_resources(cores = 16))
-
-
-bbig3 <- hipercow::task_create_bulk_expr(
-  orderly2::orderly_run(
-    "process_country",
-    parameters = list(iso3c = iso3c,
-                      description = description,
-                      quick_run = quick_run,
-                      scenario = scenario,
-                      parameter_draw = parameter_draw)),
-  sub2,
-  resources = hipercow::hipercow_resources(cores = 32))
+# submit groups of jobs by number of cores to submit  --------------------------
+lapply(cores, submit_by_core, dt = map)

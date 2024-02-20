@@ -27,29 +27,15 @@ analyse_site<- function(site,
 
 
 make_analysis_map<- function(site_data,
-                             test= F,
-                             scenario){
+                             test= FALSE){
 
-  site_info<- readRDS('pfpr10plus_admins.rds')
-  site_info<- site_info |>
-    filter(iso3c == {{iso3c}})
-
-  if(scenario == 'no-vaccination'){
-
-    site_info<- site_info |>
-      mutate(run_model = TRUE)
-  }
-
-
-  site_info<- site_info |>
-      filter(run_model == TRUE)
+  site_info<- data.table('site_name' = site_data$name_1, 'ur' = site_data$urban_rural, 'iso3c' = site_data$iso3c)
 
 
   site_info<- site_info |>
     mutate(scenario = {{scenario}},
            quick_run = {{quick_run}},
-           parameter_draw = {{parameter_draw}}) |>
-    rename(site_name = name_1)
+           parameter_draw = {{parameter_draw}})
 
   Encoding(site_info$site_name) <- "UTF-8"
 

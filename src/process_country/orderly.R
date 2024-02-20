@@ -1,10 +1,10 @@
 # process country  -------------------------------------------------------------
 # orderly metadata  ----
-orderly2::orderly_parameters(iso3c = 'NGA',
-                             scenario = 'malaria-rts3-rts4-bluesky',
-                             quick_run = FALSE,
-                             parameter_draw = 0,
-                             description =  'round_2')
+orderly2::orderly_parameters(iso3c = NULL,
+                             scenario = NULL,
+                             quick_run = NULL,
+                             parameter_draw = NULL,
+                             description =  NULL)
 
 orderly2::orderly_description('Analyze vaccine impact at the site level')
 orderly2::orderly_artefact('Processed output', 'outputs.rds')
@@ -41,7 +41,6 @@ pop_single_yr<- vimc_input$population_input_single_yr
 
 # make a map of input parameters for site function
 site_df<- remove_zero_eirs(iso3c, site_data)
-
 map<- make_analysis_map(site_df, test = FALSE)
 
 # run analysis function for each site + urban/rural combination ----
@@ -93,14 +92,10 @@ doses_full<- test$doses_full
 prev_full<- test$prev_full
 
 
-if(scenario == 'no-vaccination'){
-  # aggregate outputs up to country level
-  dt<- aggregate_outputs(processed_results, pop_single_yr)
+# aggregate outputs up to country level
+dt<- aggregate_outputs(processed_results, pop_single_yr)
 
-} else{
 
-  dt<- data.table()
-}
 
 if (scenario != 'no-vaccination'){
   doses_full<- aggregate_doses(doses_full)
