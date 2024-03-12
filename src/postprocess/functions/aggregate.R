@@ -11,12 +11,12 @@ aggregate_outputs<- function(dt, pop){
     cases = sum(cases),
     deaths = sum(deaths),
     dalys = sum(dalys)),
-    by = c('age', 'year', 'scenario')]
+    by = c('age', 'year', 'scenario', 'parameter_draw')]
 
   # remove cohort size, because for sites with some unmodelled locations, sum of cohort size != national population
   dt<- dt |>
     dplyr::select(-.data$cohort_size)
-  dt <- unique(dt, by = c('age', 'year', 'scenario'))
+  dt <- unique(dt, by = c('age', 'year', 'scenario', 'parameter_draw'))
   pop<- pop |>
     dplyr::rename(age = age_from,
            cohort_size = value) |>

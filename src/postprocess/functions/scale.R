@@ -2,9 +2,9 @@
 #' @param dt  case output at country level
 #' @param site_data site file
 #' @export
-scale_cases<- function(dt, site_data){
+scale_cases<- function(dt, site_data, scaling_data){
 
-  pre_scale<- dt |>
+  pre_scale<- scaling_data |>
     filter(scenario== 'no-vaccination')|>
     group_by(year) |>
     summarise(cases = sum(cases))
@@ -148,4 +148,41 @@ format_input_data<- function(){
               'outcomes_averted' = outcomes_averted,
               'agg_output' = agg_output,
               'case_metrics' = case_metrics))
+}
+
+
+scale_par<- function(processed_output,
+                     iso3c){
+
+  pars<- readRDS('par_scaling_vimc.rds')
+  le_africa<- read.csv('UN_WPP_2022_life_expectancy_Africa.csv')
+
+  pars<- pars |>
+    filter(iso3c == {{iso3c}}) |>
+    mutate(scaling_ratio = proportion_risk/ model_proportion_risk) |>
+    rename(country = iso3c)
+
+  processed_output<- merge(pars, processed_output, by = 'country')
+  processed_output<- merge(processed_output, le_africa, by = 'age')
+
+  processed_output<- processed_output |>
+    mutate(cases = cases * scaling_ratio) |>
+    mutate(severe = cases * prop_severe,
+           deaths = cases * prop_deaths)
+
+
+  # downstream, recalculate ylls + ylds
+  processed_output<- processed_output |>
+    mutate(ylls = deaths * life_expectancy,
+           case_dw = ifelse(age <= 5, 0.051, 0.006),
+           severe_dw = 0.133) |>
+    mutate(ylds = severe * severe_dw * 0.04795 + cases * case_dw * 0.01375) |>
+    mutate(dalys = ylds + ylls) |>
+    select(-case_dw, -severe_dw)
+
+
+
+  return(processed_output)
+
+
 }

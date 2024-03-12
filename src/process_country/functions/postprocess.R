@@ -5,7 +5,7 @@
 #' @param scenario vaccine scenario
 #' @returns list of parameters for all model runs
 #' @export
-process_output<- function(model, vimc_input, site_data, site_name, ur, iso3c, scenario, quick_run, description){
+process_output<- function(model, vimc_input, site_data, site_name, ur, iso3c, scenario, quick_run, description, pfpr10){
 
   message('postprocessing')
   # calculate rates
@@ -32,7 +32,7 @@ process_output<- function(model, vimc_input, site_data, site_name, ur, iso3c, sc
 
 
   # final formatting  ------------------------------------------------------------
-  output<- format_outputs(dt, iso3c = iso3c, site_name = site_name, ur= ur, scenario = scenario, description = description)
+  output<- format_outputs(dt, iso3c = iso3c, site_name = site_name, ur= ur, scenario = scenario, description = description, pfpr10 = pfpr10)
 
   if(scenario!="no-vaccination") {
 
@@ -140,6 +140,7 @@ vimc_postprocess<- function(output, le, iso3c, site_data, site_name, ur, vimc_po
   dt<- dt |>
     mutate(
       cases = round(.data$clinical * .data$vimc_site_population * .data$prop_n),
+      severe = round(.data$severe * .data$vimc_site_population * .data$prop_n),
       deaths = round(.data$mortality * .data$vimc_site_population * .data$prop_n),
       ylls = round(.data$ylls_pp * .data$vimc_site_population * .data$prop_n),
       dalys = round(.data$dalys_pp * .data$vimc_site_population * .data$prop_n),
@@ -155,11 +156,12 @@ vimc_postprocess<- function(output, le, iso3c, site_data, site_name, ur, vimc_po
 #' @param site_name name of site
 #' @param ur urbanicity
 #' @export
-format_outputs<- function(dt, iso3c, site_name, ur, scenario, description){
+format_outputs<- function(dt, iso3c, site_name, ur, scenario, description, pfpr10){
   dt <- dt |>
     mutate(
       disease = 'Malaria',
       country = iso3c,
+      pfpr10= pfpr10,
       country_name = countrycode::countrycode(
         sourcevar = iso3c,
         origin = 'iso3c',
@@ -183,6 +185,7 @@ format_outputs<- function(dt, iso3c, site_name, ur, scenario, description){
        description,
       .data$cohort_size,
       .data$cases,
+      .data$severe,
       .data$dalys,
       .data$ylls,
       .data$deaths,
@@ -192,6 +195,7 @@ format_outputs<- function(dt, iso3c, site_name, ur, scenario, description){
     ) |>
     mutate(
       cases = if_else(is.na(.data$cases), 0, cases),
+      severe = if_else(is.na(.data$severe), 0, severe),
       deaths = if_else(is.na(.data$deaths), 0, deaths),
       dalys = if_else(is.na(dalys), 0, dalys),
       mortality = if_else(is.na(mortality), 0, mortality),
@@ -342,5 +346,88 @@ reformat_output<- function(output){
   return(list('processed_full' = processed_results,
               'doses_full' = doses_full,
               'prev_full' = prev_full))
+
+}
+
+
+
+pull_low_transmission_sites<- function(iso3c, site_data, processed_sites){
+  # pull site output for no-vaccination for the low transmission settings
+
+  site_data$prevalence<- site_data$prevalence |>
+    filter(year == 2019) |>
+    mutate(run_model = ifelse(pfpr > 0.10, TRUE, FALSE))
+
+  prevalence<- site_data$prevalence |>
+    select(name_1, urban_rural, iso3c, run_model) |>
+    rename(site_name = name_1,
+           ur= urban_rural)
+
+
+  site_info<- prevalence |>
+    filter(iso3c == {{iso3c}},
+           run_model == FALSE)
+
+  append<- data.table()
+
+  for (i in 1:nrow(site_info)){
+
+    site<- site_info[ i,]
+
+    add<- processed_sites |>
+      filter(site_name == site$site_name & urban_rural == site$ur)
+
+    append<- rbind(append, add, fill = T)
+  }
+
+  return(append)
+}
+
+
+scale_par<- function(processed_output,
+                     iso3c){
+
+  pars<- readRDS('par_scaling_vimc.rds')
+  pars<- pars |>
+    filter(iso3c == {{iso3c}}) |>
+    mutate(scaling_ratio = proportion_risk/ model_proportion_risk) |>
+    rename(country = iso3c)
+
+  processed_output<- merge(pars, processed_output, by = 'country')
+
+  processed_output<- processed_output |>
+    mutate(cases = cases * scaling_ratio)    #  severe cases / DALYS?
+
+
+
+
+
+  return(processed_output)
+
+
+}
+
+
+
+scale_par<- function(processed_output,
+                     iso3c){
+
+  pars<- readRDS('par_scaling_vimc.rds')
+  pars<- pars |>
+    filter(iso3c == {{iso3c}}) |>
+    mutate(scaling_ratio = proportion_risk/ model_proportion_risk) |>
+    rename(country = iso3c)
+
+  processed_output<- merge(pars, processed_output, by = 'country')
+
+  processed_output<- processed_output |>
+    mutate(cases = cases * scaling_ratio)    #  severe cases / DALYS?
+
+
+
+
+
+  return(processed_output)
+
 
 }

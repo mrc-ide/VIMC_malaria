@@ -11,10 +11,11 @@ orderly2::orderly_artefact('VIMC input', 'vimc_input.rds')
 
 # pull coverage data -----------------------------------------------------------
 coverage_files<- list.files('vimc_inputs/vaccine_coverage/', full.names = T)
-coverage_dt<- rbindlist(lapply(coverage_files, read.csv)) 
+coverage_dt<- rbindlist(lapply(coverage_files, read.csv))
 
 coverage_dt <- coverage_dt |>
-  filter(country_code == iso3c)
+  filter(country_code == iso3c) |>
+  mutate(coverage = coverage / proportion_risk)  # convert coverage to per population instead of per population at risk
 
 
 # pull population data (single year) -------------------------------------------
@@ -52,9 +53,13 @@ saveRDS(vimc_input, 'vimc_input.rds')
 # pull site data  --------------------------------------------------------------
 site_data <- readRDS(paste0('site_files/', iso3c, '.rds'))
 
+new_site_data<- readRDS(paste0('site_files/new_site_files/', iso3c, '_new_eir.rds'))
+
 # turn SMC off as this will be modified with site package
-site_data$interventions <- site_data$interventions |>
-  mutate(smc_cov=0)
+# site_data$interventions <- site_data$interventions |>
+#   mutate(smc_cov=0)
 
 saveRDS(site_data, 'site_file.rds')
+saveRDS(new_site_data, 'merged_site_file.rds')
+
 

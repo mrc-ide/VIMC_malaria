@@ -1,9 +1,10 @@
 # postprocess  --------------------------------------------------------------
-orderly2::orderly_parameters(iso3c = 'NGA',
-                             scenario = 'malaria-rts3-rts4-default',
-                             quick_run = FALSE,
-                             parameter_draw = 0,
-                             description = 'full_parameter_run')
+orderly2::orderly_parameters(iso3c = NULL,
+                             scenario =NULL,
+                             quick_run = NULL,
+                             parameter_draw = NULL,
+                             description = NULL,
+                             pfpr10 = NULL)
 
 orderly2::orderly_artefact('Final output', 'processed_output.rds')
 
@@ -24,21 +25,30 @@ files<- list.files('functions/', full.names = T)
 
 invisible(lapply(files, source))
 
-bl_scenario<- 'no-vaccination'
 scenario_name <- scenario
 orderly2::orderly_dependency("process_inputs", "latest(parameter:iso3c == this:iso3c)", c(vimc_input.rds = "vimc_input.rds"))
-orderly2::orderly_dependency("process_inputs", "latest(parameter:iso3c == this:iso3c)", c(site_file.rds = "site_file.rds"))
+orderly2::orderly_dependency("process_inputs", "latest(parameter:iso3c == this:iso3c)", c(site_file.rds = "merged_site_file.rds"))
 
 orderly2::orderly_dependency("process_country", "latest(parameter:iso3c == this:iso3c &&
                                                  parameter:scenario == this:scenario &&
                                                  parameter:quick_run == this:quick_run &&
                                                  parameter:description == this:description &&
-                                                 parameter:parameter_draw == this:parameter_draw)",
+                                                 parameter:parameter_draw == this:parameter_draw &&
+                                                 parameter:pfpr10 == this:pfpr10)",
                              c(outputs.rds = "outputs.rds"))
+# pull in no vaccination outputs for parameter draw 0 to scale outputs to WMR cases
+param_draw<- 0
+bl_scenario<- 'no-vaccination'
 
+orderly2::orderly_dependency("process_country", "latest(parameter:iso3c == this:iso3c &&
+                                                 parameter:scenario == environment:bl_scenario &&
+                                                 parameter:quick_run == this:quick_run &&
+                                                 parameter:description == this:description &&
+                                                 parameter:parameter_draw == environment:param_draw)",
+                             c(scaling_output.rds = "outputs.rds"))
 
-
-if(scenario_name != 'no-vaccination'){
+# if this is an intervention scenario, read in no-vaccination outputs to bind to moderate-to-high transmission site outputs
+if(!(scenario_name == 'no-vaccination')){
 
   orderly2::orderly_dependency("process_country", "latest(parameter:iso3c == this:iso3c &&
                                                  parameter:scenario == environment:bl_scenario &&
@@ -47,20 +57,26 @@ if(scenario_name != 'no-vaccination'){
                                                  parameter:parameter_draw == this:parameter_draw)",
                                c(bl_output.rds = "outputs.rds"))
 
-  # workflow outputs  ----
   bl_output<-  readRDS('bl_output.rds')
-  bl_results<- bl_output$country_output
-  bl_prev<- bl_output$prevalence
-  processed_sites<- rbindlist(lapply(bl_output$site_output, function(x) return(x$processed_output)))
+  bl_sites<- rbindlist(lapply(bl_output$site_output, function(x) return(x$processed_output)))
+  bl_sites<- bl_sites |>
+    mutate(parameter_draw = {{parameter_draw}})
 
 }
 
 
 
+# workflow outputs  ----
+scaling_output<-  readRDS('scaling_output.rds')$country_output
+
 intvn_output<- readRDS('outputs.rds')
-intvn_results<- intvn_output$country_output
+intvn_sites<- rbindlist(lapply(intvn_output$site_output, function(x) return(x$processed_output)))
+intvn_sites<- intvn_sites |>
+  mutate(parameter_draw = {{parameter_draw}})
+
 doses<- intvn_output$doses
 int_prev<- intvn_output$prevalence
+
 
 # vimc inputs ----
 vimc_input<- readRDS('vimc_input.rds')
@@ -72,52 +88,51 @@ vimc_pop<- vimc_input$population_input_all_age
 pop_single_yr<- vimc_input$population_input_single_yr
 pop_data<- vimc_input$population_input_all_age
 
-if(scenario_name == 'no-vaccination'){
 
-  # scale cases up to 2020 values based on ratio from no-vaccination scenario
-  output<- scale_cases(intvn_results, site_data)
-  processed_output<- output
+if(scenario_name != 'no-vaccination'){
 
-} else{
   # bind intervention and baseline outputs together
-  low_transmission<- pull_low_transmission_sites(iso3c, processed_sites)
-  intvn_results<- rbind(intvn_results, low_transmission)
+  low_transmission<- pull_low_transmission_sites(iso3c, site_data, bl_sites)
+  #rename scenario from low-transmission outputs so they are now attributed to the vaccine scenario of interest
+  low_transmission<- low_transmission |>
+    mutate(scenario = {{scenario_name}})
 
-  # aggregate up high transmission and low-transmission sites
-  dt<- aggregate_outputs(intvn_results, pop_single_yr)
+  site_output<- rbind(intvn_sites, low_transmission, fill = T)
 
-  # add in baseline results for scaling
-  dt<- rbind(bl_results, intvn_results,fill= T)
-  dt<- dt[scenario!= TRUE]
+}else{
 
-  # scale cases up to 2020 values based on ratio from no-vaccination scenario
-  output<- scale_cases(dt, site_data)
-  processed_output<- output
-
-
+  site_output<- intvn_sites
 }
 
-scale_par<- function(processed_output, iso3c){
 
-  pars<- readRDS('par_scaling_vimc.rds')
-  pars<- pars |>
-    filter(iso3c == {{iso3c}}) |>
-    mutate(scaling_ratio = proportion_risk/ model_proportion_risk)
+dt<- aggregate_outputs(site_output, pop_single_yr)
 
-  processed_output<- merge(pars, processed_output, by = 'iso3c')
-
-  processed_output<- processed_output |>
-    mutate(cases = cases * scaling_ratio)    #severe cases / DALYS?
+# scale cases up to 2020 values based on ratio from no-vaccination scenario
+output<- scale_cases(dt, scaling_data= scaling_output,  site_data = site_data)
+output<- add_proportions(output)
 
 
-  return(processed_output)
+dt<- add_proportions(dt)
+dt<- dt[scenario!= TRUE]
 
 
-}
+# scale cases based on difference between site file PAR and VIMC PAR
+processed_output<- scale_par(output, iso3c= {{iso3c}})
 
-processed_output<- scale_par(processed_output, iso3c)
+# # vetting output
+# p<-   ggplot()+
+#   geom_line(data = processed_output, mapping = aes(x= year, y= cases, color =scenario))  +
+#   facet_wrap_paginate(~age, nrow= 4, ncol = 4, page = 1) +
+#   #geom_vline(xintercept= intro_yr, linetype= "dotted") +
+#   labs(x= 'Time (in years)', y= 'Cases',
+#        title= paste0('Cases over time'),
+#        color= 'Scenario', fill= 'Scenario') +
+#   scale_color_manual(values= wes_palette('Darjeeling1', n= 2)) +
+#   scale_fill_manual(values= wes_palette('Darjeeling1', n= 2))  +
+#   plotting_theme
+#
 
-# format and save
+# format and save (only outputs for the scenario of interest)
 processed_output<- processed_output |>
   filter(scenario == scenario_name) |>
   mutate(description = description,
@@ -126,5 +141,31 @@ processed_output<- processed_output |>
 
 saveRDS(processed_output, 'processed_output.rds')
 
+# processed_output<- rbind(dt, bl_results)
 
+# pdf('site_by_site_check_draw_1.pdf')
+# for(site in unique(site_results$site_name)){
+#
+#   message(site)
+#   dt<- site_results |>
+#     filter(site_name == site)
+#
+#   p<-   ggplot()+
+#     geom_line(data = dt, mapping = aes(x= year, y= cases, color =scenario))  +
+#     facet_wrap_paginate(~age, nrow= 4, ncol = 4, page = 1) +
+#     #geom_vline(xintercept= intro_yr, linetype= "dotted") +
+#     labs(x= 'Time (in years)', y= 'Cases',
+#          title= paste0('Cases over time'),
+#          subtitle = {{site}},
+#          color= 'Scenario', fill= 'Scenario') +
+#     scale_color_manual(values= wes_palette('Darjeeling1', n= 2)) +
+#     scale_fill_manual(values= wes_palette('Darjeeling1', n= 2))  +
+#     plotting_theme
+#
+# print(p)
+# }
+#
+#  dev.off()
+# #
+# #
 

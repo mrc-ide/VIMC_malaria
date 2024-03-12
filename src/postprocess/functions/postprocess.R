@@ -318,24 +318,66 @@ pull_doses_output <- function(raw_output, processed_output) {
 }
 
 
-pull_low_transmssion_sites<- function(iso3c, processed_sites){
+pull_low_transmission_sites<- function(iso3c, site_data, processed_sites){
   # pull site output for no-vaccination for the low transmission settings
 
-  site_info<- readRDS('pfpr10plus_admins.rds') |>
-    filter(iso3c == {{iso3c}},
-           run_model == FALSE)
+  site_data$prevalence<- site_data$prevalence |>
+    filter(year == 2019) |>
+    mutate(run_model = ifelse(pfpr > 0.10, TRUE, FALSE))
 
-  append<- data.table()
+  if(length(unique(site_data$prevalence$run_model)) ==  1 & site_data$prevalence$run_model[1] == TRUE){
 
-  for (i in 1:nrow(site_info)){
+    return(data.table())
 
-    site<- site_info[ i,]
+  } else{
 
-    add<- processed_sites |>
-      filter(site_name == site$name_1 & urban_rural == site$urban_rural)
+    prevalence<- site_data$prevalence |>
+      select(name_1, urban_rural, iso3c, run_model) |>
+      rename(site_name = name_1,
+             ur= urban_rural)
 
-    append<- rbind(append, add, fill = T)
+
+    site_info<- prevalence |>
+      filter(iso3c == {{iso3c}},
+             run_model == FALSE)
+
+    append<- data.table()
+
+    for (i in 1:nrow(site_info)){
+
+      site<- site_info[ i,]
+
+      add<- processed_sites |>
+        filter(site_name == site$site_name & urban_rural == site$ur)
+
+      append<- rbind(append, add, fill = T)
+    }
+
+    return(append)
+
+
   }
-
-  return(append)
 }
+
+
+
+
+# calculate the proportion of severe cases + deaths to recalculate severe cases + deaths after scaling
+add_proportions<- function(dt){
+  dt<- dt |>
+    mutate(prop_severe = severe/cases,
+           prop_deaths = deaths/ cases)
+
+  return(dt)
+}
+
+
+
+plotting_theme<- theme_bw(base_size = 12) +
+  theme( legend.position = 'bottom',
+         strip.text.x = element_text(size = rel(0.8)),
+         axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1.1),
+         #axis.text.y = element_blank(),
+         text = element_text(family= 'Arial Narrow'),
+         axis.ticks.y= element_blank(),
+         panel.grid.major = element_blank(), panel.grid.minor = element_blank())

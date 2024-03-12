@@ -29,15 +29,14 @@ run_report<- function(site, report_name){
 
 make_parameter_map<- function(iso3cs,
                               scenarios =  c('no-vaccination',
-                                             'malaria-r3-default',
-                                             'malaria-r3-r4-default',
                                              'malaria-rts3-bluesky',
                                              'malaria-rts3-default',
                                              'malaria-rts3-rts4-bluesky',
                                              'malaria-rts3-rts4-default'),
                               description,
                               parameter_draws,
-                              quick_run){
+                              quick_run,
+                              pfpr10){
 
 
   country_map<- data.table('iso3c' = iso3cs)
@@ -45,7 +44,8 @@ make_parameter_map<- function(iso3cs,
   # expand grid out to include input parameters-
   country_map<- country_map |>
     mutate(description = description,
-           quick_run = quick_run)
+           quick_run = quick_run,
+           pfpr10 = pfpr10)
 
 
   full_map<- data.table()
@@ -65,16 +65,10 @@ make_parameter_map<- function(iso3cs,
   }
 
 
-  site_counts<- rbindlist(lapply(iso3cs, pull_site_numbers))
+  site_counts<- rbindlist(lapply(iso3cs, pull_site_numbers, pfpr = pfpr10))
   full_map<- merge(full_map, site_counts, by = 'iso3c')
   full_map<- setorder(full_map, parameter_draw, -site_number)
-  full_map<- full_map |>
-    select(-site_number)
 
-
-  site_counts<- rbindlist(lapply(iso3cs, pull_site_numbers))
-
-  full_map<- merge(full_map, site_counts, by = 'iso3c')
   full_map<- full_map |>
     mutate(site_number = ifelse(site_number > 32, 32, site_number))
 
@@ -116,9 +110,16 @@ check_not_a_rerun<- function(report_name, map){
 
 }
 
-pull_site_numbers<- function(iso3c){
+pull_site_numbers<- function(iso3c, pfpr){
 
-  site<-readRDS(paste0('src/process_inputs/site_files/', iso3c, '.rds'))
+  if(pfpr == TRUE){
+
+    site<- readRDS(paste0('src/process_inputs/site_files/new_site_files/', iso3c, '_new_eir.rds'))
+
+  } else{
+    site<-readRDS(paste0('src/process_inputs/site_files/', iso3c, '.rds'))
+
+  }
 
   site_number<- nrow(site$sites)
 
@@ -140,10 +141,27 @@ submit_by_core<- function(core, dt){
                         description = description,
                         quick_run = quick_run,
                         scenario = scenario,
-                        parameter_draw = parameter_draw)),
+                        parameter_draw = parameter_draw,
+                        pfpr10= pfpr10)),
     dt,
     resources = hipercow::hipercow_resources(cores = unique(dt$site_number)))
 
   message('submitted')
 }
 
+
+submit_postprocessing<- function(dt){
+
+  hipercow::task_create_bulk_expr(
+    orderly2::orderly_run(
+      "postprocess",
+      parameters = list(iso3c = iso3c,
+                        description = description,
+                        quick_run = quick_run,
+                        scenario = scenario,
+                        parameter_draw = parameter_draw,
+                        pfpr10 = pfpr10)),
+    dt)
+
+  message('submitted')
+}

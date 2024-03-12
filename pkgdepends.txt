@@ -1,5 +1,6 @@
+
+mrc-ide/malariasimulation@1a5f00a
 mrc-ide/site@vimc
-mrc-ide/malariasimulation@dev
 mrc-ide/postie@dalys
 mrc-ide/scene
 mrc-ide/orderly2
@@ -12,8 +13,5 @@ tidyr
 tibble
 data.table
 countrycode
-<<<<<<< HEAD
 retry
 
-=======
->>>>>>> parent of 2ac2b63 (rearranged a few reports, writing full run diagnostics)

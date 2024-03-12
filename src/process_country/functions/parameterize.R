@@ -17,13 +17,13 @@ pull_age_groups_time_horizon<- function(quick_run){
     min_ages = c(0:5, 6,15,20) * year
     max_ages = c(1:6, 15,20,200) * year -1
 
-  }
-
-  else{
+  } else{
 
     pop_val<- 50000
     term_yr<- 2100
 
+    # min_ages = c(0:10, 12, 14,16,18, 20 ,30,50) * year
+    # max_ages = c(1:10, 12, 14, 16, 18, 20, 30, 50, 100) * year -1
     min_ages = c(seq(0, 19, by= 1), seq(20, 90, by= 10)) * year
     max_ages = c(seq(1, 20, by= 1), seq(30, 100, by= 10)) * year -1
 
@@ -145,7 +145,7 @@ update_coverage_values<- function(site, iso3c, coverage_data, scenario_name){
 
     coverage_data<- coverage_data |>           # pull another projection for data table structure and fill with zeroes
       filter(country_code == iso3c) |>
-      filter(scenario == 'malaria-r3-r4-default') |>
+      filter(scenario == 'malaria-rts3-rts4-default') |>
       mutate(coverage = 0)  |>
       mutate(scenario = 'no-vaccination')
 

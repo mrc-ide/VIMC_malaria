@@ -14,38 +14,70 @@ analyse_site<- function(site,
   model<- run_model(model_input)
   output<- process_output(model,
                          vimc_input,
-                          site_data = site_data,
-                                       site_name = site$site_name,
-                                       ur = site$ur,
-                                       iso3c = site$iso3c,
-                                       scenario = site$scenario,
-                          quick_run = site$quick_run,
-                         description= site$description)
+                         site_data = site_data,
+                         site_name = site$site_name,
+                         ur = site$ur,
+                         iso3c = site$iso3c,
+                         scenario = site$scenario,
+                         quick_run = site$quick_run,
+                         description= site$description,
+                         pfpr10 = site$pfpr10)
 
   return(output)
 }
 
 
-make_analysis_map<- function(site_data,
-                             test= FALSE){
+make_analysis_map<- function(site_df,
+                             site_data,
+                             test,
+                             pfpr10){
 
-  site_info<- data.table('site_name' = site_data$name_1, 'ur' = site_data$urban_rural, 'iso3c' = site_data$iso3c)
 
+  site_data$prevalence<- site_data$prevalence |>
+    filter(year == 2019) |>
+    mutate(run_model = ifelse(pfpr > 0.10, TRUE, FALSE))
+
+  prevalence<- site_data$prevalence |>
+    select(name_1, urban_rural, iso3c, run_model) |>
+    rename(site_name = name_1,
+           ur= urban_rural)
+
+  site_df<- site_df |>
+    rename(site_name = name_1,
+           ur= urban_rural)
+
+    site_info<- merge(prevalence, site_df, by = c('site_name', 'ur', 'iso3c'))
+
+    if(nrow(prevalence) < nrow(site_info)){
+      stop('dropped admin units, debug')
+    }
+
+  if(scenario == 'no-vaccination'){
+
+    site_info<- site_info |>
+      mutate(run_model = TRUE)
+
+  }
+
+  if(pfpr10 == TRUE){ #only run model for sites above pfpr 10% (for no-vaccination, pfpr10 is by defaut false)
+    site_info<- site_info |>
+      filter(run_model == TRUE)
+
+  }
 
   site_info<- site_info |>
     mutate(scenario = {{scenario}},
            quick_run = {{quick_run}},
-           parameter_draw = {{parameter_draw}})
+           parameter_draw = {{parameter_draw}},
+           pfpr10 = {{pfpr10}})
+
 
   Encoding(site_info$site_name) <- "UTF-8"
-
   site_info$site_name<- iconv(site_info$site_name, from="UTF-8", to="ASCII//TRANSLIT")
 
+  if (test == TRUE) {
 
-
-  if (test) {
-
-    site_info<- site_info[1:2]
+    site_info<- site_info[1:2,]
 
   }
   sites<- purrr::map(.x = c(1:nrow(site_info)), .f= ~ site_info[.x,])

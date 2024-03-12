@@ -4,9 +4,10 @@ orderly2::orderly_parameters(iso3c = NULL,
                              scenario = NULL,
                              quick_run = NULL,
                              parameter_draw = NULL,
-                             description =  NULL)
+                             description = NULL,
+                             pfpr10 = NULL)
 
-orderly2::orderly_description('Analyze vaccine impact at the site level')
+orderly2::orderly_description('Analyze vaccine impact at the country level')
 orderly2::orderly_artefact('Processed output', 'outputs.rds')
 
 # packages and functions ----
@@ -29,9 +30,12 @@ invisible(lapply(files, source))
 # read in dependencies  ----
 orderly2::orderly_dependency("process_inputs", "latest(parameter:iso3c == this:iso3c)", c(vimc_input.rds = "vimc_input.rds"))
 orderly2::orderly_dependency("process_inputs", "latest(parameter:iso3c == this:iso3c)", c(site_file.rds = "site_file.rds"))
+orderly2::orderly_dependency("process_inputs", "latest(parameter:iso3c == this:iso3c)", c(merged_site_file.rds = "merged_site_file.rds"))
 
 vimc_input<- readRDS('vimc_input.rds')
-site_data <- readRDS('site_file.rds')
+
+site_data <- readRDS('merged_site_file.rds')
+#orig_site_data <- readRDS('site_file.rds')
 
 # vimc inputs ----
 coverage_data<- vimc_input$coverage_input
@@ -41,7 +45,7 @@ pop_single_yr<- vimc_input$population_input_single_yr
 
 # make a map of input parameters for site function
 site_df<- remove_zero_eirs(iso3c, site_data)
-map<- make_analysis_map(site_df, test = FALSE)
+map<- make_analysis_map(site_df, site_data, test = FALSE, pfpr10 = {{pfpr10}})
 
 # run analysis function for each site + urban/rural combination ----
 cluster_cores <- Sys.getenv("CCP_NUMCPUS")
@@ -91,11 +95,14 @@ processed_results<- test$processed_full
 doses_full<- test$doses_full
 prev_full<- test$prev_full
 
+if(scenario == 'no-vaccination'){
+  # aggregate outputs up to country level
+  dt<- aggregate_outputs(processed_results, pop_single_yr)
 
-# aggregate outputs up to country level
-dt<- aggregate_outputs(processed_results, pop_single_yr)
+} else{
 
-
+  dt<- data.table()
+}
 
 if (scenario != 'no-vaccination'){
   doses_full<- aggregate_doses(doses_full)
