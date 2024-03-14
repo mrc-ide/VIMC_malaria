@@ -31,7 +31,7 @@ map<- check_not_a_rerun('postprocess', map)
 #run_process_inputs(iso3cs)
 
 
-for(index in c(1:nrow(map))){
+for(index in c(646:nrow(map))){
 
 
   message(index)
@@ -41,21 +41,21 @@ for(index in c(1:nrow(map))){
 }
 
 
-# launch one report locally
-map<- map |>
-  select(-site_number)
-inputs<- purrr::map(.x = c(1:nrow(map)), .f= ~ as.list(map[.x,]))
-
-orderly2::orderly_run(name = "process_country", parameters = inputs[[1]])
-
-# cluster setup ------
-hipercow::hipercow_init(driver = 'windows')
-hipercow::hipercow_provision()
-hipercow::hipercow_environment_create(sources= 'workflow_functions.R')
-hipercow::hipercow_configuration()
-
-cores<- unique(map$site_number)
-# submit groups of jobs by number of cores to submit  --------------------------
-lapply(cores, submit_by_core, dt = map)
-
-submit_postprocessing(map)
+# # launch one report locally
+# map<- map |>
+#   select(-site_number)
+# inputs<- purrr::map(.x = c(1:nrow(map)), .f= ~ as.list(map[.x,]))
+#
+# orderly2::orderly_run(name = "process_country", parameters = inputs[[1]])
+#
+# # cluster setup ------
+# hipercow::hipercow_init(driver = 'windows')
+# hipercow::hipercow_provision()
+# hipercow::hipercow_environment_create(sources= 'workflow_functions.R')
+# hipercow::hipercow_configuration()
+#
+# cores<- unique(map$site_number)
+# # submit groups of jobs by number of cores to submit  --------------------------
+# lapply(cores, submit_by_core, dt = map)
+#
+# submit_postprocessing(map)

@@ -1,10 +1,10 @@
 # postprocess  --------------------------------------------------------------
-orderly2::orderly_parameters(iso3c = NULL,
-                             scenario =NULL,
-                             quick_run = NULL,
-                             parameter_draw = NULL,
-                             description = NULL,
-                             pfpr10 = NULL)
+orderly2::orderly_parameters(iso3c = 'NGA',
+                             scenario = 'malaria-rts3-rts4-default',
+                             quick_run = FALSE,
+                             parameter_draw = 0,
+                             description = 'test_round2_changes',
+                             pfpr10 = TRUE)
 
 orderly2::orderly_artefact('Final output', 'processed_output.rds')
 
@@ -89,6 +89,7 @@ pop_single_yr<- vimc_input$population_input_single_yr
 pop_data<- vimc_input$population_input_all_age
 
 
+
 if(scenario_name != 'no-vaccination'){
 
   # bind intervention and baseline outputs together
@@ -110,10 +111,6 @@ dt<- aggregate_outputs(site_output, pop_single_yr)
 # scale cases up to 2020 values based on ratio from no-vaccination scenario
 output<- scale_cases(dt, scaling_data= scaling_output,  site_data = site_data)
 output<- add_proportions(output)
-
-
-dt<- add_proportions(dt)
-dt<- dt[scenario!= TRUE]
 
 
 # scale cases based on difference between site file PAR and VIMC PAR

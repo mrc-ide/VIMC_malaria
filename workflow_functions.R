@@ -81,14 +81,27 @@ completed_reports<- function(report_name){
   meta <- orderly2::orderly_metadata_extract(name = report_name, extract = c('time', 'parameters'),  options = orderly2::orderly_search_options(allow_remote = TRUE))
 
   meta<- meta|>
+    mutate(directory_name = id) |>
     tidyr::separate(col = id, into = c('date', 'other'), sep = '-')|>
     mutate(date= as.numeric(date))
+
+  meta<- data.table(meta)
+  meta<- meta[, index:= c(1:.N) ]
+
 
   unique(lapply(meta$parameters, names))
   nms <- names(meta$parameters[[1]])
   pars <- do.call("data.frame", setNames(lapply(nms, function(nm) sapply(meta$parameters, function(x) x[[nm]])), nms))
+  pars<- data.table(pars)
+  pars<- pars[, index:= c(1:.N)]
 
-  return(pars)
+  meta<- meta |>
+    select(directory_name, index)
+  map<- merge(pars, meta, by = 'index')
+  map<- map |>
+    select(-index)
+
+  return(map)
 
 }
 
