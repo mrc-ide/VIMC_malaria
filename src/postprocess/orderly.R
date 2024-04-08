@@ -1,10 +1,10 @@
 # postprocess  --------------------------------------------------------------
-orderly2::orderly_parameters(iso3c = 'NGA',
-                             scenario = 'malaria-rts3-rts4-default',
-                             quick_run = FALSE,
-                             parameter_draw = 0,
-                             description = 'test_round2_changes',
-                             pfpr10 = TRUE)
+orderly2::orderly_parameters(iso3c = NULL,
+                             scenario = NULL,
+                             quick_run = NULL,
+                             parameter_draw = NULL,
+                             description = NULL,
+                             pfpr10 = NULL)
 
 orderly2::orderly_artefact('Final output', 'processed_output.rds')
 
@@ -89,7 +89,6 @@ pop_single_yr<- vimc_input$population_input_single_yr
 pop_data<- vimc_input$population_input_all_age
 
 
-
 if(scenario_name != 'no-vaccination'){
 
   # bind intervention and baseline outputs together
@@ -116,18 +115,6 @@ output<- add_proportions(output)
 # scale cases based on difference between site file PAR and VIMC PAR
 processed_output<- scale_par(output, iso3c= {{iso3c}})
 
-# # vetting output
-# p<-   ggplot()+
-#   geom_line(data = processed_output, mapping = aes(x= year, y= cases, color =scenario))  +
-#   facet_wrap_paginate(~age, nrow= 4, ncol = 4, page = 1) +
-#   #geom_vline(xintercept= intro_yr, linetype= "dotted") +
-#   labs(x= 'Time (in years)', y= 'Cases',
-#        title= paste0('Cases over time'),
-#        color= 'Scenario', fill= 'Scenario') +
-#   scale_color_manual(values= wes_palette('Darjeeling1', n= 2)) +
-#   scale_fill_manual(values= wes_palette('Darjeeling1', n= 2))  +
-#   plotting_theme
-#
 
 # format and save (only outputs for the scenario of interest)
 processed_output<- processed_output |>
@@ -138,31 +125,5 @@ processed_output<- processed_output |>
 
 saveRDS(processed_output, 'processed_output.rds')
 
-# processed_output<- rbind(dt, bl_results)
 
-# pdf('site_by_site_check_draw_1.pdf')
-# for(site in unique(site_results$site_name)){
-#
-#   message(site)
-#   dt<- site_results |>
-#     filter(site_name == site)
-#
-#   p<-   ggplot()+
-#     geom_line(data = dt, mapping = aes(x= year, y= cases, color =scenario))  +
-#     facet_wrap_paginate(~age, nrow= 4, ncol = 4, page = 1) +
-#     #geom_vline(xintercept= intro_yr, linetype= "dotted") +
-#     labs(x= 'Time (in years)', y= 'Cases',
-#          title= paste0('Cases over time'),
-#          subtitle = {{site}},
-#          color= 'Scenario', fill= 'Scenario') +
-#     scale_color_manual(values= wes_palette('Darjeeling1', n= 2)) +
-#     scale_fill_manual(values= wes_palette('Darjeeling1', n= 2))  +
-#     plotting_theme
-#
-# print(p)
-# }
-#
-#  dev.off()
-# #
-# #
 

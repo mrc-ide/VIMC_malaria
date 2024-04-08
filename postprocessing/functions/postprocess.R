@@ -367,7 +367,7 @@ pull_low_transmission_sites<- function(iso3c, site_data, processed_sites){
              run_model == FALSE)
 
     append<- data.table()
-
+    message(paste0('adding ', nrow(site_info), ' sites'))
     for (i in 1:nrow(site_info)){
 
       site<- site_info[ i,]

@@ -65,8 +65,9 @@ make_parameter_map<- function(iso3cs,
   }
 
 
-  site_counts<- rbindlist(lapply(iso3cs, pull_site_numbers, pfpr = pfpr10))
-  full_map<- merge(full_map, site_counts, by = 'iso3c')
+  site_counts<- unique(rbindlist(lapply(c(1:nrow(full_map)), pull_site_numbers, map = full_map)))
+
+  full_map<- merge(full_map, site_counts, by = c('iso3c', 'scenario'))
   full_map<- setorder(full_map, parameter_draw, -site_number)
 
   full_map<- full_map |>
@@ -82,8 +83,9 @@ completed_reports<- function(report_name){
 
   meta<- meta|>
     mutate(directory_name = id) |>
-    tidyr::separate(col = id, into = c('date', 'other'), sep = '-')|>
-    mutate(date= as.numeric(date))
+    tidyr::separate(col = id, into = c('date', 'time'), sep = '-')|>
+    mutate(date= as.numeric(date)) |>
+    mutate(date_time = as.numeric(paste0(date, time)))
 
   meta<- data.table(meta)
   meta<- meta[, index:= c(1:.N) ]
@@ -96,47 +98,88 @@ completed_reports<- function(report_name){
   pars<- pars[, index:= c(1:.N)]
 
   meta<- meta |>
-    select(directory_name, index)
+    select(directory_name, index, date_time)
   map<- merge(pars, meta, by = 'index')
   map<- map |>
     select(-index)
 
   return(map)
-
 }
-
-check_reports_completed<- function(report_name, map){
+check_reports_completed<- function(report_name, map, date_time){
+  map<- map |> select(-site_number)
 
   completed<- completed_reports(report_name)
+  completed<- completed |>
+    select(-directory_name)|>
+    filter(date_time >= {{date_time}})|>
+    select(-date_time)
+
   intersection<- intersect(map, completed)
 
   return(intersection)
 
 }
 
-check_not_a_rerun<- function(report_name, map){
+check_not_a_rerun<- function(report_name, map, date_time){
+
+  site_counts<- map |>
+    select(scenario, iso3c, site_number)
+  site_counts<- unique(site_counts)
+  map<- map |> select(-site_number)
 
   completed<- completed_reports(report_name)
+  completed<- completed |>
+    select(-directory_name)|>
+    filter(date_time >= {{date_time}}) |>
+    select(-date_time)
+
   different<- setdiff(map, completed)
+
+  different<- merge(different, site_counts, by = c('scenario', 'iso3c'))
 
   return(different)
 
 }
 
-pull_site_numbers<- function(iso3c, pfpr){
+run_local_reports<- function(map, report_name){
+  for(index in c(1:nrow(map))){
 
-  if(pfpr == TRUE){
-
-    site<- readRDS(paste0('src/process_inputs/site_files/new_site_files/', iso3c, '_new_eir.rds'))
-
-  } else{
-    site<-readRDS(paste0('src/process_inputs/site_files/', iso3c, '.rds'))
+    print(index)
+    message(index)
+    params<- as.list(map[index,])
+    orderly2::orderly_run(name = report_name, parameters = params)
 
   }
 
-  site_number<- nrow(site$sites)
+  message('done')
+}
+pull_site_numbers<- function(index, map){
 
-  return(data.table('iso3c' = iso3c, 'site_number' = site_number))
+  map<- map[index,]
+  iso3c<- map$iso3c
+  scenario<- map$scenario
+
+    site<- readRDS(paste0('src/process_inputs/site_files/new_site_files/', iso3c, '_new_eir.rds'))
+
+    if(scenario == 'no-vaccination'){
+      site_number<- nrow(site$sites)
+
+    } else{
+
+      site$prevalence <- site$prevalence |>
+        mutate(run_model = ifelse(pfpr > 0.10, TRUE, FALSE))|>
+        mutate(run_model = ifelse(name_1 == 'Toliary', TRUE, run_model))|>   # Madagascar exception
+        mutate(run_model = ifelse(name_1 %like% 'Gambela', TRUE, run_model))|> # Ethiopia exception
+        mutate(run_model = ifelse(name_1 == 'South Darfur', TRUE, run_model)) |> # Sudan exceptions
+        mutate(run_model = ifelse(name_1 == 'West Kurdufan', TRUE, run_model))
+
+      site_number<- nrow(site$prevalence |> filter(run_model == TRUE, year == 2019))
+    }
+
+
+
+
+  return(data.table('iso3c' = iso3c, 'scenario' = scenario, 'site_number' = site_number))
 }
 
 
@@ -163,18 +206,4 @@ submit_by_core<- function(core, dt){
 }
 
 
-submit_postprocessing<- function(dt){
 
-  hipercow::task_create_bulk_expr(
-    orderly2::orderly_run(
-      "postprocess",
-      parameters = list(iso3c = iso3c,
-                        description = description,
-                        quick_run = quick_run,
-                        scenario = scenario,
-                        parameter_draw = parameter_draw,
-                        pfpr10 = pfpr10)),
-    dt)
-
-  message('submitted')
-}

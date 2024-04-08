@@ -14,4 +14,8 @@ tibble
 data.table
 countrycode
 retry
+wesanderson
+rmarkdown
+scales
+ggpubr
 

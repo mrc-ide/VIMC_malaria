@@ -33,7 +33,6 @@ orderly2::orderly_dependency("process_inputs", "latest(parameter:iso3c == this:i
 orderly2::orderly_dependency("process_inputs", "latest(parameter:iso3c == this:iso3c)", c(merged_site_file.rds = "merged_site_file.rds"))
 
 vimc_input<- readRDS('vimc_input.rds')
-
 site_data <- readRDS('merged_site_file.rds')
 #orig_site_data <- readRDS('site_file.rds')
 

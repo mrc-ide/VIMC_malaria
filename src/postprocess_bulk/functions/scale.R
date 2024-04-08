@@ -5,6 +5,7 @@
 scale_cases<- function(dt, site_data, scaling_data){
 
   pre_scale<- scaling_data |>
+    filter(scenario== 'no-vaccination')|>
     group_by(year) |>
     summarise(cases = sum(cases))
 
