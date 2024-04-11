@@ -45,6 +45,7 @@ map<- merge(map, site_counts, by = c('iso3c', 'scenario'))
 #
 #
 # obj <- didehpc::queue_didehpc(ctx, config = config)
+
 # # launch one report locally
 # map<- map |>
 #   select(-site_number)
@@ -52,6 +53,8 @@ map<- merge(map, site_counts, by = c('iso3c', 'scenario'))
 #
 # orderly2::orderly_run(name = "process_country", parameters = inputs[[1]])
 #
+
+
 # # cluster setup ------
 hipercow::hipercow_init(driver = 'windows')
 hipercow::hipercow_provision()
@@ -59,31 +62,24 @@ hipercow::hipercow_environment_create(sources= 'workflow_functions.R')
 hipercow::hipercow_configuration()
 
 cores<- unique(map$site_number)
+
+
 # # # submit groups of jobs by number of cores to submit  --------------------------
 lapply(cores, submit_by_core, dt = map)
-# #
-# # submit_postprocessing(map)
-# #
-# #
+
 for(iso in iso3cs){
   tasks<- hipercow::task_create_expr(orderly2::orderly_run('diagnostics', parameters = list(iso3c = iso,
                                                                                     description = 'test_round2_changes')))
 
 }
-# #
 
 for(iso in iso3cs){
 orderly2::orderly_run('diagnostics', parameters = list(iso3c = iso, description = 'test_round2_changes'))
 
 }
+
+
 hipercow::task_log_watch(task)
-# obj$lapply(iso3cs, run_postprocessing)
-# #
-# #
-# # test<- obj$enqueue(run_postprocessing('TCD'))
-
-
 obj$lapply(iso3cs, run_postprocessing)
-
 obj$enqueue(run_postprocessing('MDG'))
 run_postprocessing('MDG')

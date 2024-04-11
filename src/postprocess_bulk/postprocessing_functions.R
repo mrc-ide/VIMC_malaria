@@ -77,6 +77,23 @@ get_dose_output<- function(index, map){
   return(output)
 }
 
+get_dose_output<- function(index, map){
+
+  metadata<- map[ index,]
+
+  directory<- metadata$directory_name
+  scenario<- metadata$scenario
+  draw<- metadata$parameter_draw
+
+  message(directory)
+
+  output<- readRDS(paste0(output_filepath, directory, '/outputs.rds'))             # get output file
+  output<- output$doses|>
+    mutate(parameter_draw = draw,
+           scenario = scenario)
+
+  return(output)
+}
 
 check_outputs_finished<- function(completed){
 
