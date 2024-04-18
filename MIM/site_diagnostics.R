@@ -38,13 +38,14 @@ plot_incidence<- function(iso3c){
       group_by(year, scenario, parameter_draw) |>
       summarise(cases = sum(cases),
                 cases_novax = sum(cases_novax),
+                doses = doses,
                 .groups = 'keep')
     
-    ggplot(data = plot, mapping = aes(x= year, y= cases_novax - cases), alpha = 0.05) +
+    ggplot(data = plot, mapping = aes(x= year, y= (cases_novax - cases)/doses, alpha = 0.05)) +
       geom_line(aes( color = scenario)) +
       geom_abline(slope = 0 , intercept = 0, linetype = 'dashed') +
       facet_wrap(~scenario)+
-      labs(title ='Cases averted over time',
+      labs(title ='Cases averted over age',
            subtitle = paste0(site_name, ' ', ur)) +
       plotting_theme
     

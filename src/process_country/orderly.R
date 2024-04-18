@@ -29,12 +29,11 @@ invisible(lapply(files, source))
 
 # read in dependencies  ----
 orderly2::orderly_dependency("process_inputs", "latest(parameter:iso3c == this:iso3c)", c(vimc_input.rds = "vimc_input.rds"))
-orderly2::orderly_dependency("process_inputs", "latest(parameter:iso3c == this:iso3c)", c(site_file.rds = "site_file.rds"))
 orderly2::orderly_dependency("process_inputs", "latest(parameter:iso3c == this:iso3c)", c(merged_site_file.rds = "merged_site_file.rds"))
 
 vimc_input<- readRDS('vimc_input.rds')
 site_data <- readRDS('merged_site_file.rds')
-#orig_site_data <- readRDS('site_file.rds')
+
 
 # vimc inputs ----
 coverage_data<- vimc_input$coverage_input

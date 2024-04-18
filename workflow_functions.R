@@ -1,16 +1,4 @@
 # workflow functions  ----------------------------------------------------------
-run_process_inputs<- function(iso3cs){
-  for (iso3c in iso3cs){
-
-    orderly2::orderly_run(
-      'process_inputs',
-      list(iso3c = iso3c),
-      root = dir)
-  }
-  message('done')
-
-}
-
 
 run_report<- function(site, report_name){
 
@@ -105,6 +93,8 @@ completed_reports<- function(report_name){
 
   return(map)
 }
+
+
 check_reports_completed<- function(report_name, map, date_time){
   map<- map |> select(-site_number)
 
@@ -153,6 +143,8 @@ run_local_reports<- function(map, report_name){
 
   message('done')
 }
+
+
 pull_site_numbers<- function(index, map){
 
   map<- map[index,]
