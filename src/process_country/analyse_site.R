@@ -83,11 +83,9 @@ make_analysis_map<- function(site_df,
 
   }
 
-  if(pfpr10 == TRUE){ #only run model for sites above pfpr 10% (for no-vaccination, pfpr10 is by defaut false)
     site_info<- site_info |>
       filter(run_model == TRUE)
 
-  }
 
   site_info<- site_info |>
     mutate(scenario = {{scenario}},

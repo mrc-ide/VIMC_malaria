@@ -1,5 +1,10 @@
 # workflow functions  ----------------------------------------------------------
 
+#' Run orderly report based on input parameters in map
+#'
+#' @param site one observation in parameter map
+#' @param report_name  name of orderly report to extract metadata from
+#' @export
 run_report<- function(site, report_name){
 
   message(paste0('running ', site$iso3c, ' ', site$scenario))
@@ -9,12 +14,14 @@ run_report<- function(site, report_name){
                           description = site$description,
                           parameter_draw= site$parameter_draw,
                           quick_run = site$quick_run,
-                          scenario = site$scenario
-                        ))
-
-
+                          scenario = site$scenario))
 }
 
+
+#'  Make a map of input parameters for VIMC modelling
+#' @param iso3cs  countries to run models for you
+#' @param scenarios  scenarios to run models for. Default is all scenarios for the current round
+#' @export
 make_parameter_map<- function(iso3cs,
                               scenarios =  c('no-vaccination',
                                              'malaria-rts3-bluesky',
@@ -23,18 +30,11 @@ make_parameter_map<- function(iso3cs,
                                              'malaria-rts3-rts4-default'),
                               description,
                               parameter_draws,
-                              quick_run,
-                              pfpr10){
+                              quick_run){
 
-
-  country_map<- data.table('iso3c' = iso3cs)
-
-  # expand grid out to include input parameters-
-  country_map<- country_map |>
+  country_map<- data.table('iso3c' = iso3cs) |>
     mutate(description = description,
-           quick_run = quick_run,
-           pfpr10 = pfpr10)
-
+           quick_run = quick_run)
 
   full_map<- data.table()
 
@@ -46,12 +46,7 @@ make_parameter_map<- function(iso3cs,
                parameter_draw = draw)
 
       full_map<- rbind(subset, full_map)
-
-
-    }
-
-  }
-
+    }}
 
   site_counts<- unique(rbindlist(lapply(c(1:nrow(full_map)), pull_site_numbers, map = full_map)))
 
@@ -64,12 +59,16 @@ make_parameter_map<- function(iso3cs,
   return(full_map)
 }
 
+
+#' Return a list of the reports that have already completed from orderly metadata
+#' @param report_name  name of orderly report to extract metadata from
+#' @export
 completed_reports<- function(report_name){
 
 
   meta <- orderly2::orderly_metadata_extract(name = report_name, extract = c('time', 'parameters'),  options = orderly2::orderly_search_options(allow_remote = TRUE))
 
-  meta<- meta|>
+  meta<- meta |>
     mutate(directory_name = id) |>
     tidyr::separate(col = id, into = c('date', 'time'), sep = '-')|>
     mutate(date= as.numeric(date)) |>
@@ -95,6 +94,11 @@ completed_reports<- function(report_name){
 }
 
 
+#' Return a list of the reports that have already completed from orderly metadata
+#' @param report_name  name of orderly report to extract metadata from
+#' @param map  parameter map for reports you would like to crossreference
+#' @param date_time check if reports completed after a certain date, format YYYYMMDDHHMMSS
+#' @export
 check_reports_completed<- function(report_name, map, date_time){
   map<- map |> select(-site_number)
 
@@ -110,6 +114,12 @@ check_reports_completed<- function(report_name, map, date_time){
 
 }
 
+
+#' Return a list of the reports that are not a rerun based on orderly metadata
+#' @param report_name  name of orderly report to extract metadata from
+#' @param map  parameter map for reports you would like to crossreference
+#' @param date_time check if reports completed after a certain date, format YYYYMMDDHHMMSS
+#' @export
 check_not_a_rerun<- function(report_name, map, date_time){
 
   site_counts<- map |>
@@ -124,13 +134,17 @@ check_not_a_rerun<- function(report_name, map, date_time){
     select(-date_time)
 
   different<- setdiff(map, completed)
-
   different<- merge(different, site_counts, by = c('scenario', 'iso3c'))
 
   return(different)
 
 }
 
+
+#' Loop through reports locally based on parameters in map
+#' @param report_name  name of orderly report
+#' @param map  parameter map for reports
+#' @export
 run_local_reports<- function(map, report_name){
   for(index in c(1:nrow(map))){
 
@@ -145,6 +159,10 @@ run_local_reports<- function(map, report_name){
 }
 
 
+#' Pull the number of sites to model for country job
+#' @param index observation index for parameter map
+#' @param map   parameter map
+#' @export
 pull_site_numbers<- function(index, map){
 
   map<- map[index,]
@@ -168,19 +186,18 @@ pull_site_numbers<- function(index, map){
       site_number<- nrow(site$prevalence |> filter(run_model == TRUE, year == 2019))
     }
 
-
-
-
   return(data.table('iso3c' = iso3c, 'scenario' = scenario, 'site_number' = site_number))
 }
 
-
+#' Submit jobs by core
+#' @param core number of cores to request for job
+#' @param dt   parameter map for reports
+#' @export
 submit_by_core<- function(core, dt){
 
   dt<- dt |>
     filter(site_number == core)
-
-  message(unique(dt$site_number))
+   message(unique(dt$site_number))
 
   hipercow::task_create_bulk_expr(
     orderly2::orderly_run(
@@ -189,8 +206,7 @@ submit_by_core<- function(core, dt){
                         description = description,
                         quick_run = quick_run,
                         scenario = scenario,
-                        parameter_draw = parameter_draw,
-                        pfpr10= pfpr10)),
+                        parameter_draw = parameter_draw)),
     dt,
     resources = hipercow::hipercow_resources(cores = unique(dt$site_number)))
 

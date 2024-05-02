@@ -1,40 +1,5 @@
 # parameter functions
 
-#' Make list of parameters that will apply to all model runs
-#' @param   quick_run     quick run setting
-#' @returns list of parameters for all model runs
-#' @export
-pull_age_groups_time_horizon<- function(quick_run){
-
-  year<- 365
-  burnin<- 15
-
-  if(quick_run == TRUE){
-
-    term_yr<- 2030
-    pop_val<- 5000
-
-    min_ages = c(0:5, 6,15,20) * year
-    max_ages = c(1:6, 15,20,200) * year -1
-
-  } else{
-
-    pop_val<- 50000
-    term_yr<- 2100
-
-    # min_ages = c(0:10, 12, 14,16,18, 20 ,30,50) * year
-    # max_ages = c(1:10, 12, 14, 16, 18, 20, 30, 50, 100) * year -1
-    min_ages = c(seq(0, 19, by= 1), seq(20, 90, by= 10)) * year
-    max_ages = c(seq(1, 20, by= 1), seq(30, 100, by= 10)) * year -1
-
-  }
-
-  return(list('term_yr' = term_yr,
-              'pop_val' = pop_val,
-              'min_ages'= min_ages,
-              'max_ages' = max_ages,
-              'burnin' = burnin))
-}
 
 #' parameterize site + urbanicty of interest
 #' @param   site_name        name of site
@@ -114,6 +79,39 @@ pull_input_params<- function(site_name,
 }
 
 
+#' Make list of parameters that will apply to all model runs
+#' @param   quick_run     quick run setting
+#' @returns list of parameters for all model runs
+#' @export
+pull_age_groups_time_horizon<- function(quick_run){
+
+  year<- 365
+  burnin<- 15
+
+  if(quick_run == TRUE){
+
+    term_yr<- 2030
+    pop_val<- 5000
+
+    min_ages = c(0:5, 6,15,20) * year
+    max_ages = c(1:6, 15,20,200) * year -1
+
+  } else{
+
+    pop_val<- 50000
+    term_yr<- 2100
+
+    min_ages = c(seq(0, 19, by= 1), seq(20, 90, by= 10)) * year
+    max_ages = c(seq(1, 20, by= 1), seq(30, 100, by= 10)) * year -1
+
+  }
+
+  return(list('term_yr' = term_yr,
+              'pop_val' = pop_val,
+              'min_ages'= min_ages,
+              'max_ages' = max_ages,
+              'burnin' = burnin))
+}
 
 #' Change parameter set based off of stochastic draws
 #' @param   params           model input parameters
@@ -187,7 +185,6 @@ update_coverage_values<- function(site, iso3c, coverage_data, scenario_name){
            r21_booster_coverage = R4)
 
   # transform booster coverage into value per person according to coverage in the preceding year
-
   if(scenario_name == 'malaria-rts3-rts4-bluesky'){
     dt[rtss_booster_coverage== 0.9, rtss_booster_coverage:= 1]
   }else{

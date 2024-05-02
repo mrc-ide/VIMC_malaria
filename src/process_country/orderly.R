@@ -4,8 +4,7 @@ orderly2::orderly_parameters(iso3c = NULL,
                              scenario = NULL,
                              quick_run = NULL,
                              parameter_draw = NULL,
-                             description = NULL,
-                             pfpr10 = NULL)
+                             description = NULL)
 
 orderly2::orderly_description('Analyze vaccine impact at the country level')
 orderly2::orderly_artefact('Processed output', 'outputs.rds')
@@ -20,12 +19,7 @@ library(tidyr)
 library(tibble)
 library(postie)
 library(countrycode)
-
-# functions ----
-source('analyse_site.R')
-files<- list.files('functions/', full.names = TRUE)
-invisible(lapply(files, source))
-
+library(vimcmalaria)
 
 # read in dependencies  ----
 orderly2::orderly_dependency("process_inputs", "latest(parameter:iso3c == this:iso3c)", c(vimc_input.rds = "vimc_input.rds"))
@@ -43,7 +37,7 @@ pop_single_yr<- vimc_input$population_input_single_yr
 
 # make a map of input parameters for site function
 site_df<- remove_zero_eirs(iso3c, site_data)
-map<- make_analysis_map(site_df, site_data, test = FALSE, pfpr10 = {{pfpr10}})
+map<- make_analysis_map(site_df, site_data, test = TRUE)
 
 # run analysis function for each site + urban/rural combination ----
 cluster_cores <- Sys.getenv("CCP_NUMCPUS")
@@ -68,15 +62,7 @@ if (cluster_cores == "") {
     library(postie)
     library(countrycode)
     library(site)
-    source('functions/aggregate.R')
-    source('functions/diagnostics.R')
-    source('functions/model.R')
-    source('functions/parameterize.R')
-    source('functions/postprocess.R')
-    source('functions/scale.R')
-    source('functions/site_file.R')
-    source('functions/workflow.R')
-    source("analyse_site.R")
+    library(vimcmalaria)
     TRUE
   })
   output<- parallel::clusterApply(cl,
@@ -93,8 +79,9 @@ processed_results<- test$processed_full
 doses_full<- test$doses_full
 prev_full<- test$prev_full
 
+# aggregate outputs up to country level
 if(scenario == 'no-vaccination'){
-  # aggregate outputs up to country level
+
   dt<- aggregate_outputs(processed_results, pop_single_yr)
 
 } else{

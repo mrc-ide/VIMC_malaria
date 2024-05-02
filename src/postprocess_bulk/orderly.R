@@ -1,12 +1,11 @@
 # postprocess in bulk
-output_filepath<- 'J:/VIMC_malaria/archive/process_country/'
-source('postprocessing_functions.R')
-source('diagnostic_report_functions.R')
+orderly2::orderly_parameters(iso3c = NULL,
+                             description = NULL,
+                             quick_run = NULL)
 
 
-# packages
+# packages  --------------------------------------------------------------------
 library(site)
-library(data.table)
 library(dplyr)
 library(malariasimulation)
 library(openxlsx)
@@ -19,115 +18,115 @@ library(countrycode)
 library(scene)
 library(scales)
 library(wesanderson)
+library(vimcmalaria)
 
-run_postprocessing<- function(iso3c){
-  # pull metadata for completed outputs for this country
-  completed<- pull_most_recent_output({{iso3c}})
+# read in dependencies  --------------------------------------------------------
+orderly2::orderly_dependency("process_inputs", "latest(parameter:iso3c == this:iso3c)", c(vimc_input.rds = "vimc_input.rds"))
+orderly2::orderly_dependency("process_inputs", "latest(parameter:iso3c == this:iso3c)", c(merged_site_file.rds = "merged_site_file.rds"))
 
-  max_draw<- max(completed[scenario == 'no-vaccination', parameter_draw])
+vimc_input<- readRDS('vimc_input.rds')
+site_data <- readRDS('merged_site_file.rds')
 
-  # vimc inputs ----
-  inputs<- completed_reports('process_inputs') |>
-    filter(iso3c == {{iso3c}}) |>
-    arrange(desc(date_time))
-  inputs<- unique(inputs, by = 'iso3c')
+coverage_data<- vimc_input$coverage_input
+le <- vimc_input$le
+vimc_pop<- vimc_input$population_input_all_age
+pop_single_yr<- vimc_input$population_input_single_yr
+pop_data<- vimc_input$population_input_all_age
 
-  vimc_input<- readRDS(paste0('J:/VIMC_malaria/archive/process_inputs/', inputs$directory_name, '/vimc_input.rds'))
-  site_data<- readRDS(paste0('J:/VIMC_malaria/archive/process_inputs/', inputs$directory_name, '/merged_site_file.rds'))
+# pull metadata for completed outputs for this country
+completed<- pull_most_recent_output({{iso3c}}, description = {{description}}, quick_run {{quick_run}})
+max_draw<- max(completed[scenario == 'no-vaccination', parameter_draw])
 
-  coverage_data<- vimc_input$coverage_input
-  le <- vimc_input$le
-  vimc_pop<- vimc_input$population_input_all_age
-  pop_single_yr<- vimc_input$population_input_single_yr
-  pop_data<- vimc_input$population_input_all_age
+# vimc inputs
+inputs<- completed_reports('process_inputs') |>
+  filter(iso3c == {{iso3c}}) |>
+  arrange(desc(date_time))
+inputs<- unique(inputs, by = 'iso3c')
 
-  # pull model outputs for scaling to WMR cases: no-vaccination draw 0
-  scaling_filepath<- completed |> filter(parameter_draw == 0,
-                                         scenario == 'no-vaccination')
+# pull model outputs for scaling to WMR cases: no-vaccination draw 0
+scaling_filepath<- completed |> filter(parameter_draw == 0,
+                                       scenario == 'no-vaccination')
+scaling<- readRDS(paste0(output_filepath, scaling_filepath$directory_name, '/outputs.rds'))
+scaling<- scaling$country_output
 
-  message('reading in absolute filepath')
-  scaling<- readRDS(paste0(output_filepath, scaling_filepath$directory_name, '/outputs.rds'))
-  scaling<- scaling$country_output
+
+# postprocess by draw ----------------------------------------------------------
+final_postprocessing<- function(draw){
+
+  message(paste0('postprocessing draw ', draw))
+
+  bl_filepaths<- completed |> filter(parameter_draw == draw,
+                                     scenario == 'no-vaccination')
+  intvn_filepaths<- completed |> filter(parameter_draw == draw)
 
   # pull model outputs for all scenarios
-  intvn_output<- rbindlist(lapply(c(1:nrow(completed)), get_site_output, map = completed))
-  dose_output<- rbindlist(lapply(c(1:nrow(completed)), get_dose_output, map = completed), fill = TRUE)
-
-  doses<- dose_output |>
-    group_by(scenario, year, parameter_draw) |>
-    summarise(doses = sum(doses),
-              .groups = 'keep') |>
-    filter(year %in% c(2000:2100))
-
-  saveRDS(doses, paste0('J:/VIMC_malaria/outputs/dose_output/', iso3c, 'dose_output.rds'))
+  intvn<- rbindlist(lapply(c(1:nrow(intvn_filepaths)), get_site_output, map = intvn_filepaths, output_filepath = 'J:/VIMC_malaria/archive/process_country/' ))
 
   # pull model outputs for all baseline scenarios (as a separate input into intervention processing)
-  bl_filepaths<- completed |> filter(scenario == 'no-vaccination')
-  bl_output<- rbindlist(lapply(c(1:nrow(bl_filepaths)), get_site_output, map = bl_filepaths))
+  bl<- rbindlist(lapply(c(1:nrow(bl_filepaths)), get_site_output, map = bl_filepaths, output_filepath = 'J:/VIMC_malaria/archive/process_country/'))
 
-  # run postprocessing by parameter draw
-  for (draw in c(1:max_draw)){
+  message('adding low transmission sites')
 
-    message(paste0('postprocessing draw ', draw))
+  low<- pull_low_transmission_sites(iso3c, site_data, bl)
+  print(nrow(low))
+  intvn<- append_low_transmission_sites(low_transmission = low, intvn)
 
-    bl<- bl_output |> filter(parameter_draw == draw)
-    intvn<- intvn_output |> filter(parameter_draw == draw)
+  message('aggregating')
+  dt<- aggregate_outputs(intvn, pop_single_yr)
 
-    message('adding low transmission sites')
+  message('scaling cases')
+  output<- add_proportions(dt)
 
-    low_transmission<- pull_low_transmission_sites(iso3c, site_data, bl)
-    intvn<- append_low_transmission_sites(low_transmission, intvn)
+  output<- scale_cases(output, scaling_data= scaling,  site_data = site_data)
 
-    message('aggregating')
-    dt<- aggregate_outputs(intvn, pop_single_yr)
+  # scale cases based on difference between site file PAR and VIMC PAR
+  message('scaling PAR')
+  processed_output<- scale_par(output, iso3c= {{iso3c}})
 
-    message('scaling cases')
-    output<- add_proportions(dt)
+  message('formatting')
+  # format and save (
+  processed_output<- processed_output |>
+    mutate(cases = round(cases),
+           deaths = round(deaths),
+           yll= round(ylls),
+           dalys = round(dalys),
+           cohort_size = round(cohort_size)) |>
+    rename(run_id = parameter_draw) |>
+    select(-model_proportion_risk,
+           -proportion_risk,
+           -scaling_ratio,
+           -prop_severe,
+           -prop_deaths,
+           -dalys_pp,
+           -ylls,
+           -life_expectancy) |>
+    select(run_id,
+           scenario,
+           disease,
+           year,
+           age,
+           country,
+           country_name,
+           cohort_size,
+           cases,
+           dalys,
+           deaths,
+           yll)
 
-    output<- scale_cases(output, scaling_data= scaling,  site_data = site_data)
-
-    # scale cases based on difference between site file PAR and VIMC PAR
-    message('scaling PAR')
-    processed_output<- scale_par(output, iso3c= {{iso3c}})
-
-    message('formatting')
-    # format and save (
-    processed_output<- processed_output |>
-      mutate(cases = round(cases),
-             deaths = round(deaths),
-             yll= round(ylls),
-             dalys = round(dalys),
-             cohort_size = round(cohort_size)) |>
-      rename(run_id = parameter_draw) |>
-      select(-model_proportion_risk,
-             -proportion_risk,
-             -scaling_ratio,
-             -prop_severe,
-             -prop_deaths,
-             -dalys_pp,
-             -ylls,
-             -life_expectancy) |>
-      select(run_id,
-             disease,
-             year,
-             age,
-             country,
-             country_name,
-             cohort_size,
-             cases,
-             dalys,
-             deaths,
-             yll)
-
-    final_output<- rbind(final_output, processed_output, fill =T)
-
-    saveRDS(final_output, paste0('J:/VIMC_malaria/outputs/stochastic_estimates/', iso3c, '_draw_', draw, '.rds'))
-    message(paste0('done with draw ', draw))
-
-    message('done')
-  }
+  return(processed_output)
 
 }
 
+# save -------------------------------------------------------------------------
+outputs<- lapply(c(1:max_draw), final_postprocessing)
+saveRDS(outputs, 'final_output.rds')
 
+# save aggregated dose output to file
+dose_output<- rbindlist(lapply(c(1:nrow(completed)), get_dose_output, map = completed, output_filepath = 'J:/VIMC_malaria/archive/process_country/'), fill = TRUE)
+doses<- dose_output |>
+  group_by(scenario, year, parameter_draw) |>
+  summarise(doses = sum(doses),
+            .groups = 'keep') |>
+  filter(year %in% c(2000:2100))
 
+saveRDS(doses, 'dose_output.rds')
