@@ -2,6 +2,7 @@
 # orderly metadata  ----
 orderly2::orderly_parameters(iso3c = NULL,
                              scenario = NULL,
+                             gfa= NULL,
                              quick_run = NULL,
                              parameter_draw = NULL,
                              description = NULL)
@@ -23,10 +24,10 @@ library(vimcmalaria)
 
 # read in dependencies  ----
 orderly2::orderly_dependency("process_inputs", "latest(parameter:iso3c == this:iso3c)", c(vimc_input.rds = "vimc_input.rds"))
-orderly2::orderly_dependency("process_inputs", "latest(parameter:iso3c == this:iso3c)", c(merged_site_file.rds = "merged_site_file.rds"))
+orderly2::orderly_dependency("process_inputs", "latest(parameter:iso3c == this:iso3c)", c(site_file.rds = "site_file.rds"))
 
 vimc_input<- readRDS('vimc_input.rds')
-site_data <- readRDS('merged_site_file.rds')
+site_data <- readRDS('site_file.rds')
 
 
 # vimc inputs ----
@@ -37,7 +38,7 @@ pop_single_yr<- vimc_input$population_input_single_yr
 
 # make a map of input parameters for site function
 site_df<- remove_zero_eirs(iso3c, site_data)
-map<- make_analysis_map(site_df, site_data, test = TRUE)
+map<- vimcmalaria::make_analysis_map(site_df, site_data, test = FALSE)
 
 # run analysis function for each site + urban/rural combination ----
 cluster_cores <- Sys.getenv("CCP_NUMCPUS")

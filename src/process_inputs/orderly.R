@@ -18,25 +18,31 @@ coverage_dt <- coverage_dt |>
   mutate(coverage = coverage / proportion_risk)  # convert coverage to per population instead of per population at risk
 
 
+novax<- coverage_dt |>           # pull another projection for data table structure and fill with zeroes
+  dplyr::filter(country_code == iso3c) |>
+  dplyr::filter(scenario == 'malaria-rts3-rts4-default') |>
+  mutate(coverage = 0)  |>
+  mutate(scenario = 'no-vaccination')
+
+coverage_dt<- rbind(coverage_dt, novax)
+
 # pull population data (single year) -------------------------------------------
-demog_single_yr<- read.csv('vimc_inputs/demography/202310gavi-1_dds-202208_int_pop_both.csv') |>
+demog_single_yr<- read.csv('vimc_inputs/demography/202310gavi-7_dds-202208_int_pop_both.csv') |>
   filter(country_code == iso3c) |>
   filter(year >= 2000)
-
 
 # pull population data (all ages) ----------------------------------------------
-demog_all_ages<- read.csv('vimc_inputs/demography/202310gavi-1_dds-202208_tot_pop_both.csv') |>
+demog_all_ages<- read.csv('vimc_inputs/demography/202310gavi-7_dds-202208_tot_pop_both.csv') |>
   filter(country_code == iso3c) |>
   filter(year >= 2000)
 
-
 # pull life expectancy data ----------------------------------------------------
-le<- read.csv('vimc_inputs/demography/202310gavi-1_dds-202208_life_ex_both.csv') |>
+le<- read.csv('vimc_inputs/demography/202310gavi-7_dds-202208_life_ex_both.csv') |>
   filter(country_code == iso3c) |>
   filter(year >= 2000)
 
 # pull mortality rate data  ----------------------------------------------------
-mort<- read.csv('vimc_inputs/demography/202310gavi-1_dds-202208_mort_rate_both.csv') |>
+mort<- read.csv('vimc_inputs/demography/202310gavi-7_dds-202208_mort_rate_both.csv') |>
   filter(country_code == iso3c) |>
   filter(year >= 2000)
 
@@ -51,15 +57,7 @@ vimc_input<- list('coverage_input' = coverage_dt,
 saveRDS(vimc_input, 'vimc_input.rds')
 
 # pull site data  --------------------------------------------------------------
-site_data <- readRDS(paste0('site_files/', iso3c, '.rds'))
-
-new_site_data<- readRDS(paste0('site_files/new_site_files/', iso3c, '_new_eir.rds'))
-
-# turn SMC off as this will be modified with site package
-# site_data$interventions <- site_data$interventions |>
-#   mutate(smc_cov=0)
-
+site_data <- readRDS(paste0('site_files/', iso3c, '_new_eir.rds'))
 saveRDS(site_data, 'site_file.rds')
-saveRDS(new_site_data, 'merged_site_file.rds')
 
 

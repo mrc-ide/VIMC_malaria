@@ -4,6 +4,7 @@ mrc-ide/site@vimc
 mrc-ide/postie@dalys
 mrc-ide/scene
 mrc-ide/orderly2
+mrc-ide/vimcmalaria
 
 data.table
 dplyr
