@@ -29,7 +29,6 @@ map<- check_reports_completed('process_country', map, date_time = 0)
 # STEP 1: run process_inputs report --------------------------------------------
 #lapply(iso3cs, function(x) orderly2::orderly_run('process_inputs', parameters = list(iso3c = x)))
 
-
 reports<- vimcmalaria::completed_reports('process_country') |> filter(description == 'round3')
 
 unique(reports)
@@ -65,13 +64,17 @@ orderly2::orderly_run(
 
 # STEP 4: run diagnostic reports for outputs  ----------------------------------
 for(iso in iso3cs){
-  tasks <-
-    hipercow::task_create_expr(orderly2::orderly_run(
-      'diagnostics',
-      parameters = list(iso3c = iso,
-                        description = 'test_round2_changes')
+  
+  message(iso)
+  #hipercow::task_create_bulk_expr(
+  orderly2::orderly_run(
+    "diagnostics",
+    parameters = list(
+      iso3c = iso,
+      description = 'round3',
+      quick_run = FALSE
     ))
-
+  #)
 }
 
 
