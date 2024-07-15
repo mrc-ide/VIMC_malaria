@@ -11,7 +11,7 @@
 raw_data/
 data/
 contexts/
-diagnostics/
+plots/
 ctxs/
 ctxs2/
 ctxs3/
@@ -28,6 +28,8 @@ src/process_inputs/vimc_inputs/
 src/process_inputs/site_files/
 src/set_parameters/vimc_inputs/
 src/set_parameters/site_files/
+
+
 # ---VVV--- added by orderly ---VVV----------------
 # Don't manually edit content between these markers
 .outpack
