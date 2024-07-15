@@ -1,5 +1,5 @@
 # compile reports-- if results are missing, impute zeroes for now
-path <-"J:/VIMC_malaria/archive/postprocess/"
+path <-"J:/VIMC_malaria/archive/postprocessing/"
 setwd('J:/VIMC_malaria')
 library(ggpubr)
 library(ggforce)
@@ -19,7 +19,7 @@ for (scenario in scenarios){
   message(scenario)
   files<- list.files(paste0('J:/VIMC_malaria/outputs/stochastic_estimates/', scenario), full.names = TRUE)
 
-  for(draw in c(101:200)){
+  for(draw in 0 ){
 
     message(draw)
     draw_files<- files[files %like% paste0('draw_', draw, '.rds')]
@@ -82,6 +82,8 @@ for (iso in iso3cs){
   }
 
   saveRDS(country_output, paste0('outputs/stochastic_estimates/by_draw/draw_0.rds'))
+
+
 
 
 

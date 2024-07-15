@@ -21,7 +21,7 @@ library(tibble)
 library(postie)
 library(countrycode)
 library(vimcmalaria)
-
+library(cali)
 # read in dependencies  ----
 orderly2::orderly_dependency("process_inputs", "latest(parameter:iso3c == this:iso3c)", c(vimc_input.rds = "vimc_input.rds"))
 orderly2::orderly_dependency("process_inputs", "latest(parameter:iso3c == this:iso3c)", c(site_file.rds = "site_file.rds"))
@@ -38,8 +38,12 @@ pop_single_yr<- vimc_input$population_input_single_yr
 
 # make a map of input parameters for site function
 site_df<- remove_zero_eirs(iso3c, site_data)
-map<- vimcmalaria::make_analysis_map(site_df, site_data, test = FALSE)
+map<- vimcmalaria::make_analysis_map(site_df, site_data, test = FALSE, run_all = TRUE)
 
+if(iso3c == 'ETH'){
+
+  site_data$interventions$irs_cov = 0
+}
 # run analysis function for each site + urban/rural combination ----
 cluster_cores <- Sys.getenv("CCP_NUMCPUS")
 if (cluster_cores == "") {
@@ -77,8 +81,8 @@ if (cluster_cores == "") {
 # reformat outputs into separate data frames
 test<- reformat_output(output)
 processed_results<- test$processed_full
-doses_full<- test$doses_full
-prev_full<- test$prev_full
+raw_output<- test$raw_full
+
 
 # aggregate outputs up to country level
 if(scenario == 'no-vaccination'){
@@ -90,15 +94,11 @@ if(scenario == 'no-vaccination'){
   dt<- data.table()
 }
 
-if (scenario != 'no-vaccination'){
-  doses_full<- aggregate_doses(doses_full)
-}
 
 #save every output to one list
 outputs<- list('country_output' = dt,
                'site_output' = output,
-               'doses' = doses_full,
-               'prevalence' = prev_full)
+               'raw_output' = raw_output)
 
 
 saveRDS(outputs, 'outputs.rds')

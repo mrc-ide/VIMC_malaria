@@ -1,7 +1,7 @@
 # postprocess in bulk
-orderly2::orderly_parameters(iso3c = NULL,
-                             description = NULL,
-                             quick_run = NULL)
+orderly2::orderly_parameters(iso3c = 'TZA',
+                             description = 'fix_rtss_booster',
+                             quick_run = FALSE)
 
 
 # packages  --------------------------------------------------------------------
@@ -34,7 +34,14 @@ pop_single_yr<- vimc_input$population_input_single_yr
 pop_data<- vimc_input$population_input_all_age
 
 # pull metadata for completed outputs for this country
-completed<- pull_most_recent_output({{iso3c}}, description = {{description}}, quick_run = {{quick_run}})
+completed<- completed_reports('process_country') |>
+  dplyr::filter(iso3c == {{iso3c}},
+                description == {{description}},
+                quick_run == {{quick_run}}) |>
+  dplyr::arrange(dplyr::desc(date_time)) |>
+  dplyr::distinct(iso3c, scenario, quick_run, parameter_draw, description, gfa, .keep_all = TRUE) |>
+  dplyr::arrange(iso3c, scenario, parameter_draw)
+
 max_draw<- max(completed[scenario == 'no-vaccination', parameter_draw])
 
 # vimc inputs
@@ -67,12 +74,12 @@ final_postprocessing<- function(draw){
   # pull model outputs for all baseline scenarios (as a separate input into intervention processing)
   bl<- rbindlist(lapply(c(1:nrow(bl_filepaths)), get_site_output, map = bl_filepaths, output_filepath = 'J:/VIMC_malaria/archive/process_country/'))
   bl[gfa == TRUE, scenario := paste0(scenario, '_gfa')]
-  
-  message('adding low transmission sites')
-
-  low<- pull_low_transmission_sites(iso3c, site_data, bl)
-  print(nrow(low))
-  intvn<- append_low_transmission_sites(low_transmission = low, intvn)
+  # commenting out as now modelling introduction in all sites regardless of transmission intensity
+  # message('adding low transmission sites')
+  # 
+  # low<- pull_low_transmission_sites(iso3c, site_data, bl)
+  # print(nrow(low))
+  # intvn<- append_low_transmission_sites(low_transmission = low, intvn)
 
   message('aggregating')
   dt<- aggregate_outputs(intvn, pop_single_yr)
@@ -124,14 +131,72 @@ final_postprocessing<- function(draw){
 outputs<- lapply(c(0:max_draw), final_postprocessing)
 saveRDS(outputs, 'final_output.rds')
 
-# save aggregated dose output to file
-dose_output<- rbindlist(lapply(c(1:nrow(completed)), get_dose_output, map = completed, output_filepath = 'J:/VIMC_malaria/archive/process_country/'), fill = TRUE)
-doses<- dose_output |>
-  group_by(scenario, year, parameter_draw) |>
-  summarise(doses = sum(doses),
-            .groups = 'keep') |>
-  filter(year %in% c(2000:2100))
 
-saveRDS(doses, 'dose_output.rds')
+
+dose_postprocessing<- function(){
+  intvn_filepaths<- completed |> filter(parameter_draw == 0)
+  
+  # pull model outputs for all scenarios
+  raw<- bind_rows(lapply(c(1:nrow(intvn_filepaths)), get_raw_output, map = intvn_filepaths, output_filepath = 'J:/VIMC_malaria/archive/process_country/' ))
+  raw<- raw |>
+    mutate(site = paste0(site_name, '_', urban_rural, '_', scenario),
+           site_ur = paste0(site_name, '_', urban_rural))
+  
+  ids<- unique(raw$site)
+  
+  case_output<- rbindlist(lapply(ids, site_postprocessing, dt = raw)) 
+  
+  case_output<- case_output |>
+    rename(year = t,
+           age = age_lower) |>
+    mutate(cases = round(clinical * n),
+           deaths = round(mortality * n)) |>
+    group_by(site, year, site_ur) |>
+    summarise(cases = sum(cases),
+              deaths= sum(deaths),
+              .groups = 'keep') 
+  
+  #calculate cases averted by year and site
+  novax<- case_output|> 
+    filter(site %like%'no-vaccination') |>
+    rename(cases_novax = cases,
+           deaths_novax = deaths) |>
+    ungroup() |>
+    select(-site)
+
+  vax<- case_output |> filter(!site %like% 'no-vaccination')
+  
+  averted<- merge(vax, novax, by = c('year', 'site_ur')) |>
+    mutate(cases_averted = cases_novax- cases,
+           deaths_averted = deaths_novax - deaths)
+
+    
+  doses<- raw |>
+    select(timestep, n_pev_epi_dose_1, n_pev_epi_dose_2, n_pev_epi_dose_3, n_pev_epi_booster_1, scenario, site) |>
+    mutate(year = as.integer(timestep/365)) |>
+    group_by(site, year, scenario) |>
+    summarise(n_pev_epi_dose_1 = sum(n_pev_epi_dose_1),
+              n_pev_epi_dose_2 = sum(n_pev_epi_dose_2),
+              n_pev_epi_dose_3 = sum(n_pev_epi_dose_3),
+              n_pev_epi_booster_1 = sum(n_pev_epi_booster_1),
+              .groups = 'keep') |>
+      mutate(doses_total = n_pev_epi_dose_1 + n_pev_epi_dose_2 +n_pev_epi_dose_3 + n_pev_epi_booster_1,
+             fvp = ifelse(scenario == 'malaria-rts3-bluesky' |
+                          scenario == 'malaria-r3-default' |
+                        scenario == 'malaria-rts3-default' |
+                        scenario == 'malaria-r3-bluesky',
+                        n_pev_epi_dose_3, 
+                        n_pev_epi_booster_1)) |>
+    select(-n_pev_epi_dose_1, -n_pev_epi_dose_2, -n_pev_epi_dose_3, -n_pev_epi_booster_1) |>
+    mutate(year = year +1999)
+    
+  dose_output<- merge(averted, doses, by = c('year', 'site')) 
+  
+  return(dose_output)
+  
+}
+
+dose_output<- dose_postprocessing()
+saveRDS(dose_output, 'dose_output.rds')
 
 message('done with postprocessing')
