@@ -142,66 +142,20 @@ run_postprocessing<- function(iso3c){
 
 
 
-completed_reports<- function(report_name){
 
-
-  meta <- orderly2::orderly_metadata_extract(name = report_name, extract = c('time', 'parameters'),  options = orderly2::orderly_search_options(allow_remote = TRUE))
-
-  meta<- meta|>
-    mutate(directory_name = id) |>
-    tidyr::separate(col = id, into = c('date', 'time'), sep = '-')|>
-    mutate(date= as.numeric(date)) |>
-    mutate(date_time = as.numeric(paste0(date, time)))
-
-  meta<- data.table(meta)
-  meta<- meta[, index:= c(1:.N) ]
-
-
-  unique(lapply(meta$parameters, names))
-  nms <- names(meta$parameters[[1]])
-  pars <- do.call("data.frame", setNames(lapply(nms, function(nm) sapply(meta$parameters, function(x) x[[nm]])), nms))
-  pars<- data.table(pars)
-  pars<- pars[, index:= c(1:.N)]
-
-  meta<- meta |>
-    select(directory_name, index, date_time)
-  map<- merge(pars, meta, by = 'index')
-  map<- map |>
-    select(-index)
-
-  return(map)
-}
-
-pull_most_recent_output<- function(iso3c){
+pull_most_recent_output<- function(iso3c, description, quick_run){
   completed<- completed_reports('process_country') |>
     filter(iso3c == {{iso3c}},
-           pfpr10 == TRUE,
-           description == 'test_round2_changes',
-           quick_run == FALSE) |>
+           description == {{description}},
+           quick_run == {{quick_run}}) |>
     arrange(desc(date_time)) |>
-    dplyr::distinct(iso3c, scenario, quick_run, parameter_draw, description, pfpr10, .keep_all = TRUE) |>
+    dplyr::distinct(iso3c, scenario, quick_run, parameter_draw, description, .keep_all = TRUE) |>
     arrange(iso3c, scenario, parameter_draw)
 
 
   return(completed)
 }
 
-
-get_site_output<- function(index, map){
-
-  metadata<- map[ index,]
-
-  directory<- metadata$directory_name
-  draw<- metadata$parameter_draw
-
-  message(directory)
-
-  output<- readRDS(paste0(output_filepath, directory, '/outputs.rds'))             # get output file
-  sites<- rbindlist(lapply(output$site_output, function(x) return(x$processed_output))) #pull out processed site_level output
-  sites<- sites |>
-    mutate(parameter_draw = draw)
-  return(sites)
-}
 
 get_dose_output<- function(index, map){
 
@@ -433,10 +387,6 @@ add_proportions<- function(dt){
 
 scale_par<- function(processed_output,
                      iso3c){
-
-  pars<- readRDS('J:/VIMC_malaria/postprocessing/par_scaling_vimc.rds')
-  le_africa<- readRDS('J:/VIMC_malaria/postprocessing/le_africa.rds')
-  print(names(le_africa))
   pars<- pars |>
     filter(iso3c == {{iso3c}}) |>
     mutate(scaling_ratio = proportion_risk/ model_proportion_risk) |>
