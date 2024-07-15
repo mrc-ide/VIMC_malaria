@@ -1,0 +1,1324 @@
+---
+title: "Diagnostic Report"
+output: 
+  html_document:
+    df_print: paged
+    toc: true
+    toc_float:
+      collapsed: false
+      smooth_scroll: false
+    theme: cosmo
+    highlight: espresso
+params:
+  vetting: ""
+  coverage_data: ""
+  site_data: ""
+  country_name: ""
+  site_output: ""
+  averted_output: ""
+  burden_output: ""
+  dose_output: ""
+  population: ""
+  population_by_age: ""
+---
+
+```{r setup, include=FALSE, warning = FALSE, echo = FALSE, message = FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message= FALSE)
+
+vetting<- params$vetting
+site_output<- params$site_output
+averted_output<- params$averted_output
+burden_output<- params$burden_output
+coverage_data<- params$coverage_data
+dose_output<- params$dose_output
+site_data<- params$site_data
+population <- params$population
+population_by_age<- params$population_by_age
+country_name<- params$country_name
+
+pfprs<- readRDS('pfpr10plus_admins.rds')
+```
+
+This is a diagnostic report for `r country_name`.
+
+# Vaccine Coverage
+
+```{r vaccine coverage}
+plot_vaccine_coverage(coverage_data, country_name = {{country_name}})
+```
+
+# Site file
+
+## Intervention coverage
+
+```{r intervention coverage}
+plot_intvn_coverage(site_data)
+```
+
+## Cases and Deaths
+
+```{r cases and deaths}
+cases_deaths_diagnostic(site_data)
+```
+
+## Admin units {.tabset}
+
+### Moderate-to-High transmission sites
+
+```{r}
+pfprs |>
+  filter(run_model == TRUE,
+         country == {{country_name}})
+
+```
+
+### Low transmission sites
+
+```{r}
+pfprs |>
+  filter(run_model == FALSE,
+         country == {{country_name}})
+
+```
+
+## Site level cases + deaths per FVP {.tabset}
+
+### Cases
+```{r case comparison}
+
+plot_case_site_comparison(dose_output$site_doses)
+
+
+```
+
+### Deaths
+
+```{r death comparison}
+
+plot_death_site_comparison(dose_output$site_doses)
+
+```
+
+
+## Population distribution {.tabset}
+
+### Population over time
+
+```{r population}
+
+ggplot(data = population, mapping= aes(x= year, y= value))+
+  geom_line() +
+  plotting_theme +
+  labs(title = ('Total population over time'),
+       subtitle = {{country_name}})
+       
+```
+
+###    Population at beginning and end of simulation 
+
+```{r}
+population_by_age<- data.table(population_by_age) |> filter(age_from < 6)
+
+under_5<- population_by_age |>
+  group_by(year) |>
+  summarise(value = sum(value))
+
+p<- ggplot(data = under_5, mapping= aes(x= year, y= value))+
+  geom_line() +
+  plotting_theme +
+  labs(title = ('Population under 5 over time'),
+       subtitle = {{country_name}})
+       
+p
+```
+# Incidence
+
+## Incidence over time {.tabset}
+
+<!-- ### rts3-default -->
+<!-- # ```{r} -->
+<!-- # incidence_over_time(burden_output$by_year,  -->
+<!-- #                     scenario= 'malaria-rts3-default', -->
+<!-- #                     site_data, -->
+<!-- #                     coverage_data) -->
+<!-- # ``` -->
+<!-- #  -->
+<!-- # ### rts3-bluesky -->
+<!-- #  -->
+<!-- # ```{r} -->
+<!-- # incidence_over_time(burden_output$by_year,  -->
+<!-- #                     scenario= 'malaria-rts3-bluesky', -->
+<!-- #                     site_data, -->
+<!-- #                     coverage_data) -->
+<!-- # ``` -->
+
+<!-- ### rts3-rts4-default -->
+
+<!-- # ```{r} -->
+<!-- # incidence_over_time(burden_output$by_year,  -->
+<!-- #                     scenario= 'malaria-rts3-rts4-default', -->
+<!-- #                     site_data, -->
+<!-- #                     coverage_data) -->
+<!-- # ``` -->
+
+<!-- ### rts3-rts4-bluesky -->
+
+<!-- # ```{r} -->
+<!-- # incidence_over_time(burden_output$by_year,  -->
+<!-- #                     scenario= 'malaria-rts3-rts4-bluesky', -->
+<!-- #                     site_data, -->
+<!-- #                     coverage_data) -->
+<!-- # ``` -->
+
+
+<!-- ### r3-default -->
+
+<!-- ```{r incidence_time_r3} -->
+<!-- incidence_over_time(burden_output$by_year,  -->
+<!--                     scenario= 'malaria-r3-default', -->
+<!--                     site_data, -->
+<!--                     coverage_data) -->
+<!-- ``` -->
+
+### r3-bluesky
+
+```{r incidence_time_r3_bluesky}
+incidence_over_time(burden_output$by_year, 
+                    scenario= 'malaria-r3-bluesky',
+                    site_data,
+                    coverage_data)
+```
+
+<!-- ### r3-r4-default -->
+
+<!-- ```{r incidence_time_r4} -->
+<!-- incidence_over_time(burden_output$by_year,  -->
+<!--                     scenario= 'malaria-r3-r4-default', -->
+<!--                     site_data, -->
+<!--                     coverage_data) -->
+<!-- ``` -->
+
+### r3-r4-bluesky
+
+```{r incidence_time_r4_bluesky}
+incidence_over_time(burden_output$by_year, 
+                    scenario= 'malaria-r3-r4-bluesky',
+                    site_data,
+                    coverage_data)
+```
+
+
+
+## Incidence over age {.tabset}
+
+<!-- ### rts3-default -->
+
+<!-- ```{r} -->
+<!-- incidence_over_age(burden_output$by_age,  -->
+<!--                     scenario= 'malaria-rts3-default', -->
+<!--                     coverage_data) -->
+<!-- ``` -->
+
+<!-- ### rts3-bluesky -->
+
+<!-- # ```{r} -->
+<!-- # incidence_over_age(burden_output$by_age,  -->
+<!-- #                     scenario= 'malaria-rts3-bluesky', -->
+<!-- #                     coverage_data) -->
+<!-- # ``` -->
+
+<!-- ### rts3-rts4-default -->
+
+<!-- # ```{r} -->
+<!-- # incidence_over_age(burden_output$by_age,  -->
+<!-- #                     scenario= 'malaria-rts3-rts4-default', -->
+<!-- #                     coverage_data) -->
+<!-- # ``` -->
+
+<!-- ### rts3-rts4-bluesky -->
+
+<!-- # ```{r} -->
+<!-- # incidence_over_age(burden_output$by_age,  -->
+<!-- #                     scenario= 'malaria-rts3-rts4-bluesky', -->
+<!-- #                     coverage_data) -->
+<!-- # ``` -->
+
+<!-- ### r3-default -->
+
+<!-- ```{r incidence_age_r3} -->
+<!-- incidence_over_age(burden_output$by_age,  -->
+<!--                     scenario= 'malaria-r3-default', -->
+<!--                     coverage_data) -->
+<!-- ``` -->
+
+### r3-bluesky
+
+```{r incidence_age_r3_bluesky}
+incidence_over_age(burden_output$by_age, 
+                    scenario= 'malaria-r3-bluesky',
+                    coverage_data)
+```
+
+<!-- ### r3-r4-default -->
+
+<!-- ```{r incidence_age_r4} -->
+<!-- incidence_over_age(burden_output$by_age,  -->
+<!--                     scenario= 'malaria-r3-r4-default', -->
+<!--                     coverage_data) -->
+<!-- ``` -->
+
+### r3-r4-bluesky
+
+```{r incidence_age_r4_bluesky}
+incidence_over_age(burden_output$by_age, 
+                    scenario= 'malaria-r3-r4-bluesky',
+                    coverage_data)
+```
+
+## Incidence rate over time {.tabset}
+
+<!-- ### rts3-default -->
+
+<!-- ```{r} -->
+<!-- incidence_rate_over_time(burden_output$by_year,  -->
+<!--                     scenario= 'malaria-rts3-default', -->
+<!--                     coverage_data = coverage_data) -->
+<!-- ``` -->
+
+<!-- ### rts3-bluesky -->
+
+<!-- ```{r} -->
+<!-- incidence_rate_over_time(burden_output$by_year,  -->
+<!--                     scenario= 'malaria-rts3-bluesky', -->
+<!--                     coverage_data) -->
+<!-- ``` -->
+
+<!-- ### rts3-rts4-default -->
+
+<!-- # ```{r} -->
+<!-- # incidence_rate_over_time(burden_output$by_year,  -->
+<!-- #                     scenario= 'malaria-rts3-rts4-default', -->
+<!-- #                     coverage_data) -->
+<!-- # ``` -->
+
+<!-- ### rts3-rts4-bluesky -->
+
+<!-- ```{r} -->
+<!-- incidence_rate_over_time(burden_output$by_year,  -->
+<!--                     scenario= 'malaria-rts3-rts4-bluesky', -->
+<!--                     coverage_data) -->
+<!-- ``` -->
+
+<!-- ### r3-default -->
+
+<!-- ```{r ir_time_r3} -->
+<!-- incidence_rate_over_time(burden_output$by_year,  -->
+<!--                     scenario= 'malaria-r3-default', -->
+<!--                     coverage_data = coverage_data) -->
+<!-- ``` -->
+
+### r3-bluesky
+
+```{r ir_time_r3_bluesky}
+incidence_rate_over_time(burden_output$by_year, 
+                    scenario= 'malaria-r3-bluesky',
+                    coverage_data)
+```
+
+<!-- ### r3-r4-default -->
+
+<!-- ```{r ir_time_r4} -->
+<!-- incidence_rate_over_time(burden_output$by_year,  -->
+<!--                     scenario= 'malaria-r3-r4-default', -->
+<!--                     coverage_data) -->
+<!-- ``` -->
+
+### r3-r4-bluesky
+
+```{r ir_time_r4_bluesky}
+incidence_rate_over_time(burden_output$by_year, 
+                    scenario= 'malaria-r3-r4-bluesky',
+                    coverage_data)
+```
+
+## Incidence rate over age  {.tabset}
+
+<!-- ### rts3-default -->
+
+<!-- ```{r} -->
+<!-- incidence_rate_over_age(burden_output$by_age,  -->
+<!--                     scenario= 'malaria-rts3-default',  -->
+<!--                     coverage_data) -->
+<!-- ``` -->
+
+<!-- ### rts3-bluesky -->
+<!-- # ```{r} -->
+<!-- # incidence_rate_over_age(burden_output$by_age,  -->
+<!-- #                     scenario= 'malaria-rts3-bluesky', -->
+<!-- #                     coverage_data) -->
+<!-- # ``` -->
+
+<!-- ### rts3-rts4-default -->
+<!-- # ```{r} -->
+<!-- # incidence_rate_over_age(burden_output$by_age,  -->
+<!-- #                     scenario= 'malaria-rts3-rts4-default', -->
+<!-- #                     coverage_data) -->
+<!-- # ``` -->
+
+<!-- ### rts3-rts4-bluesky -->
+<!-- # ```{r} -->
+<!-- # incidence_rate_over_age(burden_output$by_age,  -->
+<!-- #                     scenario= 'malaria-rts3-rts4-bluesky', -->
+<!-- #                     coverage_data) -->
+<!-- # ``` -->
+
+<!-- ### r3-default -->
+<!-- ```{r ir_age_r3} -->
+<!-- incidence_rate_over_age(burden_output$by_age,  -->
+<!--                     scenario= 'malaria-r3-default',  -->
+<!--                     coverage_data) -->
+<!-- ``` -->
+
+### r3-bluesky
+```{r ir_r3_age_bluesky}
+incidence_rate_over_age(burden_output$by_age, 
+                    scenario= 'malaria-r3-bluesky',
+                    coverage_data)
+```
+
+<!-- ### r3-r4-default -->
+<!-- ```{r ir_age_r4_default} -->
+<!-- incidence_rate_over_age(burden_output$by_age,  -->
+<!--                     scenario= 'malaria-r3-r4-default', -->
+<!--                     coverage_data) -->
+<!-- ``` -->
+
+### r3-r4-bluesky
+```{r ir_age_r4_bluesky}
+incidence_rate_over_age(burden_output$by_age, 
+                    scenario= 'malaria-r3-r4-bluesky',
+                    coverage_data)
+```
+
+
+## Cases averted over time {.tabset}
+
+<!-- ### rts3-bluesky -->
+
+<!-- ```{r} -->
+<!-- cases_averted_over_time(averted_output$by_year,  -->
+<!--                         scenario= 'malaria-rts3-bluesky', -->
+<!--                         country_name = {{country_name}}) -->
+<!-- ``` -->
+
+<!-- ### rts3-default -->
+
+<!-- # ```{r} -->
+<!-- # cases_averted_over_time(averted_output$by_year,  -->
+<!-- #                         scenario= 'malaria-rts3-default', -->
+<!-- #                         country_name = {{country_name}}) -->
+<!-- # ``` -->
+
+<!-- ### rts3-rts4-bluesky -->
+
+<!-- # ```{r} -->
+<!-- # cases_averted_over_time(averted_output$by_year,  -->
+<!-- #                         scenario='malaria-rts3-rts4-bluesky', -->
+<!-- #                         country_name = {{country_name}}) -->
+<!-- # ``` -->
+
+<!-- ### rts3-rts4-default -->
+
+<!-- ```{r} -->
+<!-- cases_averted_over_time(averted_output$by_year,  -->
+<!--                         scenario= 'malaria-rts3-rts4-default', -->
+<!--                         country_name = {{country_name}}) -->
+<!-- ``` -->
+
+### r3-bluesky
+
+```{r cases_av_r3_bluesky}
+cases_averted_over_time(averted_output$by_year, 
+                        scenario= 'malaria-r3-bluesky',
+                        country_name = {{country_name}})
+```
+
+<!-- ### r3-default -->
+
+<!-- ```{r cases_av_r3_default} -->
+<!-- cases_averted_over_time(averted_output$by_year,  -->
+<!--                         scenario= 'malaria-r3-default', -->
+<!--                         country_name = {{country_name}}) -->
+<!-- ``` -->
+
+### r3-r4-bluesky
+
+```{r cases_av_r3_bluesky1}
+cases_averted_over_time(averted_output$by_year, 
+                        scenario='malaria-r3-r4-bluesky',
+                        country_name = {{country_name}})
+```
+
+<!-- ### r3-r4-default -->
+
+<!-- ```{r cases_av_time_r4} -->
+<!-- cases_averted_over_time(averted_output$by_year,  -->
+<!--                         scenario= 'malaria-r3-r4-default', -->
+<!--                         country_name = {{country_name}}) -->
+<!-- ``` -->
+
+
+## Cases averted over time per dose {.tabset}
+
+<!-- ### rts3-bluesky -->
+
+<!-- ```{r} -->
+<!-- cases_averted_per_dose(dose_output$country_doses,  -->
+<!--                         scenario= 'malaria-rts3-bluesky', -->
+<!--                         country_name = {{country_name}}) -->
+<!-- ``` -->
+
+<!-- ### rts3-default -->
+
+<!-- # ```{r} -->
+<!-- # cases_averted_per_dose(dose_output$country_doses,  -->
+<!-- #                         scenario= 'malaria-rts3-default', -->
+<!-- #                         country_name = {{country_name}}) -->
+<!-- # ``` -->
+
+<!-- ### rts3-rts4-bluesky -->
+
+<!-- # ```{r} -->
+<!-- # cases_averted_per_dose(dose_output$country_doses,  -->
+<!-- #                         scenario='malaria-rts3-rts4-bluesky', -->
+<!-- #                         country_name = {{country_name}}) -->
+<!-- # ``` -->
+
+<!-- ### rts3-rts4-default -->
+
+<!-- # ```{r} -->
+<!-- # cases_averted_per_dose(dose_output$country_doses,  -->
+<!-- #                         scenario= 'malaria-rts3-rts4-default', -->
+<!-- #                         country_name = {{country_name}}) -->
+<!-- # ``` -->
+
+### r3-bluesky
+
+```{r cases_av_dose_r3_bluesky}
+cases_averted_per_dose(dose_output$country_doses, 
+                        scenario= 'malaria-r3-bluesky',
+                        country_name = {{country_name}})
+```
+
+<!-- #### r3-default -->
+
+<!-- ```{r cases_av_dose_r3_default} -->
+<!-- cases_averted_per_dose(dose_output$country_doses,  -->
+<!--                         scenario= 'malaria-r3-default', -->
+<!--                         country_name = {{country_name}}) -->
+<!-- ``` -->
+
+### r3-r4-bluesky
+
+```{r cases_av_dose_r4_bluesky}
+cases_averted_per_dose(dose_output$country_doses, 
+                        scenario='malaria-r3-r4-bluesky',
+                        country_name = {{country_name}})
+```
+
+<!-- ### r3-r4-default -->
+
+<!-- ```{r case_av_r4_default} -->
+<!-- cases_averted_per_dose(dose_output$country_doses,  -->
+<!--                         scenario= 'malaria-r3-r4-default', -->
+<!--                         country_name = {{country_name}}) -->
+<!-- ``` -->
+
+
+## Cases averted over time per FVP {.tabset}
+
+<!-- ### rts3-bluesky -->
+
+<!-- ```{r} -->
+<!-- cases_averted_per_fvp(dose_output$country_doses,  -->
+<!--                         scenario= 'malaria-rts3-bluesky', -->
+<!--                         country_name = {{country_name}}) -->
+<!-- ``` -->
+
+<!-- ### rts3-default -->
+
+<!-- # ```{r} -->
+<!-- # cases_averted_per_fvp(dose_output$country_doses,  -->
+<!-- #                         scenario= 'malaria-rts3-default', -->
+<!-- #                         country_name = {{country_name}}) -->
+<!-- # ``` -->
+
+<!-- ### rts3-rts4-bluesky -->
+
+<!-- ```{r} -->
+<!-- cases_averted_per_fvp(dose_output$country_doses,  -->
+<!--                         scenario='malaria-rts3-rts4-bluesky', -->
+<!--                         country_name = {{country_name}}) -->
+<!-- ``` -->
+
+<!-- ### rts3-rts4-default -->
+
+<!-- # ```{r} -->
+<!-- # cases_averted_per_fvp(dose_output$country_doses,  -->
+<!-- #                         scenario= 'malaria-rts3-rts4-default', -->
+<!-- #                         country_name = {{country_name}}) -->
+<!-- # ``` -->
+
+### r3-bluesky
+
+```{r cases_av_r3_fvp}
+cases_averted_per_fvp(dose_output$country_doses, 
+                        scenario= 'malaria-r3-bluesky',
+                        country_name = {{country_name}})
+```
+
+<!-- ### r3-default -->
+
+<!-- ```{r cases_Av_fvp_r3_default} -->
+<!-- cases_averted_per_fvp(dose_output$country_doses,  -->
+<!--                         scenario= 'malaria-r3-default', -->
+<!--                         country_name = {{country_name}}) -->
+<!-- ``` -->
+
+### r3-r4-bluesky
+
+```{r cases_av_r4_bluesky1}
+cases_averted_per_fvp(dose_output$country_doses, 
+                        scenario='malaria-r3-r4-bluesky',
+                        country_name = {{country_name}})
+```
+
+<!-- #### r3-r4-default -->
+
+<!-- ```{r} -->
+<!-- cases_averted_per_fvp(dose_output$country_doses,  -->
+<!--                         scenario= 'malaria-r3-r4-default', -->
+<!--                         country_name = {{country_name}}) -->
+<!-- ``` -->
+
+
+## Cases averted over age {.tabset}
+
+<!-- ### rts3-bluesky -->
+
+<!-- ```{r} -->
+<!-- cases_averted_over_age(averted_output$by_age,  -->
+<!--                         scenario= 'malaria-rts3-bluesky', -->
+<!--                         country_name = {{country_name}}) -->
+<!-- ``` -->
+
+<!-- ### rts3-default -->
+
+<!-- # ```{r} -->
+<!-- # cases_averted_over_age(averted_output$by_age,  -->
+<!-- #                         scenario= 'malaria-rts3-default', -->
+<!-- #                         country_name = {{country_name}}) -->
+<!-- # ``` -->
+
+<!-- ### rts3-rts4-bluesky -->
+
+<!-- # ```{r} -->
+<!-- # cases_averted_over_age(averted_output$by_age,  -->
+<!-- #                         scenario='malaria-rts3-rts4-bluesky', -->
+<!-- #                         country_name = {{country_name}}) -->
+<!-- # ``` -->
+
+<!-- ### rts3-rts4-default -->
+
+<!-- ```{r} -->
+<!-- cases_averted_over_age(averted_output$by_age,  -->
+<!--                         scenario= 'malaria-rts3-rts4-default', -->
+<!--                         country_name = {{country_name}}) -->
+<!-- ``` -->
+
+
+
+### r3-bluesky
+
+```{r}
+cases_averted_over_age(averted_output$by_age, 
+                        scenario= 'malaria-r3-bluesky',
+                        country_name = {{country_name}})
+```
+
+<!-- ### r3-default -->
+
+<!-- ```{r} -->
+<!-- cases_averted_over_age(averted_output$by_age,  -->
+<!--                         scenario= 'malaria-r3-default', -->
+<!--                         country_name = {{country_name}}) -->
+<!-- ``` -->
+
+### r3-r4-bluesky
+
+```{r}
+cases_averted_over_age(averted_output$by_age, 
+                        scenario='malaria-r3-r4-bluesky',
+                        country_name = {{country_name}})
+```
+
+<!-- ### r3-r4-default -->
+<!-- ```{r} -->
+<!-- cases_averted_over_age(averted_output$by_age,  -->
+<!--                         scenario= 'malaria-r3-r4-default', -->
+<!--                         country_name = {{country_name}}) -->
+<!-- ``` -->
+
+
+
+# Deaths
+
+## Deaths over time {.tabset}
+
+<!-- ### rts3-default -->
+
+<!-- ```{r} -->
+<!-- deaths_over_time(burden_output$by_year,  -->
+<!--                     scenario= 'malaria-rts3-default', -->
+<!--                     coverage_data) -->
+<!-- <!-- ``` 
+
+<!-- ### rts3-bluesky -->
+
+<!-- # ```{r}
+<!-- # deaths_over_time(burden_output$by_year,
+<!-- #                     scenario= 'malaria-rts3-bluesky',
+<!-- #                     coverage_data)
+<!-- # ```
+
+<!-- ### rts3-rts4-default -->
+
+<!-- # ```{r} -->
+<!-- # deaths_over_time(burden_output$by_year,  -->
+<!-- #                     scenario= 'malaria-rts3-rts4-default', -->
+<!-- #                     coverage_data) -->
+<!-- # ``` -->
+
+<!-- ### rts3-rts4-bluesky -->
+
+<!-- # ```{r} -->
+<!-- # deaths_over_time(burden_output$by_year,  -->
+<!-- #                     scenario= 'malaria-rts3-rts4-bluesky', -->
+<!-- #                     coverage_data)
+<!-- # ```
+
+<!-- ### r3-default -->
+<!-- ```{r} -->
+<!-- deaths_over_time(burden_output$by_year, -->
+<!--                     scenario= 'malaria-r3-default', -->
+<!--                     coverage_data) -->
+<!-- ``` -->
+
+### r3-bluesky
+
+```{r}
+deaths_over_time(burden_output$by_year, 
+                    scenario= 'malaria-r3-bluesky',
+                    coverage_data)
+```
+
+<!-- ### r3-r4-default -->
+
+<!-- ```{r} -->
+<!-- deaths_over_time(burden_output$by_year,  -->
+<!--                     scenario= 'malaria-r3-r4-default', -->
+<!--                     coverage_data) -->
+<!-- ``` -->
+
+### r3-r4-bluesky
+```{r}
+deaths_over_time(burden_output$by_year, 
+                    scenario= 'malaria-r3-r4-bluesky',
+                    coverage_data)
+```
+
+
+
+## Deaths over age {.tabset}
+
+<!-- ### rts3-default -->
+
+<!-- # ```{r} -->
+<!-- # deaths_over_age(burden_output$by_age,  -->
+<!-- #                     scenario= 'malaria-rts3-default', -->
+<!-- #                     coverage_data) -->
+<!-- # ``` -->
+
+<!-- ### rts3-bluesky -->
+
+<!-- # ```{r} -->
+<!-- # deaths_over_age(burden_output$by_age,  -->
+<!-- #                     scenario= 'malaria-rts3-bluesky', -->
+<!-- #                     coverage_data) -->
+<!-- # ``` -->
+
+<!-- ### rts3-rts4-default -->
+
+<!-- ```{r} -->
+<!-- deaths_over_age(burden_output$by_age,  -->
+<!--                     scenario= 'malaria-rts3-rts4-default', -->
+<!--                     coverage_data) -->
+<!-- ``` -->
+
+<!-- ### rts3-rts4-bluesky -->
+
+<!-- # ```{r} -->
+<!-- # deaths_over_age(burden_output$by_age,  -->
+<!-- #                     scenario= 'malaria-rts3-rts4-bluesky', -->
+<!-- #                     coverage_data) -->
+<!-- # ``` -->
+
+<!-- ### r3-default -->
+
+<!-- ```{r} -->
+<!-- deaths_over_age(burden_output$by_age,  -->
+<!--                     scenario= 'malaria-r3-default', -->
+<!--                     coverage_data) -->
+<!-- ``` -->
+
+<!-- ### rts3-bluesky -->
+
+<!-- ```{r} -->
+<!-- deaths_over_age(burden_output$by_age,  -->
+<!--                     scenario= 'malaria-r3-bluesky', -->
+<!--                     coverage_data) -->
+<!-- ``` -->
+
+<!-- ### rts3-rts4-default -->
+
+<!-- # ```{r} -->
+<!-- # deaths_over_age(burden_output$by_age,  -->
+<!-- #                     scenario= 'malaria-r3-r4-default', -->
+<!-- #                     coverage_data) -->
+<!-- # ``` -->
+
+### r3-r4-bluesky
+
+```{r}
+deaths_over_age(burden_output$by_age, 
+                    scenario= 'malaria-r3-r4-bluesky',
+                    coverage_data)
+```
+
+
+## Deaths averted over time {.tabset}
+<!-- ### rts3-bluesky -->
+
+<!-- ```{r} -->
+<!-- deaths_averted_over_time(averted_output$by_year,  -->
+<!--                         scenario= 'malaria-rts3-bluesky', -->
+<!--                         country_name = {{country_name}}) -->
+<!-- ``` -->
+
+<!-- ### rts3-default -->
+
+<!-- # ```{r} -->
+<!-- # deaths_averted_over_time(averted_output$by_year,  -->
+<!-- #                         scenario= 'malaria-rts3-default', -->
+<!-- #                         country_name = {{country_name}}) -->
+<!-- # ``` -->
+
+<!-- ### rts3-rts4-bluesky -->
+
+<!-- ```{r} -->
+<!-- deaths_averted_over_time(averted_output$by_year,  -->
+<!--                         scenario='malaria-rts3-rts4-bluesky', -->
+<!--                         country_name = {{country_name}}) -->
+<!-- ``` -->
+
+<!-- ### rts3-rts4-default -->
+
+<!-- ```{r} -->
+<!-- deaths_averted_over_time(averted_output$by_year,  -->
+<!--                         scenario= 'malaria-rts3-rts4-default', -->
+<!--                         country_name = {{country_name}}) -->
+<!-- ``` -->
+
+### r3-bluesky
+
+```{r}
+deaths_averted_over_time(averted_output$by_year, 
+                        scenario= 'malaria-r3-bluesky',
+                        country_name = {{country_name}})
+```
+
+<!-- ### rts3-default -->
+
+<!-- # ```{r} -->
+<!-- # deaths_averted_over_time(averted_output$by_year,  -->
+<!-- #                         scenario= 'malaria-r3-default', -->
+<!-- #                         country_name = {{country_name}}) -->
+<!-- # ``` -->
+
+### r3-r4-bluesky
+
+```{r}
+ deaths_averted_over_time(averted_output$by_year,
+                         scenario='malaria-r3-r4-bluesky',
+                         country_name = {{country_name}})
+```
+
+<!-- ### r3-r4-default -->
+
+<!-- ```{r} -->
+<!--  deaths_averted_over_time(averted_output$by_year, -->
+<!--                          scenario= 'malaria-r3-r4-default', -->
+<!--                          country_name = {{country_name}}) -->
+<!-- ``` -->
+
+
+
+## Deaths averted over time per dose {.tabset}
+
+<!-- ### rts3-bluesky -->
+
+<!-- # ```{r} -->
+<!-- # deaths_averted_per_dose(dose_output$country_doses,  -->
+<!-- #                         scenario= 'malaria-rts3-bluesky', -->
+<!-- #                         country_name = {{country_name}}) -->
+<!-- # ``` -->
+
+<!-- ### rts3-default -->
+
+<!-- ```{r} -->
+<!-- deaths_averted_per_dose(dose_output$country_doses,  -->
+<!--                         scenario= 'malaria-rts3-default', -->
+<!--                         country_name = {{country_name}}) -->
+<!-- ``` -->
+
+<!-- ### rts3-rts4-bluesky -->
+
+<!-- # ```{r} -->
+<!-- # deaths_averted_per_dose(dose_output$country_doses,   -->
+<!-- #                         scenario='malaria-rts3-rts4-bluesky', -->
+<!-- #                         country_name = {{country_name}}) -->
+<!-- # ``` -->
+
+<!-- ### rts3-rts4-default -->
+
+<!-- ```{r} -->
+<!-- deaths_averted_per_dose(dose_output$country_doses,  -->
+<!--                         scenario= 'malaria-rts3-rts4-default', -->
+<!--                         country_name = {{country_name}}) -->
+<!-- ``` -->
+
+### r3-bluesky
+
+```{r}
+deaths_averted_per_dose(dose_output$country_doses, 
+                        scenario= 'malaria-r3-bluesky',
+                        country_name = {{country_name}})
+```
+
+<!-- ### r3-default -->
+
+<!-- ```{r} -->
+<!-- deaths_averted_per_dose(dose_output$country_doses, -->
+<!--                         scenario= 'malaria-r3-default', -->
+<!--                         country_name = {{country_name}}) -->
+<!-- ``` -->
+
+### r3-r4-bluesky
+
+```{r}
+deaths_averted_per_dose(dose_output$country_doses, 
+                        scenario='malaria-r3-r4-bluesky',
+                        country_name = {{country_name}})
+```
+
+<!-- ### r3-r4-default -->
+
+<!-- ```{r} -->
+<!-- deaths_averted_per_dose(dose_output$country_doses,  -->
+<!--                         scenario= 'malaria-r3-r4-default', -->
+<!--                         country_name = {{country_name}}) -->
+<!-- ``` -->
+
+
+## Deaths averted over time per fvp {.tabset}
+
+<!-- ### rts3-bluesky -->
+
+<!-- # ```{r} -->
+<!-- # deaths_averted_per_fvp(dose_output$country_doses,  -->
+<!-- #                         scenario= 'malaria-rts3-bluesky', -->
+<!-- #                         country_name = {{country_name}}) -->
+<!-- # ``` -->
+
+<!-- ### rts3-default -->
+
+<!-- ```{r} -->
+<!-- deaths_averted_per_fvp(dose_output$country_doses,  -->
+<!--                         scenario= 'malaria-rts3-default', -->
+<!--                         country_name = {{country_name}}) -->
+<!-- ``` -->
+
+<!-- ### rts3-rts4-bluesky -->
+
+<!-- ```{r} -->
+<!-- deaths_averted_per_fvp(dose_output$country_doses,   -->
+<!--                         scenario='malaria-rts3-rts4-bluesky', -->
+<!--                         country_name = {{country_name}}) -->
+<!-- ``` -->
+
+<!-- ### rts3-rts4-default -->
+
+<!-- # ```{r} -->
+<!-- # deaths_averted_per_fvp(dose_output$country_doses, -->
+<!-- #                         scenario= 'malaria-rts3-rts4-default', -->
+<!-- #                         country_name = {{country_name}}) -->
+<!-- # ``` -->
+
+### r3-bluesky
+
+```{r}
+deaths_averted_per_fvp(dose_output$country_doses, 
+                        scenario= 'malaria-r3-bluesky',
+                        country_name = {{country_name}})
+```
+
+<!-- ### r3-default -->
+
+<!-- ```{r} -->
+<!-- deaths_averted_per_fvp(dose_output$country_doses,  -->
+<!--                         scenario= 'malaria-r3-default', -->
+<!--                         country_name = {{country_name}}) -->
+<!-- ``` -->
+
+### r3-r4-bluesky
+
+```{r}
+deaths_averted_per_fvp(dose_output$country_doses, 
+                        scenario='malaria-r3-r4-bluesky',
+                        country_name = {{country_name}})
+```
+
+<!-- ### r3-r4-default -->
+
+<!-- ```{r} -->
+<!-- deaths_averted_per_fvp(dose_output$country_doses,  -->
+<!--                         scenario= 'malaria-r3-r4-default', -->
+<!--                         country_name = {{country_name}}) -->
+<!-- ``` -->
+
+## Deaths averted over age {.tabset}
+
+<!-- #### rts3-bluesky -->
+
+<!-- ```{r} -->
+<!-- deaths_averted_over_age(averted_output$by_age,  -->
+<!--                         scenario= 'malaria-rts3-bluesky', -->
+<!--                         country_name = {{country_name}}) -->
+<!-- ``` -->
+
+
+<!-- ### rts3-default -->
+
+<!-- ```{r} -->
+<!-- deaths_averted_over_age(averted_output$by_age,  -->
+<!--                         scenario= 'malaria-rts3-default', -->
+<!--                         country_name = {{country_name}}) -->
+<!-- ``` -->
+
+<!-- ### rts3-rts4-bluesky -->
+
+<!-- ```{r} -->
+<!-- deaths_averted_over_age(averted_output$by_age,  -->
+<!--                         scenario='malaria-rts3-rts4-bluesky', -->
+<!--                         country_name = {{country_name}}) -->
+<!-- ``` -->
+
+<!-- ### rts3-rts4-default -->
+
+<!-- # ```{r} -->
+<!-- # deaths_averted_over_age(averted_output$by_age,  -->
+<!-- #                         scenario= 'malaria-rts3-rts4-default', -->
+<!-- #                         country_name = {{country_name}}) -->
+<!-- # ``` -->
+
+### r3-bluesky
+
+```{r}
+deaths_averted_over_age(averted_output$by_age, 
+                        scenario= 'malaria-r3-bluesky',
+                        country_name = {{country_name}})
+```
+
+<!-- ### r3-default -->
+
+<!-- ```{r} -->
+<!-- deaths_averted_over_age(averted_output$by_age,  -->
+<!--                         scenario= 'malaria-r3-default', -->
+<!--                         country_name = {{country_name}}) -->
+<!-- ``` -->
+
+### r3-r4-bluesky
+
+```{r}
+deaths_averted_over_age(averted_output$by_age, 
+                        scenario='malaria-r3-r4-bluesky',
+                        country_name = {{country_name}})
+```
+
+<!-- ### r3-r4-default -->
+
+<!-- ```{r} -->
+<!-- deaths_averted_over_age(averted_output$by_age,  -->
+<!--                         scenario= 'malaria-r3-r4-default', -->
+<!--                         country_name = {{country_name}}) -->
+<!-- ``` -->
+
+
+# DALYs
+
+## DALYs over time {.tabset}
+
+<!-- ### rts3-default -->
+
+<!-- ```{r} -->
+<!-- dalys_over_time(burden_output$by_year,  -->
+<!--                     scenario= 'malaria-rts3-default', -->
+<!--                     coverage_data) -->
+<!-- ``` -->
+
+<!-- ### rts3-bluesky -->
+
+<!-- # ```{r} -->
+<!-- # dalys_over_time(burden_output$by_year,  -->
+<!-- #                     scenario= 'malaria-rts3-bluesky', -->
+<!-- #                     coverage_data) -->
+<!-- # ``` -->
+
+<!-- ### rts3-rts4-default -->
+
+<!-- ```{r} -->
+<!-- dalys_over_time(burden_output$by_year,  -->
+<!--                     scenario= 'malaria-rts3-rts4-default', -->
+<!--                     coverage_data) -->
+<!-- ``` -->
+
+<!-- ### rts3-rts4-bluesky -->
+
+<!-- ```{r} -->
+<!-- dalys_over_time(burden_output$by_year,  -->
+<!--                     scenario= 'malaria-rts3-rts4-bluesky', -->
+<!--                     coverage_data) -->
+<!-- ``` -->
+
+<!-- ### r3-default -->
+
+<!-- ```{r} -->
+<!-- dalys_over_time(burden_output$by_year,  -->
+<!--                     scenario= 'malaria-r3-default', -->
+<!--                     coverage_data) -->
+<!-- ``` -->
+
+### r3-bluesky
+
+```{r}
+dalys_over_time(burden_output$by_year, 
+                    scenario= 'malaria-r3-bluesky',
+                    coverage_data)
+```
+
+<!-- ### r3-r4-default -->
+
+<!-- ```{r} -->
+<!-- dalys_over_time(burden_output$by_year,  -->
+<!--                     scenario= 'malaria-r3-r4-default', -->
+<!--                     coverage_data) -->
+<!-- ``` -->
+
+### r3-r4-bluesky
+
+```{r}
+dalys_over_time(burden_output$by_year, 
+                    scenario= 'malaria-rts3-rts4-bluesky',
+                    coverage_data)
+```
+
+
+
+
+## DALYs averted over age {.tabset}
+<!-- ### rts3-bluesky -->
+
+<!-- ```{r} -->
+<!-- dalys_averted_over_age(averted_output$by_age,  -->
+<!--                         scenario= 'malaria-rts3-bluesky', -->
+<!--                         country_name = {{country_name}}) -->
+<!-- ``` -->
+
+<!-- ### rts3-default -->
+
+<!-- # ```{r} -->
+<!-- # dalys_averted_over_age(averted_output$by_age,  -->
+<!-- #                         scenario= 'malaria-rts3-default', -->
+<!-- #                         country_name = {{country_name}}) -->
+<!-- # ``` -->
+
+<!-- ### rts3-rts4-bluesky -->
+
+<!-- ```{r} -->
+<!-- dalys_averted_over_age(averted_output$by_age,  -->
+<!--                         scenario='malaria-rts3-rts4-bluesky', -->
+<!--                         country_name = {{country_name}}) -->
+<!-- ``` -->
+
+<!-- ### rts3-rts4-default -->
+
+<!-- ```{r} -->
+<!-- dalys_averted_over_age(averted_output$by_age,  -->
+<!--                         scenario= 'malaria-rts3-rts4-default', -->
+<!--                         country_name = {{country_name}}) -->
+<!-- ``` -->
+
+### r3-bluesky
+
+```{r}
+dalys_averted_over_age(averted_output$by_age, 
+                        scenario= 'malaria-r3-bluesky',
+                        country_name = {{country_name}})
+```
+
+<!-- ### rts3-default -->
+
+<!-- ```{r} -->
+<!-- dalys_averted_over_age(averted_output$by_age,  -->
+<!--                         scenario= 'malaria-r3-default', -->
+<!--                         country_name = {{country_name}}) -->
+<!-- ``` -->
+
+### r3-r4-bluesky
+
+```{r}
+dalys_averted_over_age(averted_output$by_age, 
+                        scenario='malaria-r3-r4-bluesky',
+                        country_name = {{country_name}})
+```
+
+<!-- ### r3-r4-default -->
+
+<!-- ```{r} -->
+<!-- dalys_averted_over_age(averted_output$by_age,  -->
+<!--                         scenario= 'malaria-r3-r4-default', -->
+<!--                         country_name = {{country_name}}) -->
+<!-- ``` -->
+
+
+
+## DALYs averted over time {.tabset}
+
+
+<!-- ### rts3-bluesky -->
+
+<!-- ```{r} -->
+<!-- dalys_averted_over_time(averted_output$by_year,  -->
+<!--                         scenario= 'malaria-rts3-bluesky', -->
+<!--                         country_name = {{country_name}}) -->
+<!-- ``` -->
+
+<!-- ### rts3-default -->
+
+<!-- ```{r} -->
+<!-- dalys_averted_over_time(averted_output$by_year,  -->
+<!--                         scenario= 'malaria-rts3-default', -->
+<!--                         country_name = {{country_name}}) -->
+<!-- ``` -->
+
+<!-- ### rts3-rts4-bluesky -->
+
+<!-- # ```{r} -->
+<!-- # dalys_averted_over_time(averted_output$by_year,  -->
+<!-- #                         scenario='malaria-rts3-rts4-bluesky', -->
+<!-- #                         country_name = {{country_name}}) -->
+<!-- # ``` -->
+
+<!-- ### rts3-rts4-default -->
+
+<!-- ```{r} -->
+<!-- dalys_averted_over_time(averted_output$by_year,  -->
+<!--                         scenario= 'malaria-rts3-rts4-default', -->
+<!--                         country_name = {{country_name}}) -->
+<!-- ``` -->
+
+
+
+<!-- ## Averted by dose {.tabset} -->
+
+
+<!-- ### Cases -->
+
+<!-- ```{r} -->
+<!-- cases_averted_per_dose(averted_output$by_year, country_name = {{country_name}}) -->
+<!-- ``` -->
+
+<!-- ### Deaths -->
+<!-- ```{r} -->
+<!-- deaths_averted_per_dose(averted_output$by_year, country_name = {{country_name}}) -->
+<!-- ``` -->
+
+<!-- ### DALYs -->
+<!-- ```{r} -->
+<!-- dalys_averted_per_dose(averted_output$by_year, country_name = {{country_name}}) -->
+<!-- ``` -->
+
+
+
+#### r3-bluesky
+
+```{r}
+dalys_averted_over_time(averted_output$by_year, 
+                        scenario= 'malaria-r3-bluesky',
+                        country_name = {{country_name}})
+```
+
+<!-- #### r3-default -->
+
+<!-- ```{r} -->
+<!-- dalys_averted_over_time(averted_output$by_year,  -->
+<!--                         scenario= 'malaria-r3-default', -->
+<!--                         country_name = {{country_name}}) -->
+<!-- ``` -->
+
+#### r3-r4-bluesky
+
+```{r}
+dalys_averted_over_time(averted_output$by_year, 
+                        scenario='malaria-r3-r4-bluesky',
+                        country_name = {{country_name}})
+```
+
+<!-- #### r3-r4-default -->
+
+<!-- ```{r} -->
+<!-- dalys_averted_over_time(averted_output$by_year,  -->
+<!--                         scenario= 'malaria-r3-r4-default', -->
+<!--                         country_name = {{country_name}}) -->
+<!-- ``` -->
+
+
+
+<!-- ## Averted by dose {.tabset} -->
+
+
+<!-- ### Cases -->
+
+<!-- ```{r} -->
+<!-- cases_averted_per_dose(averted_output$by_year, country_name = {{country_name}}) -->
+<!-- ``` -->
+
+<!-- ### Deaths -->
+<!-- ```{r} -->
+<!-- deaths_averted_per_dose(averted_output$by_year, country_name = {{country_name}}) -->
+<!-- ``` -->
+
+<!-- ### DALYs -->
+<!-- ```{r} -->
+<!-- dalys_averted_per_dose(averted_output$by_year, country_name = {{country_name}}) -->
+<!-- ``` -->
