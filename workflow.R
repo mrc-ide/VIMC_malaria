@@ -12,13 +12,13 @@ library(dplyr)
 library(hipercow)
 library(vimcmalaria)
 
-coverage<- read.csv('src/process_inputs/vimc_inputs/vaccine_coverage/coverage_202310gavi-7_malaria-rts3-rts4-bluesky.csv')
+coverage<- read.csv('src/process_inputs/vimc_inputs/vaccine_coverage/coverage_202409malaria-1_malaria-r3-r4-default.csv')
 iso3cs<- unique(coverage$country_code)
 dir<- getwd()
 
 # # generate parameter map for analysis ------------------------------------------
 map<- make_parameter_map(iso3cs= iso3cs,
-                         scenarios = c('malaria-r3-bluesky','malaria-r3-r4-bluesky', 'no-vaccination'),
+                         scenarios = c('malaria-r3-r4-default', 'malaria-rts3-rts4-default', 'no-vaccination'),
                           description = 'models_for_paper',
                           parameter_draws = c(0),
                           gfa = FALSE,
@@ -27,7 +27,7 @@ map<- check_not_a_rerun('process_country', map, date_time = 0)
 
 map<- check_reports_completed('process_country', map, date_time = 0)
 # # STEP 1: run process_inputs report --------------------------------------------
-# #lapply(iso3cs, function(x) orderly2::orderly_run('process_inputs', parameters = list(iso3c = x)))
+lapply(iso3cs, function(x) orderly2::orderly_run('process_inputs', parameters = list(iso3c = x)))
 # reports<- vimcmalaria::completed_reports('process_country') |> filter(description == 'round3')
 #
 # unique(reports)

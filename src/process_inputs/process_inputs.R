@@ -27,22 +27,22 @@ novax<- coverage_dt |>           # pull another projection for data table struct
 coverage_dt<- rbind(coverage_dt, novax)
 
 # pull population data (single year) -------------------------------------------
-demog_single_yr<- read.csv('vimc_inputs/demography/202310gavi-7_dds-202208_int_pop_both.csv') |>
+demog_single_yr<- read.csv('vimc_inputs/demography/202409malaria-1_dds-202208_int_pop_both.csv') |>
   filter(country_code == iso3c) |>
   filter(year >= 2000)
 
 # pull population data (all ages) ----------------------------------------------
-demog_all_ages<- read.csv('vimc_inputs/demography/202310gavi-7_dds-202208_tot_pop_both.csv') |>
+demog_all_ages<- read.csv('vimc_inputs/demography/202409malaria-1_dds-202208_tot_pop_both.csv') |>
   filter(country_code == iso3c) |>
   filter(year >= 2000)
 
 # pull life expectancy data ----------------------------------------------------
-le<- read.csv('vimc_inputs/demography/202310gavi-7_dds-202208_life_ex_both.csv') |>
+le<- read.csv('vimc_inputs/demography/202409malaria-1_dds-202208_life_ex_both.csv') |>
   filter(country_code == iso3c) |>
   filter(year >= 2000)
 
 # pull mortality rate data  ----------------------------------------------------
-mort<- read.csv('vimc_inputs/demography/202310gavi-7_dds-202208_mort_rate_both.csv') |>
+mort<- read.csv('vimc_inputs/demography/202409malaria-1_dds-202208_mort_rate_both.csv') |>
   filter(country_code == iso3c) |>
   filter(year >= 2000)
 

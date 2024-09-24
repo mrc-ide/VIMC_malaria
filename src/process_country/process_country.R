@@ -1,11 +1,10 @@
 # process country  -------------------------------------------------------------
 # orderly metadata  ----
-orderly2::orderly_parameters(iso3c = NULL,
-                             scenario = NULL,
-                             gfa= NULL,
-                             quick_run = NULL,
-                             parameter_draw = NULL,
-                             description = NULL)
+orderly2::orderly_parameters(iso3c = 'SLE',
+                             scenario = 'malaria-r3-r4-default',
+                             quick_run = TRUE,
+                             parameter_draw = 0,
+                             description = 'testing_for_refactor')
 
 orderly2::orderly_description('Analyze vaccine impact at the country level')
 orderly2::orderly_artefact('Processed output', 'outputs.rds')
