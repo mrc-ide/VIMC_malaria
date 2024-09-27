@@ -1,10 +1,10 @@
 
 mrc-ide/malariasimulation@dev
 mrc-ide/site@vimc
-mrc-ide/postie@dalys
 mrc-ide/scene
 mrc-ide/orderly2
 mrc-ide/vimcmalaria
+local::./postie_0.1.2.tar.gz
 
 
 data.table

@@ -21,20 +21,19 @@ map<- make_parameter_map(iso3cs= iso3cs,
                          scenarios = c('malaria-r3-r4-default', 'malaria-rts3-rts4-default', 'no-vaccination'),
                           description = 'models_for_paper',
                           parameter_draws = c(0),
-                          gfa = FALSE,
                           quick_run= FALSE)
 map<- check_not_a_rerun('process_country', map, date_time = 0)
 
 map<- check_reports_completed('process_country', map, date_time = 0)
 # # STEP 1: run process_inputs report --------------------------------------------
-lapply(iso3cs, function(x) orderly2::orderly_run('process_inputs', parameters = list(iso3c = x)))
+#lapply(iso3cs, function(x) orderly2::orderly_run('process_inputs', parameters = list(iso3c = x)))
 # reports<- vimcmalaria::completed_reports('process_country') |> filter(description == 'round3')
 #
 # unique(reports)
 # # STEP 2: run process_country for all countries (on cluster)  ------------------
 # # if needed, test a report locally before full launch
-run_local_reports(map, 'process_country')
-#
+#run_local_reports(map, 'process_country')
+
 # # cluster setup ------
 hipercow::hipercow_init(driver = 'windows')
 hipercow::hipercow_provision()
@@ -47,15 +46,15 @@ hipercow::task_log_watch(task)
 lapply(unique(map$site_number), submit_by_core, dt = map, test = FALSE)
 
 
+for(iso in iso3cs)
 task<- hipercow::task_create_expr(
   orderly2::orderly_run(
   "process_country",
-  parameters = list(iso3c = 'BFA',
-                    description = 'fix_rtss_booster',
+  parameters = list(iso3c = iso,
+                    description = 'sept_test_run',
                     quick_run = FALSE,
-                    scenario = 'malaria-rts3-rts4-bluesky',
-                    parameter_draw = 0,
-                    gfa= FALSE))
+                    scenario = 'no-vaccination',
+                    parameter_draw = 0))
   )
 # # launch ethiopia calibrations and save somewhere central ----------------------
 # eth<-   readRDS('src/process_inputs/site_files/ETH_new_eir.rds')

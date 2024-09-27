@@ -1,10 +1,10 @@
 # process country  -------------------------------------------------------------
 # orderly metadata  ----
-orderly2::orderly_parameters(iso3c = 'SLE',
-                             scenario = 'malaria-r3-r4-default',
-                             quick_run = TRUE,
-                             parameter_draw = 0,
-                             description = 'testing_for_refactor')
+orderly2::orderly_parameters(iso3c = FALSE,
+                             scenario = FALSE,
+                             quick_run = FALSE,
+                             parameter_draw = FALSE,
+                             description = FALSE)
 
 orderly2::orderly_description('Analyze vaccine impact at the country level')
 orderly2::orderly_artefact('Processed output', 'outputs.rds')
@@ -21,6 +21,7 @@ library(postie)
 library(countrycode)
 library(vimcmalaria)
 library(cali)
+
 # read in dependencies  ----
 orderly2::orderly_dependency("process_inputs", "latest(parameter:iso3c == this:iso3c)", c(vimc_input.rds = "vimc_input.rds"))
 orderly2::orderly_dependency("process_inputs", "latest(parameter:iso3c == this:iso3c)", c(site_file.rds = "site_file.rds"))
@@ -37,7 +38,7 @@ pop_single_yr<- vimc_input$population_input_single_yr
 
 # make a map of input parameters for site function
 site_df<- remove_zero_eirs(iso3c, site_data)
-map<- vimcmalaria::make_analysis_map(site_df, site_data, test = FALSE, run_all = TRUE)
+map<- vimcmalaria::make_analysis_map(site_df, site_data, test = FALSE, run_all = FALSE)
 
 if(iso3c == 'ETH'){
 
