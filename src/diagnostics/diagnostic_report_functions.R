@@ -3,6 +3,7 @@
 library(ggplot2)
 
 
+
 plotting_theme<- theme_bw(base_size = 14) +
   theme( legend.position = 'bottom',
          strip.text.x = element_text(size = rel(0.8)),
@@ -560,7 +561,8 @@ prepare_dose_output<- function(dose_output, site_data, coverage_data){
   
   # first aggregate cases + deaths averted by site_ur over entire simulation period
   site_doses<- dose_output |>
-    group_by(site_ur, scenario) |>
+    group_by(site_ur, scenario, parameter_draw) |>
+    filter(parameter_draw == 0)|>
     filter(year %in% c(intro_yr:(intro_yr+15))) |>
     summarise(cases_averted = sum(cases_averted),
               deaths_averted = sum(deaths_averted), 
@@ -578,7 +580,8 @@ prepare_dose_output<- function(dose_output, site_data, coverage_data){
   
   # then sum all doses + cases + deaths averted up to country level by year
   country_doses<- dose_output |>
-    group_by(year, scenario) |>
+    group_by(year, scenario, parameter_draw) |>
+    filter(parameter_draw== 0) |>
     summarise(cases_averted = sum(cases_averted),
               deaths_averted = sum(deaths_averted), 
               doses_total = sum(doses_total),
@@ -594,7 +597,7 @@ prepare_dose_output<- function(dose_output, site_data, coverage_data){
 
 
 plot_case_site_comparison<- function(site_doses){
-  p<- ggplot(data = site_doses, mapping = aes(x= pfpr, y = cases_averted/fvp *100000, color = scenario, shape = site_ur)) +
+  p<- ggplot(data = site_doses, mapping = aes(x= pfpr, y = (cases_averted/fvp) *100000, color = scenario, shape = site_ur)) +
     geom_point()+
     plotting_theme +
     theme(legend.position = 'none')+

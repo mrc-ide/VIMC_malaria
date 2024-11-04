@@ -1,10 +1,10 @@
 # process country  -------------------------------------------------------------
 # orderly metadata  ----
-orderly2::orderly_parameters(iso3c = FALSE,
-                             scenario = FALSE,
-                             quick_run = FALSE,
-                             parameter_draw = FALSE,
-                             description = FALSE)
+orderly2::orderly_parameters(iso3c = NULL,
+                             scenario = NULL,
+                             quick_run = NULL,
+                             parameter_draw = NULL,
+                             description = NULL)
 
 orderly2::orderly_description('Analyze vaccine impact at the country level')
 orderly2::orderly_artefact('Processed output', 'outputs.rds')
@@ -20,7 +20,6 @@ library(tibble)
 library(postie)
 library(countrycode)
 library(vimcmalaria)
-library(cali)
 
 # read in dependencies  ----
 orderly2::orderly_dependency("process_inputs", "latest(parameter:iso3c == this:iso3c)", c(vimc_input.rds = "vimc_input.rds"))

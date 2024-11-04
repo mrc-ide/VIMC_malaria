@@ -17,22 +17,22 @@ iso3cs<- unique(coverage$country_code)
 dir<- getwd()
 
 # # generate parameter map for analysis ------------------------------------------
-map<- make_parameter_map(iso3cs= iso3cs,
-                         scenarios = c('malaria-r3-r4-default', 'malaria-rts3-rts4-default', 'no-vaccination'),
-                          description = 'models_for_paper',
-                          parameter_draws = c(0),
+map<- make_parameter_map(iso3cs=iso3cs,
+                         scenarios = c('no-vaccination', 'malaria-rts3-rts4-default', 'malaria-r3-r4-default'),
+                          description = 'fix_booster_coverage',
+                          parameter_draws = c(101:200),
                           quick_run= FALSE)
-map<- check_not_a_rerun('process_country', map, date_time = 0)
+test<- check_not_a_rerun('process_country', map, date_time = 0)
 
-map<- check_reports_completed('process_country', map, date_time = 0)
+#map<- check_reports_completed('process_country', map, date_time = 0)
 # # STEP 1: run process_inputs report --------------------------------------------
 #lapply(iso3cs, function(x) orderly2::orderly_run('process_inputs', parameters = list(iso3c = x)))
-# reports<- vimcmalaria::completed_reports('process_country') |> filter(description == 'round3')
+reports<- vimcmalaria::completed_reports('postprocessing') |> filter(description == 'fix_booster_coverage')
 #
 # unique(reports)
 # # STEP 2: run process_country for all countries (on cluster)  ------------------
 # # if needed, test a report locally before full launch
-#run_local_reports(map, 'process_country')
+run_local_reports(map, 'process_country')
 
 # # cluster setup ------
 hipercow::hipercow_init(driver = 'windows')
@@ -40,42 +40,34 @@ hipercow::hipercow_provision()
 hipercow::hipercow_environment_create()
 hipercow::hipercow_configuration()
 
+#hipercow::task_log_watch(task)
 
-hipercow::task_log_watch(task)
 # # submit groups of jobs by number of cores to submit  ------------------------
-lapply(unique(map$site_number), submit_by_core, dt = map, test = FALSE)
-
+number_order<- c(32, 30, 2, 28, 4, 24, 8, 23, 9, 20, 12, 18, 13, 17, 15, 16,7,3, 1, 5, 6, 7, 10, 11, 14) # intersperse the tasks so the cluster is at optimal usage
+lapply(unique(number_order), submit_by_core, dt = map, test = FALSE)
 
 for(iso in iso3cs)
 task<- hipercow::task_create_expr(
   orderly2::orderly_run(
   "process_country",
-  parameters = list(iso3c = iso,
-                    description = 'sept_test_run',
+  parameters = list(iso3c = 'GHA',
+                    description = 'fix_booster_coverage',
                     quick_run = FALSE,
-                    scenario = 'no-vaccination',
+                    scenario = 'malaria-rts3-rts4-default',
                     parameter_draw = 0))
   )
 # # launch ethiopia calibrations and save somewhere central ----------------------
-# eth<-   readRDS('src/process_inputs/site_files/ETH_new_eir.rds')
-# sites<- unique(eth$sites$name_1)
-#
-# for(site in sites){
-#   message(paste0('launching', site))
-#   hipercow::task_create_expr(calibrate_eth_sites(site))
-#
-# }
 # STEP 3: run postprocessing on outputs   --------------------------------------
 for(iso in iso3cs){
 
 message(iso)
 
-hipercow::task_create_expr(
+task<- hipercow::task_create_expr(
 orderly2::orderly_run(
     "postprocessing",
     parameters = list(
       iso3c = iso,
-      description = 'models_for_paper',
+      description = 'fix_booster_coverage',
       quick_run = FALSE
     ))
 )
@@ -86,15 +78,15 @@ orderly2::orderly_run(
 for(iso in iso3cs){
 
   message(iso)
-  #hipercow::task_create_expr(
+task<- hipercow::task_create_expr(
   orderly2::orderly_run(
     "diagnostics",
     parameters = list(
       iso3c = iso,
-      description = 'models_for_paper',
+      description = 'fix_booster_coverage',
       quick_run = FALSE
     ))
-# )
+)
 }
 
 # compile outputs to shared filepath
@@ -126,6 +118,8 @@ for(scen in c('malaria-r3-bluesky', 'malaria-r3-default', 'malaria-r3-r4-bluesky
   write.csv(full, paste0('montagu/update/central-burden-est-', scen, '.csv'), row.names = FALSE)
 
 }
+
+
 
 
 

@@ -1,6 +1,6 @@
 # run diagnostic report by country
-orderly2::orderly_parameters(iso3c = 'ETH',
-                             description = 'bluesky_fix',
+orderly2::orderly_parameters(iso3c = 'CMR',
+                             description = 'fix_booster_coverage',
                              quick_run= FALSE)
 
 source('diagnostic_report_functions.R')
@@ -31,7 +31,7 @@ orderly2::orderly_dependency("postprocessing", "latest(parameter:iso3c == this:i
                              c(dose_output.rds = "dose_output.rds"))
 
 vetting<- rbindlist(readRDS('final_output.rds'))
-dose_output<- readRDS('dose_output.rds')
+dose_output<- rbindlist(readRDS('dose_output.rds'))
 
 # load site file --------------------------------------------------------------
 site_data<- readRDS('site_file.rds')
@@ -42,7 +42,9 @@ population<- vimc_input$population_input_all_age
 population_by_age<- vimc_input$population_input_single_yr
 
 vetting<- vetting |>
-  mutate(parameter_draw = run_id)
+  mutate(parameter_draw = run_id) 
+
+
 
 country_name<- unique(vetting$country_name)
 averted_output<- prepare_averted_outputs(vetting)
@@ -66,7 +68,7 @@ saveRDS(diagnostic_inputs, 'diagnostic_inputs.rds')
 # # render report --------------------------------------------------------------
 
 message('rendering')
-rmarkdown::render(input= 'diagnostic_report.Rmd',
+  rmarkdown::render(input= 'diagnostic_report.Rmd',
                   output_file = paste0('diagnostic_report_', iso3c,'.html'),
                   output_format = 'html_document',
                   params= list('vetting' = vetting,
@@ -79,10 +81,5 @@ rmarkdown::render(input= 'diagnostic_report.Rmd',
                                'population' = population,
                                'population_by_age' = population_by_age))
 
-
-incidence_over_time(burden_output$by_year, 
-                    scenario= 'malaria-rts3-rts4-bluesky',
-                    site_data,
-                    coverage_data)
 
 

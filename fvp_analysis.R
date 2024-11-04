@@ -1,0 +1,58 @@
+###cases averted per FVP diagnostic
+library(malariasimulation)
+library(ggplot2)
+library(dplyr)
+library(data.table)
+
+cols <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+doses<- readRDS('doses_test.rds')
+raw_outpts<- readRDS('raw_outputs_CMR.rds')
+
+# Plot dose timing (look fine? try sud_rural)
+plot_doses <- function(output){
+  yr<- 365
+  output$yr <- ceiling(output$timestep / yr)
+  doses <- output[, c(grep("n_pev" , names(output)), grep("yr", names(output)))]
+  doses<- doses |>
+    group_by(yr) |>
+    summarise(n_pev_epi_dose_1= sum(n_pev_epi_dose_1, na.rm = TRUE), 
+              n_pev_epi_dose_2= sum(n_pev_epi_dose_2, na.rm = TRUE),
+              n_pev_epi_dose_3= sum(n_pev_epi_dose_3, na.rm = TRUE),
+              n_pev_epi_booster_1= sum(n_pev_epi_booster_1, na.rm = TRUE)) |>
+    data.table()
+  
+ doses_long<- melt(doses, id.vars = 'yr', value.name = 'dose_count') 
+  
+  
+  ggplot(doses_long, aes(x= yr, y= dose_count, fill= variable))+
+    geom_col(position= 'stack')+
+    scale_fill_manual(values= cols)
+}
+
+site_doses<- doses$site_doses
+country_dose<- doses$country_doses
+
+#rhe
+site_doses<- site_doses |>
+  mutate(val = cases_averted/fvp)
+
+averted<- data.table(averted)
+ggplot(data= averted[site_ur== 'Centre_rural'], aes(x= year, y= cases_averted, group = site))+
+  geom_line() +
+  facet_wrap(~site_ur)
+
+ggplot(data = dose_output, mapping = aes(x= pfpr, y = (cases_averted/fvp) *100000, color = scenario, shape = site_ur)) +
+  geom_point()+
+  plotting_theme +
+  theme(legend.position = 'none')+
+  labs(title = 'Unscaled cases averted per 100,000 FVP, 15 yrs after introduction',
+       x= 'PFPR(2-10) in 2019',
+       y = 'Cases averted per 100k FVPs')
+
+
+
+output<- raw |> filter(site_ur == 'Nord_both')
+
+
+plot_doses(subset)

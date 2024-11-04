@@ -1,6 +1,6 @@
 # postprocess in bulk
-orderly2::orderly_parameters(iso3c = 'TZA',
-                             description = 'fix_rtss_booster',
+orderly2::orderly_parameters(iso3c = 'NGA',
+                             description =  'fix_booster_coverage',
                              quick_run = FALSE)
 
 
@@ -26,12 +26,12 @@ orderly2::orderly_dependency("process_inputs", "latest(parameter:iso3c == this:i
 
 vimc_input<- readRDS('vimc_input.rds')
 site_data <- readRDS('site_file.rds')
-
 coverage_data<- vimc_input$coverage_input
 le <- vimc_input$le
 vimc_pop<- vimc_input$population_input_all_age
 pop_single_yr<- vimc_input$population_input_single_yr
 pop_data<- vimc_input$population_input_all_age
+
 
 # pull metadata for completed outputs for this country
 completed<- completed_reports('process_country') |>
@@ -39,7 +39,7 @@ completed<- completed_reports('process_country') |>
                 description == {{description}},
                 quick_run == {{quick_run}}) |>
   dplyr::arrange(dplyr::desc(date_time)) |>
-  dplyr::distinct(iso3c, scenario, quick_run, parameter_draw, description, gfa, .keep_all = TRUE) |>
+  dplyr::distinct(iso3c, scenario, quick_run, parameter_draw, description, .keep_all = TRUE) |>
   dplyr::arrange(iso3c, scenario, parameter_draw)
 
 max_draw<- max(completed[scenario == 'no-vaccination', parameter_draw])
@@ -52,9 +52,8 @@ inputs<- unique(inputs, by = 'iso3c')
 
 # pull model outputs for scaling to WMR cases: no-vaccination draw 0
 scaling_filepath<- completed |> filter(parameter_draw == 0,
-                                       scenario == 'no-vaccination',
-                                       gfa == FALSE)
-scaling<- readRDS(paste0('J:/VIMC_malaria/archive/process_country/', scaling_filepath$directory_name, '/outputs.rds'))
+                                       scenario == 'no-vaccination')
+scaling<- readRDS(paste0('J:/september_runs/VIMC_malaria/archive/process_country/', scaling_filepath$directory_name, '/outputs.rds'))
 scaling<- scaling$country_output
 
 
@@ -68,18 +67,17 @@ final_postprocessing<- function(draw){
   intvn_filepaths<- completed |> filter(parameter_draw == draw)
 
   # pull model outputs for all scenarios
-  intvn<- rbindlist(lapply(c(1:nrow(intvn_filepaths)), get_site_output, map = intvn_filepaths, output_filepath = 'J:/VIMC_malaria/archive/process_country/' ))
-  intvn[gfa == TRUE, scenario := paste0(scenario, '_gfa')]
+  intvn<- rbindlist(lapply(c(1:nrow(intvn_filepaths)), get_site_output, map = intvn_filepaths, output_filepath = 'J:/september_runs/VIMC_malaria/archive/process_country/' ))
   
   # pull model outputs for all baseline scenarios (as a separate input into intervention processing)
-  bl<- rbindlist(lapply(c(1:nrow(bl_filepaths)), get_site_output, map = bl_filepaths, output_filepath = 'J:/VIMC_malaria/archive/process_country/'))
-  bl[gfa == TRUE, scenario := paste0(scenario, '_gfa')]
+  bl<- rbindlist(lapply(c(1:nrow(bl_filepaths)), get_site_output, map = bl_filepaths, output_filepath = 'J:/september_runs/VIMC_malaria/archive/process_country/'))
+
   # commenting out as now modelling introduction in all sites regardless of transmission intensity
-  # message('adding low transmission sites')
-  # 
-  # low<- pull_low_transmission_sites(iso3c, site_data, bl)
-  # print(nrow(low))
-  # intvn<- append_low_transmission_sites(low_transmission = low, intvn)
+   message('adding low transmission sites')
+  
+  low<- pull_low_transmission_sites(iso3c, site_data, bl)
+  print(nrow(low))
+  intvn<- append_low_transmission_sites(low_transmission = low, intvn)
 
   message('aggregating')
   dt<- aggregate_outputs(intvn, pop_single_yr)
@@ -100,7 +98,7 @@ final_postprocessing<- function(draw){
            deaths = round(deaths),
            yll= round(ylls),
            dalys = round(dalys),
-           cohort_size = round(cohort_size)) |>
+           cohort_size = cohort_size) |>
     rename(run_id = parameter_draw) |>
     select(-model_proportion_risk,
            -proportion_risk,
@@ -128,28 +126,29 @@ final_postprocessing<- function(draw){
 }
 
 # save -------------------------------------------------------------------------
+max_draw<- 0
 outputs<- lapply(c(0:max_draw), final_postprocessing)
 saveRDS(outputs, 'final_output.rds')
 
 
 
-dose_postprocessing<- function(){
-  intvn_filepaths<- completed |> filter(parameter_draw == 0)
+dose_postprocessing<- function(draw){
+  intvn_filepaths<- completed |> filter(parameter_draw == draw)
   
   # pull model outputs for all scenarios
-  raw<- bind_rows(lapply(c(1:nrow(intvn_filepaths)), get_raw_output, map = intvn_filepaths, output_filepath = 'J:/VIMC_malaria/archive/process_country/' ))
+  raw<- bind_rows(lapply(c(1:nrow(intvn_filepaths)), get_raw_output, map = intvn_filepaths, output_filepath = 'J:/september_runs/VIMC_malaria/archive/process_country/' ))
   raw<- raw |>
     mutate(site = paste0(site_name, '_', urban_rural, '_', scenario),
            site_ur = paste0(site_name, '_', urban_rural))
   
   ids<- unique(raw$site)
   
-  case_output<- rbindlist(lapply(ids, site_postprocessing, dt = raw)) 
+  case_output<- rbindlist(lapply(ids, site_postprocessing, dt = raw)) |>
+    rename(year = t)
   
   case_output<- case_output |>
-    rename(year = t,
-           age = age_lower) |>
-    mutate(cases = round(clinical * n),
+    rename(age = age_lower) |>
+    mutate(cases = round(clinical * n ),
            deaths = round(mortality * n)) |>
     group_by(site, year, site_ur) |>
     summarise(cases = sum(cases),
@@ -158,7 +157,7 @@ dose_postprocessing<- function(){
   
   #calculate cases averted by year and site
   novax<- case_output|> 
-    filter(site %like%'no-vaccination') |>
+    filter(site %like% 'no-vaccination') |>
     rename(cases_novax = cases,
            deaths_novax = deaths) |>
     ungroup() |>
@@ -188,7 +187,8 @@ dose_postprocessing<- function(){
                         n_pev_epi_dose_3, 
                         n_pev_epi_booster_1)) |>
     select(-n_pev_epi_dose_1, -n_pev_epi_dose_2, -n_pev_epi_dose_3, -n_pev_epi_booster_1) |>
-    mutate(year = year +1999)
+    mutate(year = year +1999) |>
+    mutate(parameter_draw = draw)
     
   dose_output<- merge(averted, doses, by = c('year', 'site')) 
   
@@ -196,7 +196,39 @@ dose_postprocessing<- function(){
   
 }
 
-dose_output<- dose_postprocessing()
+dose_output<- lapply(c(0:max_draw), dose_postprocessing)
+
 saveRDS(dose_output, 'dose_output.rds')
 
 message('done with postprocessing')
+
+
+
+
+#plot cohort size against population input
+
+
+p1<- ggplot(processed_output, aes(x= year, y= cohort_size, color= age))+
+  geom_col(position = 'stack')+
+  labs(title = 'cohort size in processed output')
+
+
+p2 <- ggplot(pop_single_yr, aes(x= year, y= value, color= age_from))+
+  geom_col(position = 'stack')+
+  labs(title = 'cohort size in VIMC input')
+
+
+ggpubr::ggarrange(p1, p2)
+
+
+comp<- processed_output[, c('year', 'cohort_size', 'age')]
+comp2<- pop_single_yr[, c('age_from', 'year', 'value')] |>
+  rename(age = age_from)
+
+
+comparison<- merge(comp, comp2, by = c('age', 'year')) |>
+  mutate(difference = (cohort_size- value))
+
+
+ggplot(comparison, aes(x= year, y= difference, color= age))+
+  geom_col(position= 'stack')
