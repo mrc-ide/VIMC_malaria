@@ -62,7 +62,7 @@ for(iso in iso3cs){
 
 message(iso)
 
-task<- hipercow::task_create_expr(
+#task<- hipercow::task_create_expr(
 orderly2::orderly_run(
     "postprocessing",
     parameters = list(
@@ -70,7 +70,7 @@ orderly2::orderly_run(
       description = 'fix_booster_coverage',
       quick_run = FALSE
     ))
-)
+#)
 }
 
 

@@ -1,5 +1,5 @@
 # postprocess in bulk
-orderly2::orderly_parameters(iso3c = 'NGA',
+orderly2::orderly_parameters(iso3c = 'CMR',
                              description =  'fix_booster_coverage',
                              quick_run = FALSE)
 
@@ -143,14 +143,56 @@ dose_postprocessing<- function(draw){
   
   ids<- unique(raw$site)
   
+  process_doses<- function(id, raw, processed_output){
+
+    subset<- raw |> filter(site == id)
+    scenario<- unique(subset$scenario)
+    site_name<- unique(subset$site_name)
+    ur<- unique(subset$ur)
+
+    dose_outputs<- pull_doses_output(subset, processed_output)
+    dose_outputs<- dose_outputs |>
+      mutate(site = id,
+            scenario = scenario,
+            site_name = site_name,
+           ur= ur)
+  
+    return(dose_outputs)
+  }
+
+  doses<- rbindlist(lapply(ids,process_doses, raw= raw, processed_output = processed_output), fill= TRUE)
+  
+# remove cohort size because this is for the national population
+  doses<- doses |>
+    select(-cohort_size, -doses)
+
   case_output<- rbindlist(lapply(ids, site_postprocessing, dt = raw)) |>
     rename(year = t)
   
+# merge on population from site files to more accurately calculate cases averted
+ populations<- site_data$population |>
+   rename(site_name = name_1,
+          ur = urban_rural)
+    
+  
+case_output<- merge(case_output, populations, by = c('site_name', 'ur', 'year'))
+
   case_output<- case_output |>
     rename(age = age_lower) |>
-    mutate(cases = round(clinical * n ),
-           deaths = round(mortality * n)) |>
-    group_by(site, year, site_ur) |>
+    mutate(cohort = pop * prop_n) 
+  
+  vax_cohort<- case_output |>
+    filter(age == 1) |>
+    select(site, year, cohort) |>
+    rename(vaccine_cohort = cohort)
+
+  doses<- merge(doses, vax_cohort, by = c('year', 'site')) |>
+    mutate(fvp = rate_dosing * vaccine_cohort)
+      
+  case_output<- case_output |>
+    mutate(cases = round(clinical * cohort),
+           deaths = round(mortality * cohort)) |>
+    group_by(site, year, site_ur, scenario, site_name, ur) |>
     summarise(cases = sum(cases),
               deaths= sum(deaths),
               .groups = 'keep') 
@@ -161,37 +203,31 @@ dose_postprocessing<- function(draw){
     rename(cases_novax = cases,
            deaths_novax = deaths) |>
     ungroup() |>
-    select(-site)
+    select(-site, -scenario)
 
   vax<- case_output |> filter(!site %like% 'no-vaccination')
   
-  averted<- merge(vax, novax, by = c('year', 'site_ur')) |>
+  averted<- merge(vax, novax, by = c('year', 'site_ur', 'ur', 'site_name')) |>
     mutate(cases_averted = cases_novax- cases,
            deaths_averted = deaths_novax - deaths)
-
     
-  doses<- raw |>
-    select(timestep, n_pev_epi_dose_1, n_pev_epi_dose_2, n_pev_epi_dose_3, n_pev_epi_booster_1, scenario, site) |>
-    mutate(year = as.integer(timestep/365)) |>
-    group_by(site, year, scenario) |>
-    summarise(n_pev_epi_dose_1 = sum(n_pev_epi_dose_1),
-              n_pev_epi_dose_2 = sum(n_pev_epi_dose_2),
-              n_pev_epi_dose_3 = sum(n_pev_epi_dose_3),
-              n_pev_epi_booster_1 = sum(n_pev_epi_booster_1),
-              .groups = 'keep') |>
-      mutate(doses_total = n_pev_epi_dose_1 + n_pev_epi_dose_2 +n_pev_epi_dose_3 + n_pev_epi_booster_1,
-             fvp = ifelse(scenario == 'malaria-rts3-bluesky' |
-                          scenario == 'malaria-r3-default' |
-                        scenario == 'malaria-rts3-default' |
-                        scenario == 'malaria-r3-bluesky',
-                        n_pev_epi_dose_3, 
-                        n_pev_epi_booster_1)) |>
-    select(-n_pev_epi_dose_1, -n_pev_epi_dose_2, -n_pev_epi_dose_3, -n_pev_epi_booster_1) |>
-    mutate(year = year +1999) |>
-    mutate(parameter_draw = draw)
-    
-  dose_output<- merge(averted, doses, by = c('year', 'site')) 
+  dose_output<- merge(averted, doses, by = c('year', 'scenario', 'site_name', 'ur', 'site')) 
   
+#sum fvps and cases averted over 15 year period
+intro_yr<- min(coverage_data[coverage> 0, year])
+
+  test<- dose_output |>
+    filter(year %in% c(intro_yr, intro_yr+15)) |>
+    group_by(site_name, ur, scenario) |>
+    summarise(cases_averted = sum(cases_averted),
+              deaths_averted= sum(deaths_averted),
+              fvp = sum(fvp),
+            .groups = 'keep') |>
+    mutate(cases_per = cases_averted/fvp * 100000,
+           deaths_per = deaths_averted/fvp * 100000)
+
+
+
   return(dose_output)
   
 }
@@ -205,30 +241,3 @@ message('done with postprocessing')
 
 
 
-#plot cohort size against population input
-
-
-p1<- ggplot(processed_output, aes(x= year, y= cohort_size, color= age))+
-  geom_col(position = 'stack')+
-  labs(title = 'cohort size in processed output')
-
-
-p2 <- ggplot(pop_single_yr, aes(x= year, y= value, color= age_from))+
-  geom_col(position = 'stack')+
-  labs(title = 'cohort size in VIMC input')
-
-
-ggpubr::ggarrange(p1, p2)
-
-
-comp<- processed_output[, c('year', 'cohort_size', 'age')]
-comp2<- pop_single_yr[, c('age_from', 'year', 'value')] |>
-  rename(age = age_from)
-
-
-comparison<- merge(comp, comp2, by = c('age', 'year')) |>
-  mutate(difference = (cohort_size- value))
-
-
-ggplot(comparison, aes(x= year, y= difference, color= age))+
-  geom_col(position= 'stack')
