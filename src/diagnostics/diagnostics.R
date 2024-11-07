@@ -1,7 +1,7 @@
 # run diagnostic report by country
-orderly2::orderly_parameters(iso3c = 'CMR',
-                             description = 'fix_booster_coverage',
-                             quick_run= FALSE)
+orderly2::orderly_parameters(iso3c = NULL,
+                             description = NULL,
+                             quick_run= NULL)
 
 source('diagnostic_report_functions.R')
 library(data.table)

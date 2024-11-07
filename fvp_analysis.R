@@ -4,16 +4,43 @@ library(ggplot2)
 library(dplyr)
 library(data.table)
 
-cols <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 
 doses<- readRDS('doses_test.rds')
-raw_outpts<- readRDS('raw_outputs_CMR.rds')
+
+saveRDS(raw, 'raw_kenya_outputs.rds')
+raw<-  readRDS('raw_kenya_outputs.rds')
+
+# filter to one site to get sense of dosage rate
+output<- raw |> filter(site_name == 'Bungoma' & scenario == 'malaria-r3-r4-default')
+
+output$year <- floor(output$timestep / 365) + 2000
+output<- data.table(output)
+
+View(output[is.na(n_pev_epi_booster_1)])
+doses_per_year <-output |>
+  dplyr::group_by(.data$year) |>
+  dplyr::summarise(n_model=mean(n_age_365_729),    ## average number of people in the eligible age grp (?best way to do this)
+                   doses_model=sum(n_pev_epi_booster_1)) |>
+  mutate(rate_dosing = .data$doses_model/.data$n_model)
+
+
+
+
+
+
 
 # Plot dose timing (look fine? try sud_rural)
 plot_doses <- function(output){
   yr<- 365
+  cols <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
   output$yr <- ceiling(output$timestep / yr)
-  doses <- output[, c(grep("n_pev" , names(output)), grep("yr", names(output)))]
+  doses <- output |> 
+    select(n_pev_epi_booster_1,
+           n_pev_epi_dose_1,
+          n_pev_epi_dose_2,
+        n_pev_epi_dose_3,
+        yr)
+  
   doses<- doses |>
     group_by(yr) |>
     summarise(n_pev_epi_dose_1= sum(n_pev_epi_dose_1, na.rm = TRUE), 
@@ -25,13 +52,17 @@ plot_doses <- function(output){
  doses_long<- melt(doses, id.vars = 'yr', value.name = 'dose_count') 
   
   
-  ggplot(doses_long, aes(x= yr, y= dose_count, fill= variable))+
+ p<-  ggplot(doses_long, aes(x= yr, y= dose_count, fill= variable))+
     geom_col(position= 'stack')+
     scale_fill_manual(values= cols)
+
+
+  return(p)
+
 }
 
-site_doses<- doses$site_doses
-country_dose<- doses$country_doses
+raw<- data.table(raw)
+
 
 #rhe
 site_doses<- site_doses |>
@@ -52,7 +83,7 @@ ggplot(data = dose_output, mapping = aes(x= pfpr, y = (cases_averted/fvp) *10000
 
 
 
-output<- raw |> filter(site_ur == 'Nord_both')
-
+output<- raw |> filter(site_ur == 'Bungoma_both')
+output<- data.table(output)
 
 plot_doses(subset)

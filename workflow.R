@@ -36,16 +36,17 @@ run_local_reports(map, 'process_country')
 
 # # cluster setup ------
 hipercow::hipercow_init(driver = 'windows')
-hipercow::hipercow_provision()
+#hipercow::hipercow_provision()
 hipercow::hipercow_environment_create()
 hipercow::hipercow_configuration()
 
 #hipercow::task_log_watch(task)
-
+map<- map |> filter(site_number != 32 & site_number != 2)
 # # submit groups of jobs by number of cores to submit  ------------------------
 number_order<- c(32, 30, 2, 28, 4, 24, 8, 23, 9, 20, 12, 18, 13, 17, 15, 16,7,3, 1, 5, 6, 7, 10, 11, 14) # intersperse the tasks so the cluster is at optimal usage
 lapply(unique(number_order), submit_by_core, dt = map, test = FALSE)
 
+submit_by_core(16, map, test = FALSE)
 for(iso in iso3cs)
 task<- hipercow::task_create_expr(
   orderly2::orderly_run(

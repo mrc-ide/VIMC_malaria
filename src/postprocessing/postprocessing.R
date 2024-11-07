@@ -1,7 +1,7 @@
 # postprocess in bulk
-orderly2::orderly_parameters(iso3c = 'CMR',
-                             description =  'fix_booster_coverage',
-                             quick_run = FALSE)
+orderly2::orderly_parameters(iso3c = NULL,
+                             description =  NULL,
+                             quick_run = NULL)
 
 
 # packages  --------------------------------------------------------------------
@@ -67,10 +67,10 @@ final_postprocessing<- function(draw){
   intvn_filepaths<- completed |> filter(parameter_draw == draw)
 
   # pull model outputs for all scenarios
-  intvn<- rbindlist(lapply(c(1:nrow(intvn_filepaths)), get_site_output, map = intvn_filepaths, output_filepath = 'J:/september_runs/VIMC_malaria/archive/process_country/' ))
+  intvn<- rbindlist(lapply(c(1:nrow(intvn_filepaths)), get_site_output, map = intvn_filepaths, output_filepath = 'J:/VIMC_malaria/archive/process_country/' ))
   
   # pull model outputs for all baseline scenarios (as a separate input into intervention processing)
-  bl<- rbindlist(lapply(c(1:nrow(bl_filepaths)), get_site_output, map = bl_filepaths, output_filepath = 'J:/september_runs/VIMC_malaria/archive/process_country/'))
+  bl<- rbindlist(lapply(c(1:nrow(bl_filepaths)), get_site_output, map = bl_filepaths, output_filepath = 'J:/VIMC_malaria/archive/process_country/'))
 
   # commenting out as now modelling introduction in all sites regardless of transmission intensity
    message('adding low transmission sites')
@@ -143,91 +143,49 @@ dose_postprocessing<- function(draw){
   
   ids<- unique(raw$site)
   
-  process_doses<- function(id, raw, processed_output){
-
-    subset<- raw |> filter(site == id)
-    scenario<- unique(subset$scenario)
-    site_name<- unique(subset$site_name)
-    ur<- unique(subset$ur)
-
-    dose_outputs<- pull_doses_output(subset, processed_output)
-    dose_outputs<- dose_outputs |>
-      mutate(site = id,
-            scenario = scenario,
-            site_name = site_name,
-           ur= ur)
-  
-    return(dose_outputs)
-  }
-
-  doses<- rbindlist(lapply(ids,process_doses, raw= raw, processed_output = processed_output), fill= TRUE)
-  
-# remove cohort size because this is for the national population
-  doses<- doses |>
-    select(-cohort_size, -doses)
-
-  case_output<- rbindlist(lapply(ids, site_postprocessing, dt = raw)) |>
-    rename(year = t)
-  
-# merge on population from site files to more accurately calculate cases averted
- populations<- site_data$population |>
-   rename(site_name = name_1,
-          ur = urban_rural)
-    
-  
-case_output<- merge(case_output, populations, by = c('site_name', 'ur', 'year'))
-
+  case_output<- rbindlist(lapply(ids, site_postprocessing, dt = raw)) 
+             
   case_output<- case_output |>
-    rename(age = age_lower) |>
-    mutate(cohort = pop * prop_n) 
-  
-  vax_cohort<- case_output |>
-    filter(age == 1) |>
-    select(site, year, cohort) |>
-    rename(vaccine_cohort = cohort)
-
-  doses<- merge(doses, vax_cohort, by = c('year', 'site')) |>
-    mutate(fvp = rate_dosing * vaccine_cohort)
-      
-  case_output<- case_output |>
-    mutate(cases = round(clinical * cohort),
-           deaths = round(mortality * cohort)) |>
-    group_by(site, year, site_ur, scenario, site_name, ur) |>
-    summarise(cases = sum(cases),
-              deaths= sum(deaths),
-              .groups = 'keep') 
-  
-  #calculate cases averted by year and site
-  novax<- case_output|> 
-    filter(site %like% 'no-vaccination') |>
-    rename(cases_novax = cases,
-           deaths_novax = deaths) |>
-    ungroup() |>
-    select(-site, -scenario)
-
-  vax<- case_output |> filter(!site %like% 'no-vaccination')
-  
-  averted<- merge(vax, novax, by = c('year', 'site_ur', 'ur', 'site_name')) |>
-    mutate(cases_averted = cases_novax- cases,
-           deaths_averted = deaths_novax - deaths)
-    
-  dose_output<- merge(averted, doses, by = c('year', 'scenario', 'site_name', 'ur', 'site')) 
-  
-#sum fvps and cases averted over 15 year period
-intro_yr<- min(coverage_data[coverage> 0, year])
-
-  test<- dose_output |>
-    filter(year %in% c(intro_yr, intro_yr+15)) |>
-    group_by(site_name, ur, scenario) |>
-    summarise(cases_averted = sum(cases_averted),
-              deaths_averted= sum(deaths_averted),
-              fvp = sum(fvp),
-            .groups = 'keep') |>
-    mutate(cases_per = cases_averted/fvp * 100000,
-           deaths_per = deaths_averted/fvp * 100000)
-
-
-
+             rename(year = t,
+                    age = age_lower) |>
+             mutate(cases = round(clinical * n),
+                    deaths = round(mortality * n)) |>
+             group_by(site, scenario, year, site_ur) |>
+             summarise(cases = sum(cases),
+                       deaths= sum(deaths),
+                       .groups = 'keep') 
+           
+           #calculate cases averted by year and site
+           novax<- case_output|> 
+             filter(site %like%'no-vaccination') |>
+             rename(cases_novax = cases,
+                    deaths_novax = deaths) |>
+             ungroup() |>
+             select(-site, -scenario)
+         
+           vax<- case_output |> filter(!site %like% 'no-vaccination')
+           
+           averted<- merge(vax, novax, by = c('year', 'site_ur')) |>
+             mutate(cases_averted = cases_novax- cases,
+                    deaths_averted = deaths_novax - deaths)
+         
+             
+           doses<- raw |>
+             select(timestep, n_pev_epi_dose_1, n_pev_epi_dose_2, n_pev_epi_dose_3, n_pev_epi_booster_1, scenario, site) |>
+             mutate(year = as.integer(timestep/365)) |>
+             group_by(site, year, scenario) |>
+             summarise(n_pev_epi_dose_1 = sum(n_pev_epi_dose_1),
+                       n_pev_epi_dose_2 = sum(n_pev_epi_dose_2),
+                       n_pev_epi_dose_3 = sum(n_pev_epi_dose_3),
+                       n_pev_epi_booster_1 = sum(n_pev_epi_booster_1),
+                       .groups = 'keep') |>
+               mutate(fvp = n_pev_epi_dose_3) |> # to align with Nora and HIllary's paper
+               mutate(doses_total = n_pev_epi_dose_1 + n_pev_epi_dose_2 +n_pev_epi_dose_3 + n_pev_epi_booster_1) |>
+             select(-n_pev_epi_dose_1, -n_pev_epi_dose_2, -n_pev_epi_dose_3, -n_pev_epi_booster_1) |>
+             mutate(year = year +1999)
+             
+           dose_output<- merge(averted, doses, by = c('year', 'site', 'scenario')) 
+         
   return(dose_output)
   
 }
@@ -237,7 +195,6 @@ dose_output<- lapply(c(0:max_draw), dose_postprocessing)
 saveRDS(dose_output, 'dose_output.rds')
 
 message('done with postprocessing')
-
 
 
 
