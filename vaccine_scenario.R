@@ -173,10 +173,10 @@ devise_vaccine_scenario <- function(iso) {
   value_2030 <- dtp_coverage / 100 # Value in 2022
 
 
-  # make sure the maximum is no more than 50%
-  if (value_2030 > 50) {
-    value_2030 <- 50.0
-  }
+  # # make sure the maximum is no more than 50%
+  # if (value_2030 > 50) {
+  #   value_2030 <- 50.0
+  # }
 
   # Perform linear extrapolation
   values <- approx(x = c(intro, 2030), y = c(value_intro, value_2030), xout = years)$y
