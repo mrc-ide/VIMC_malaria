@@ -8,6 +8,8 @@
 #packages and objects
 library(data.table)
 library(ggplot2)
+library(dplyr)
+
 cols<- c('#CE5137', '#1B4F72', '#45B39D', '#BA4A00')
 
 # data
@@ -25,11 +27,6 @@ inputs<- data.table('iso3c' = c('AGO', 'BDI', 'BEN', 'BFA', 'CAF', 'CIV', 'CMR',
 pop_age<- pop_age |>
   filter(year %in% c(2026:2030)) |>
   filter(age_from < 2)
-
-#pull out children in groups at risk from 2030 onward (children under 1)
-par<- pop_age |>
-  filter(age_from <1) |>
-  group_by()
 
 # sum the total population of children under 2 from 2026-2030 (the comparator period for gavi estimate)
 total_par<- pop_age |>
@@ -108,7 +105,7 @@ pop_under_1<- pop_age |>
   summarise(value_1 = sum(value), .groups = 'keep') 
 
 pop_at_2<- pop_age |>
-  filter(age_from == 2) |>
+  filter(age_from == 1) |>
   filter(year %in% c(2026:2030)) |>
   group_by(country, year, country_code) |>
   rename(iso3c= country_code) |>
@@ -207,6 +204,7 @@ devise_vaccine_scenario <- function(iso) {
   # add in booster coverage, which should be 80% of total coverage in the preceding year
   result <- result |>
     mutate(booster = .80 * coverage) |>
+    mutate(booster = ifelse(year == intro, 0, booster)) |> # if it is the year of introduction, no booster
     data.table()
 
   return(result)
@@ -221,8 +219,9 @@ calculate_children_protected<- function(coverage){
   # calculate doses at the admin- 1 level
   # assuming that coverage is uniform in all moderate to high transmission areas
   doses<- doses |>
-    mutate(coverage= ifelse(is.na(coverage), 0, coverage)) |>
-    mutate(children_protected = pop_1 * coverage)
+    mutate(coverage= ifelse(is.na(coverage), 0, coverage),
+           booster= ifelse(is.na(booster), 0, booster)) |>
+    mutate(children_protected = pop_2 * booster)
   
   doses<- doses |>
     summarise(children_protected = sum(children_protected))
@@ -231,16 +230,20 @@ calculate_children_protected<- function(coverage){
 }
 
 #pull in VIMC scenario for comparison
-vimc <- vimc |>
-  filter(age_first== 0) |>
+vimc_cov <- vimc |>
+  #filter(age_first== 0) |>
   rename(iso3c = country_code) |>
   mutate(scenario = 'vimc') |>
   mutate(coverage = coverage / proportion_risk) |>  # convert coverage to per population instead of per population at risk
   mutate(coverage= ifelse(is.na(coverage), 0, coverage)) |>
-  select(iso3c, coverage, year, scenario)
+  select(year,  coverage, iso3c, age_first, scenario)
+
+initial<- vimc_cov |> filter(age_first == 0)   |> select(-age_first)
+boosted<- vimc_cov |> filter(age_first == 1) |> rename(booster = coverage) |> select(-age_first)
+vimc_cov<- merge(initial, boosted, by = c('year', 'iso3c', 'scenario')) 
 
 calculate_children_protected(coverage_through_2030)
-calculate_children_protected(vimc)
+calculate_children_protected(vimc_cov)
 
 coverage_through_2030<- coverage_through_2030 |>
   mutate(scenario= 'proxy') |>
