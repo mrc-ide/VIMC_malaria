@@ -561,8 +561,8 @@ prepare_dose_output<- function(dose_output, site_data, coverage_data){
   
   # first aggregate cases + deaths averted by site_ur over entire simulation period
   site_doses<- dose_output |>
-    group_by(site_ur, scenario, parameter_draw) |>
-    filter(parameter_draw == 0)|>
+    group_by(site_ur, scenario) |>
+    #filter(parameter_draw == 0)|>
     filter(year %in% c(intro_yr:(intro_yr+15))) |>
     summarise(cases_averted = sum(cases_averted),
               deaths_averted = sum(deaths_averted), 
@@ -580,8 +580,8 @@ prepare_dose_output<- function(dose_output, site_data, coverage_data){
   
   # then sum all doses + cases + deaths averted up to country level by year
   country_doses<- dose_output |>
-    group_by(year, scenario, parameter_draw) |>
-    filter(parameter_draw== 0) |>
+    group_by(year, scenario) |>
+    #filter(parameter_draw== 0) |>
     summarise(cases_averted = sum(cases_averted),
               deaths_averted = sum(deaths_averted), 
               doses_total = sum(doses_total),

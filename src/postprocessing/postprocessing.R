@@ -67,10 +67,10 @@ final_postprocessing<- function(draw){
   intvn_filepaths<- completed |> filter(parameter_draw == draw)
 
   # pull model outputs for all scenarios
-  intvn<- rbindlist(lapply(c(1:nrow(intvn_filepaths)), get_site_output, map = intvn_filepaths, output_filepath = 'J:/VIMC_malaria/archive/process_country/' ))
+  intvn<- rbindlist(lapply(c(1:nrow(intvn_filepaths)), get_site_output, map = intvn_filepaths, output_filepath = 'J:/september_runs/VIMC_malaria/archive/process_country/' ))
   
   # pull model outputs for all baseline scenarios (as a separate input into intervention processing)
-  bl<- rbindlist(lapply(c(1:nrow(bl_filepaths)), get_site_output, map = bl_filepaths, output_filepath = 'J:/VIMC_malaria/archive/process_country/'))
+  bl<- rbindlist(lapply(c(1:nrow(bl_filepaths)), get_site_output, map = bl_filepaths, output_filepath = 'J:/september_runs/VIMC_malaria/archive/process_country/'))
 
   # commenting out as now modelling introduction in all sites regardless of transmission intensity
    message('adding low transmission sites')
@@ -126,7 +126,6 @@ final_postprocessing<- function(draw){
 }
 
 # save -------------------------------------------------------------------------
-max_draw<- 0
 outputs<- lapply(c(0:max_draw), final_postprocessing)
 saveRDS(outputs, 'final_output.rds')
 
@@ -150,7 +149,7 @@ dose_postprocessing<- function(draw){
                     age = age_lower) |>
              mutate(cases = round(clinical * n),
                     deaths = round(mortality * n)) |>
-             group_by(site, scenario, year, site_ur) |>
+             group_by(site, year, site_ur) |>
              summarise(cases = sum(cases),
                        deaths= sum(deaths),
                        .groups = 'keep') 
@@ -161,7 +160,7 @@ dose_postprocessing<- function(draw){
              rename(cases_novax = cases,
                     deaths_novax = deaths) |>
              ungroup() |>
-             select(-site, -scenario)
+             select(-site)
          
            vax<- case_output |> filter(!site %like% 'no-vaccination')
            
@@ -182,9 +181,11 @@ dose_postprocessing<- function(draw){
                mutate(fvp = n_pev_epi_dose_3) |> # to align with Nora and HIllary's paper
                mutate(doses_total = n_pev_epi_dose_1 + n_pev_epi_dose_2 +n_pev_epi_dose_3 + n_pev_epi_booster_1) |>
              select(-n_pev_epi_dose_1, -n_pev_epi_dose_2, -n_pev_epi_dose_3, -n_pev_epi_booster_1) |>
-             mutate(year = year +1999)
+             mutate(year = year +1998) #there was misalignment here
              
-           dose_output<- merge(averted, doses, by = c('year', 'site', 'scenario')) 
+           dose_output<- merge(averted, doses, by = c('year', 'site')) 
+           dose_output <- dose_output |>
+             mutate(parameter_draw = draw)
          
   return(dose_output)
   

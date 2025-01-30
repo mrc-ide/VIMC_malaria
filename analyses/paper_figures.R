@@ -70,31 +70,6 @@ get_dose_output<- function(index, map, output_filepath){
   return(output)
 }
 
-extract_site_data<- function(directory){
-  
-  site_file<- readRDS(paste0('archive/process_inputs/', directory, '/site_file.rds'))
-
-  # extract prevalece data
-  prev<- site_file$prevalence |>
-    filter(year %in% c(2000, 2019)) |>
-    mutate(id = paste0(name_1, '_', urban_rural)) |>
-    data.table()
-  
-  prevs<- dcast(prev, id  ~ year, value.var = 'pfpr') |>
-    rename(pfpr_2000 = `2000`,
-           pfpr_2019 = `2019`)
-
-  
-  #extract intervention coverage data for last available year
-  intvns<- site_file$interventions |>
-    filter(year == 2022) |>
-      mutate(id = paste0(name_1, '_', urban_rural)) |>
-    select(id, itn_use, tx_cov, smc_cov, pmc_cov, irs_cov)
-
-  site_info<- merge(prevs, intvns, by = 'id')
-  
-  return(site_info)
-}
 
 
 # pull metadata

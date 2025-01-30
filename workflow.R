@@ -19,15 +19,15 @@ dir<- getwd()
 # # generate parameter map for analysis ------------------------------------------
 map<- make_parameter_map(iso3cs=iso3cs,
                          scenarios = c('no-vaccination', 'malaria-rts3-rts4-default', 'malaria-r3-r4-default'),
-                          description = 'fix_booster_coverage',
-                          parameter_draws = c(101:200),
+                          description = 'booster_update',
+                          parameter_draws = c(1:200),
                           quick_run= FALSE)
 test<- check_not_a_rerun('process_country', map, date_time = 0)
 
 #map<- check_reports_completed('process_country', map, date_time = 0)
 # # STEP 1: run process_inputs report --------------------------------------------
 #lapply(iso3cs, function(x) orderly2::orderly_run('process_inputs', parameters = list(iso3c = x)))
-reports<- vimcmalaria::completed_reports('postprocessing') |> filter(description == 'fix_booster_coverage')
+reports<- vimcmalaria::completed_reports('process_country') |> filter(description == 'booster_update')
 #
 # unique(reports)
 # # STEP 2: run process_country for all countries (on cluster)  ------------------
@@ -36,7 +36,7 @@ run_local_reports(map, 'process_country')
 
 # # cluster setup ------
 hipercow::hipercow_init(driver = 'windows')
-#hipercow::hipercow_provision()
+hipercow::hipercow_provision()
 hipercow::hipercow_environment_create()
 hipercow::hipercow_configuration()
 
@@ -44,9 +44,10 @@ hipercow::hipercow_configuration()
 map<- map |> filter(site_number != 32 & site_number != 2)
 # # submit groups of jobs by number of cores to submit  ------------------------
 number_order<- c(32, 30, 2, 28, 4, 24, 8, 23, 9, 20, 12, 18, 13, 17, 15, 16,7,3, 1, 5, 6, 7, 10, 11, 14) # intersperse the tasks so the cluster is at optimal usage
-lapply(unique(number_order), submit_by_core, dt = map, test = FALSE)
+lapply(unique(map$site_number), submit_by_core, dt = map, test = FALSE)
 
-submit_by_core(16, map, test = FALSE)
+submit_by_core(32, map, test = FALSE)
+
 for(iso in iso3cs)
 task<- hipercow::task_create_expr(
   orderly2::orderly_run(
@@ -59,19 +60,19 @@ task<- hipercow::task_create_expr(
   )
 # # launch ethiopia calibrations and save somewhere central ----------------------
 # STEP 3: run postprocessing on outputs   --------------------------------------
-for(iso in iso3cs){
+for(iso in c('SDN', 'COD') ){
 
 message(iso)
 
-#task<- hipercow::task_create_expr(
+task<- hipercow::task_create_expr(
 orderly2::orderly_run(
     "postprocessing",
     parameters = list(
       iso3c = iso,
-      description = 'fix_booster_coverage',
+      description = 'booster_update',
       quick_run = FALSE
     ))
-#)
+)
 }
 
 
@@ -91,7 +92,7 @@ task<- hipercow::task_create_expr(
 }
 
 # compile outputs to shared filepath
-compile_diagnostics(descrip = 'models_for_paper', date_time = 20240710001352)
+compile_diagnostics(descrip = 'booster_update', date_time = 20241110000000)
 
 files<- list.files('montagu/', full.names = TRUE)
 files<- files[files %like% 'r3']
@@ -123,49 +124,21 @@ for(scen in c('malaria-r3-bluesky', 'malaria-r3-default', 'malaria-r3-r4-bluesky
 
 
 
-
-total<- eth |> select(-run_id)
-for(scen in unique(total$scenario)){
-
-  subset<- total |> filter(scenario == scen)
-  subset<- subset |> select(-scenario)
-
-  write.csv(subset, paste0('montagu/central-burden-est-', scen, '.csv'), row.names = FALSE)
-
-}
-
-
-
-completed<- completed_reports('process_country')
-completed<- completed |>
-  filter(description == 'stochastic_fix',
-         scenario == 'no-vaccination')
-
-
 site_output<- lapply(c(1:nrow(completed)), get_site_outputs, map = completed, output_filepath = 'archive/process_country/')
 
 
 
-#' Pull site level processed output based on metadata input
-#' @param index           observation in metadata df
-#' @param map             metadata df
-#' @param output_filepath filepath where outputs live
-#' @export
-get_site_outputs<- function(index, map, output_filepath){
-
-  metadata<- map[ index,]
-
-  directory<- metadata$directory_name
-  iso3c<- metadata$iso3c
-
-  message(directory)
-
-  output<- readRDS(paste0(output_filepath, directory, '/outputs.rds'))                  # get output file
-  sites<- data.table::rbindlist(lapply(output$site_output, function(x) return(x$processed_output))) #pull out processed site_level output
 
 
-  saveRDS(sites, paste0('J:/malaria_no_more/test_files/', iso3c, '_site_output.rds'))
 
-  return(sites)
-}
 
+
+# compile final outputs
+
+
+task<- hipercow::task_create_expr(vimcmalaria::compile_and_save('booster_update', 'no-vaccination'))
+task<- hipercow::task_create_expr(vimcmalaria::compile_and_save('booster_update', 'malaria-r3-r4-default'))
+task<- hipercow::task_create_expr(vimcmalaria::compile_and_save('booster_update', 'malaria-rts3-rts4-default'))
+
+
+hipercow::task_log_watch(task)
