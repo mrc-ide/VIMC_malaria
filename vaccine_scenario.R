@@ -14,7 +14,7 @@ cols<- c('#CE5137', '#1B4F72', '#45B39D', '#BA4A00')
 
 # data
 population<- read.csv('src/process_inputs/vimc_inputs/demography/202409malaria-1_dds-202208_tot_pop_both.csv') # total population
-pop_age<- read.csv('src/process_inputs/vimc_inputs/demography/202409malaria-1_dds-202208_int_pop_both.csv') #single year population 
+pop_age<- read.csv('src/process_inputs/vimc_inputs/demography/202409malaria-1_dds-202208_int_pop_both.csv') #single year population
 dtp<- read.csv('who_dtp_coverage.csv')
 vimc<- read.csv('src/process_inputs/vimc_inputs/vaccine_coverage/coverage_202409malaria-1_malaria-r3-r4-default.csv') # vimc vaccine scenario
 
@@ -24,14 +24,14 @@ inputs<- data.table('iso3c' = c('AGO', 'BDI', 'BEN', 'BFA', 'CAF', 'CIV', 'CMR',
 
 
 #pull out the number of children from 0-1 yrs old from 2023-2030--------------------------------------------------
-pop_age<- pop_age |>
-  filter(year %in% c(2026:2030)) |>
-  filter(age_from < 2)
+# pop_age<- pop_age |>
+  #filter(year %in% c(2026:2030)) |>
+  #filter(age_from < 2)
 
 # sum the total population of children under 2 from 2026-2030 (the comparator period for gavi estimate)
 total_par<- pop_age |>
   group_by(age_from) |>
-  summarise(value = sum(value)) 
+  summarise(value = sum(value))
 
 # estimate par based on moderate-to-high transmission cutoff (will be smaller)--------------------------------------
 # read in population data from site files
@@ -68,12 +68,10 @@ read_pop<- function(file_name){
   }
 
   prevalence<- site_data$prevalence |>
-    select(name_1, urban_rural, iso3c, run_model) 
-  
-  #now pull annual population and merge this on 
+    select(name_1, urban_rural, iso3c, run_model)
 
-  pop<- site_data$population |>
-    filter(year %in% c(2023:2030))
+  #now pull annual population and merge this on
+  pop<- site_data$population
 
 
   pop<- merge(pop, prevalence, by = c('name_1', 'urban_rural', 'iso3c'))
@@ -92,38 +90,38 @@ ids <- ids |>
 
 # subset to moderate to high transmission areas
 pop_ar<- pops |>
-  filter(run_model== TRUE) 
+  filter(run_model== TRUE)
 
 # calculate target population by admin 1 unit through 2100
 # this assumes that the national age distribution is the same as the subnational age distribution for any given year
 #pull out the number of children from 0-1 yrs old from 2023-2030
 pop_under_1<- pop_age |>
   filter(age_from < 1) |>
-  filter(year %in% c(2026:2030)) |>
+  #filter(year %in% c(2026:2030)) |>
   group_by(country, year, country_code) |>
   rename(iso3c= country_code) |>
-  summarise(value_1 = sum(value), .groups = 'keep') 
+  summarise(value_1 = sum(value), .groups = 'keep')
 
 pop_at_2<- pop_age |>
   filter(age_from == 1) |>
-  filter(year %in% c(2026:2030)) |>
+  #filter(year %in% c(2026:2030)) |>
   group_by(country, year, country_code) |>
   rename(iso3c= country_code) |>
-  summarise(value_2 = sum(value), .groups = 'keep') 
+  summarise(value_2 = sum(value), .groups = 'keep')
 
 # pull total population
 total_pop<- population |>
   group_by(country, year, country_code) |>
   rename(iso3c= country_code) |>
-  filter(year %in% c(2026:2030)) |>
-  summarise(total= sum(value), .groups = 'keep') 
+  #filter(year %in% c(2026:2030)) |>
+  summarise(total= sum(value), .groups = 'keep')
 
-pop_prop<- merge(pop_under_1, total_pop, by = c('iso3c', 'year')) 
+pop_prop<- merge(pop_under_1, total_pop, by = c('iso3c', 'year'))
 pop_prop<- merge(pop_at_2, pop_prop, by = c('iso3c', 'year')) |>
   mutate(prop_1 = value_1/total,
          prop_2 = value_2/total ) |>
   select(country, year, iso3c, prop_1, prop_2)
- 
+
 # merge onto site specific data set
 pops<- merge(pop_ar, pop_prop, by = c('iso3c', 'year')) |>
   mutate(pop_1 = pop * prop_1,
@@ -131,7 +129,7 @@ pops<- merge(pop_ar, pop_prop, by = c('iso3c', 'year')) |>
 
 summary<- pops|>
   summarise(pop_1 = sum(pop_1),
-            pop_2 = sum(pop_2)) 
+            pop_2 = sum(pop_2))
 
 
 #clean dtp covearge data set  ----------------------------------------------------------------------------
@@ -154,36 +152,27 @@ devise_vaccine_scenario <- function(iso) {
     filter(iso3c == iso) |>
     pull(intro_yr)
 
-  if (intro < 2022) {
-    intro <- 2022
-  } # for MVIP countries, vaccine coverage pre-2022 is already in the malariasimulation site files and this is for RTS,S
-  
+  if (intro < 2022) { intro <- 2022 } # for MVIP countries, vaccine coverage pre-2022 is already in the malariasimulation site files and this is for RTS,S
+
   dtp_coverage <- dtp |>
     filter(iso3c == iso) |>
     pull(coverage)
 
-  # if (iso %in% c("KEN", "GHA", "MWI")) {
-  #   dtp_coverage <- 0.50
-  # } # for MVIP countries, use coverage value for vaccines in 2022 instead of DTP coverage
-
   # interpolate between 65% and 100% of this value from 2022 to 2030
   # Define the years and the corresponding values
-  years <- intro:2030
-  value_intro <- (0.65 * dtp_coverage) / 100 # Value in intro year
-  value_2030 <- dtp_coverage / 100 # Value in 2022
-
-
-  # # make sure the maximum is no more than 50%
-  # if (value_2030 > 50) {
-  #   value_2030 <- 50.0
-  # }
+  years <- intro:2100
+  value_intro <- (0.75 * dtp_coverage) / 100 # Value in intro year
+  value_2030 <-  (dtp_coverage) / 100 # Value in 2022
+  value_2060<-  0.95 #assume every country reaches 95% threshold by 2100
+#
+#   # make sure the maximum is no more than 95%
+  if (value_2030 > 0.90) {value_2030 <- 0.90 } 
 
   # Perform linear extrapolation
-  values <- approx(x = c(intro, 2030), y = c(value_intro, value_2030), xout = years)$y
+  values <- approx(x = c(intro, 2030, 2060, 2100), y = c(value_intro, value_2030, value_2060, 0.95), xout = years)$y
 
   # Combine years and values into a data frame for easier viewing
   result <- data.table(year = years, coverage = values, iso3c = iso)
-
 
   if (nrow(result[year == 2022]) != 1) {
     append <- data.frame(
@@ -194,11 +183,6 @@ devise_vaccine_scenario <- function(iso) {
 
     result <- data.table(rbind(append, result))
   }
-
-  # if (iso %in% c("KEN", "GHA", "MWI")) {
-  #   # in site files ,vaccine coverage is 50% for MVIP program years (2019- 2022)
-  #   result[year %in% c(2019:2022), coverage := 0.50]
-  # }
 
 
   # add in booster coverage, which should be 80% of total coverage in the preceding year
@@ -211,21 +195,41 @@ devise_vaccine_scenario <- function(iso) {
 }
 
 # run for all countries
-coverage_through_2030<- rbindlist(lapply(ids$iso3c, devise_vaccine_scenario))
+proxy_scenario<- rbindlist(lapply(ids$iso3c, devise_vaccine_scenario))
 
 calculate_children_protected<- function(coverage){
 
   doses<- merge(pops, coverage, by = c('iso3c', 'year'), all.x = TRUE)
   # calculate doses at the admin- 1 level
   # assuming that coverage is uniform in all moderate to high transmission areas
+  #first calculate the number of children protected with the primary series (first 3 doses)
+  # number of children protected with the booster dose corresponds to 
+  # booster coverage * children_protected_primary 
+
   doses<- doses |>
+    group_by(year) |>
     mutate(coverage= ifelse(is.na(coverage), 0, coverage),
            booster= ifelse(is.na(booster), 0, booster)) |>
-    mutate(children_protected = pop_2 * booster)
-  
+    mutate(children_protected_primary = pop_1 * coverage) |>
+    mutate(children_fully_protected = children_protected_primary * booster) |>
+    summarise(children_protected = sum(children_fully_protected))
+
+
+  return(doses)
+}
+calculate_children_protected_summary<- function(coverage){
+
+  doses<- merge(pops, coverage, by = c('iso3c', 'year'), all.x = TRUE)
+  # calculate doses at the admin- 1 level
+  # assuming that coverage is uniform in all moderate to high transmission areas
   doses<- doses |>
-    summarise(children_protected = sum(children_protected))
-  
+    filter(year %in%  c(2026:2030)) |>
+      mutate(coverage= ifelse(is.na(coverage), 0, coverage),
+    booster= ifelse(is.na(booster), 0, booster)) |>
+mutate(children_protected_primary = pop_1 * coverage) |>
+mutate(children_fully_protected = children_protected_primary * booster) |>
+summarise(children_protected = sum(children_fully_protected))
+
   return(doses$children_protected)
 }
 
@@ -240,16 +244,19 @@ vimc_cov <- vimc |>
 
 initial<- vimc_cov |> filter(age_first == 0)   |> select(-age_first)
 boosted<- vimc_cov |> filter(age_first == 1) |> rename(booster = coverage) |> select(-age_first)
-vimc_cov<- merge(initial, boosted, by = c('year', 'iso3c', 'scenario')) 
+vimc_cov<- merge(initial, boosted, by = c('year', 'iso3c', 'scenario'))
 
-calculate_children_protected(coverage_through_2030)
-calculate_children_protected(vimc_cov)
+cov_scenario<- calculate_children_protected(proxy_scenario)
+vimc_scenario<- calculate_children_protected(vimc_cov)
 
-coverage_through_2030<- coverage_through_2030 |>
+cov_scenario<- calculate_children_protected_summary(proxy_scenario)
+vimc_scenario<- calculate_children_protected_summary(vimc_cov)
+
+proxy_scenario<- proxy_scenario |>
   mutate(scenario= 'proxy') |>
-  select(year, coverage, iso3c, scenario)
+  select(year, coverage, booster, iso3c, scenario)
 
-cov<- data.table(rbind(vimc, coverage_through_2030))
+cov<- data.table(rbind(vimc_cov, proxy_scenario))
 
 
 compare_coverage<- function(iso){
@@ -258,16 +265,17 @@ compare_coverage<- function(iso){
   p<- ggplot(cov[iso3c == iso], mapping = aes(x= year, y= coverage, color= scenario)) +
     geom_line()+
     geom_vline(mapping= aes(xintercept= 2022), linetype= 'dotted')+
+      geom_vline(mapping= aes(xintercept= 2030), linetype= 'dotted')+
     scale_color_manual(values = cols) +
     labs(title = 'Comparison of coverage scenarios',
           subtitle = iso)
-  
-  
+
+
   print(p)
 
 }
 
-pdf('comparison_scenarios.pdf')
+pdf('comparison_scenario_test5.pdf')
 
 lapply(unique(cov$iso3c), compare_coverage)
 

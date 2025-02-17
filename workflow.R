@@ -20,7 +20,7 @@ dir<- getwd()
 map<- make_parameter_map(iso3cs=iso3cs,
                          scenarios = c('no-vaccination', 'malaria-rts3-rts4-default', 'malaria-r3-r4-default'),
                           description = 'booster_update',
-                          parameter_draws = c(1:200),
+                          parameter_draws = 0,
                           quick_run= FALSE)
 test<- check_not_a_rerun('process_country', map, date_time = 0)
 
