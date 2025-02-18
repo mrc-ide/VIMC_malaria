@@ -57,7 +57,7 @@ vimc_input<- list('coverage_input' = coverage_dt,
 saveRDS(vimc_input, 'vimc_input.rds')
 
 # pull site data  --------------------------------------------------------------
-site_data <- readRDS(paste0('site_files/', iso3c, '_new_eir.rds'))
+site_data<- site::fetch_site(iso3c = {iso3c})
 saveRDS(site_data, 'site_file.rds')
 
 

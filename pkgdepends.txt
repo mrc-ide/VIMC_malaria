@@ -1,12 +1,11 @@
 
 
 local::./postie_0.1.2.tar.gz
-local::./site_0.3.0.tar.gz
 
-mrc-ide/malariasimulation@dev
-mrc-ide/scene@627c642
+mrc-ide/malariasimulation
+mrc-ide/scene
 mrc-ide/orderly2
-mrc-ide/vimcmalaria
+mrc-ide/vimcmalaria@refactor
 
 
 data.table

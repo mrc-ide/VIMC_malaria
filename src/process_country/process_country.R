@@ -37,12 +37,9 @@ pop_single_yr<- vimc_input$population_input_single_yr
 
 # make a map of input parameters for site function
 site_df<- remove_zero_eirs(iso3c, site_data)
-map<- vimcmalaria::make_analysis_map(site_df, site_data, test = FALSE, run_all = FALSE)
+map<- vimcmalaria::make_analysis_map(site_df, site_data, test = TRUE, run_all = FALSE)
 
-if(iso3c == 'ETH'){
 
-  site_data$interventions$irs_cov = 0
-}
 # run analysis function for each site + urban/rural combination ----
 cluster_cores <- Sys.getenv("CCP_NUMCPUS")
 if (cluster_cores == "") {

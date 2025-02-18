@@ -26,8 +26,8 @@ test<- check_not_a_rerun('process_country', map, date_time = 0)
 
 #map<- check_reports_completed('process_country', map, date_time = 0)
 # # STEP 1: run process_inputs report --------------------------------------------
-#lapply(iso3cs, function(x) orderly2::orderly_run('process_inputs', parameters = list(iso3c = x)))
-reports<- vimcmalaria::completed_reports('process_country') |> filter(description == 'booster_update')
+lapply(iso3cs, function(x) orderly2::orderly_run('process_inputs', parameters = list(iso3c = x)))
+#reports<- vimcmalaria::completed_reports('process_country') |> filter(description == 'booster_update')
 #
 # unique(reports)
 # # STEP 2: run process_country for all countries (on cluster)  ------------------
