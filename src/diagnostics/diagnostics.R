@@ -1,7 +1,7 @@
 # run diagnostic report by country
-orderly2::orderly_parameters(iso3c = 'AGO',
-                             description = 'booster_update',
-                             quick_run= FALSE)
+orderly2::orderly_parameters(iso3c = NULL,
+                             description = NULL,
+                             quick_run= NULL)
 
 source('diagnostic_report_functions.R')
 library(data.table)
@@ -14,6 +14,7 @@ library(wesanderson)
 library(ggpubr)
 library(vimcmalaria)
 library(plotly)
+
 orderly2::orderly_dependency("process_inputs", "latest(parameter:iso3c == this:iso3c)", c(vimc_input.rds = "vimc_input.rds"))
 orderly2::orderly_dependency("process_inputs", "latest(parameter:iso3c == this:iso3c)", c(site_file.rds = "site_file.rds"))
 
@@ -43,8 +44,6 @@ population_by_age<- vimc_input$population_input_single_yr
 
 vetting<- vetting |>
   mutate(parameter_draw = run_id) 
-
-
 
 country_name<- unique(vetting$country_name)
 averted_output<- prepare_averted_outputs(vetting)

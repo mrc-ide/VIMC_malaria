@@ -1,7 +1,7 @@
 # postprocess in bulk
-orderly2::orderly_parameters(iso3c = NULL,
-                             description =  NULL,
-                             quick_run = NULL)
+orderly2::orderly_parameters(iso3c = 'CIV',
+                             description =  'new_site_files',
+                             quick_run = FALSE)
 
 
 # packages  --------------------------------------------------------------------
@@ -32,6 +32,10 @@ vimc_pop<- vimc_input$population_input_all_age
 pop_single_yr<- vimc_input$population_input_single_yr
 pop_data<- vimc_input$population_input_all_age
 
+# if this is ivory coast, pull WMR cases and deaths from a flat file for scaling portion
+# this will be fixed in upcoming versions of the site file
+wmr<- read.xlsx('CIV_cases_deaths.xlsx')|> select(year, cases_mean) |> rename(wmr_cases = cases_mean)
+wmr<- list('cases_deaths' = wmr )
 
 # pull metadata for completed outputs for this country
 completed<- completed_reports('process_country') |>
@@ -53,7 +57,7 @@ inputs<- unique(inputs, by = 'iso3c')
 # pull model outputs for scaling to WMR cases: no-vaccination draw 0
 scaling_filepath<- completed |> filter(parameter_draw == 0,
                                        scenario == 'no-vaccination')
-scaling<- readRDS(paste0('J:/september_runs/VIMC_malaria/archive/process_country/', scaling_filepath$directory_name, '/outputs.rds'))
+scaling<- readRDS(paste0('J:/VIMC/VIMC_malaria/archive/process_country/', scaling_filepath$directory_name, '/outputs.rds'))
 scaling<- scaling$country_output
 
 
@@ -67,13 +71,13 @@ final_postprocessing<- function(draw){
   intvn_filepaths<- completed |> filter(parameter_draw == draw)
 
   # pull model outputs for all scenarios
-  intvn<- rbindlist(lapply(c(1:nrow(intvn_filepaths)), get_site_output, map = intvn_filepaths, output_filepath = 'J:/september_runs/VIMC_malaria/archive/process_country/' ))
+  intvn<- rbindlist(lapply(c(1:nrow(intvn_filepaths)), get_site_output, map = intvn_filepaths, output_filepath = 'J:/VIMC/VIMC_malaria/archive/process_country/' ))
   
   # pull model outputs for all baseline scenarios (as a separate input into intervention processing)
-  bl<- rbindlist(lapply(c(1:nrow(bl_filepaths)), get_site_output, map = bl_filepaths, output_filepath = 'J:/september_runs/VIMC_malaria/archive/process_country/'))
+  bl<- rbindlist(lapply(c(1:nrow(bl_filepaths)), get_site_output, map = bl_filepaths, output_filepath = 'J:/VIMC/VIMC_malaria/archive/process_country/'))
 
   # commenting out as now modelling introduction in all sites regardless of transmission intensity
-   message('adding low transmission sites')
+  message('adding low transmission sites')
   
   low<- pull_low_transmission_sites(iso3c, site_data, bl)
   print(nrow(low))
@@ -85,7 +89,13 @@ final_postprocessing<- function(draw){
   message('scaling cases')
   output<- add_proportions(dt)
 
-  output<- scale_cases(output, scaling_data= scaling,  site_data = site_data)
+  if(iso3c= 'CIV'){
+    output<- scale_cases(output, scaling_data= scaling,  site_data = wmr)
+
+  }else{
+    output<- scale_cases(output, scaling_data= scaling,  site_data = site_data)
+
+  }
 
   # scale cases based on difference between site file PAR and VIMC PAR
   message('scaling PAR')
@@ -135,7 +145,7 @@ dose_postprocessing<- function(draw){
   intvn_filepaths<- completed |> filter(parameter_draw == draw)
   
   # pull model outputs for all scenarios
-  raw<- bind_rows(lapply(c(1:nrow(intvn_filepaths)), get_raw_output, map = intvn_filepaths, output_filepath = 'J:/september_runs/VIMC_malaria/archive/process_country/' ))
+  raw<- bind_rows(lapply(c(1:nrow(intvn_filepaths)), get_raw_output, map = intvn_filepaths, output_filepath = 'J:/VIMC/VIMC_malaria/archive/process_country/' ))
   raw<- raw |>
     mutate(site = paste0(site_name, '_', urban_rural, '_', scenario),
            site_ur = paste0(site_name, '_', urban_rural))
