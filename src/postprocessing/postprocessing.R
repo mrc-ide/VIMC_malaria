@@ -1,6 +1,6 @@
 # postprocess in bulk
-orderly2::orderly_parameters(iso3c = 'CIV',
-                             description =  'new_site_files',
+orderly2::orderly_parameters(iso3c = 'NGA',
+                             description =  'booster_update',
                              quick_run = FALSE)
 
 
@@ -79,31 +79,40 @@ final_postprocessing<- function(draw){
   # commenting out as now modelling introduction in all sites regardless of transmission intensity
   message('adding low transmission sites')
   
-  low<- pull_low_transmission_sites(iso3c, site_data, bl, threshold = 0.10)
-  print(nrow(low))
-  intvn<- append_low_transmission_sites(low_transmission = low, intvn)
+  low_10<- pull_low_transmission_sites(iso3c, site_data, bl, threshold = 0.10, threshold = .10) # pull sites below PFPR threshold
+  intvn_10<- subset_high_transmission_sites(intvn, threshold = .10, site_data) #subset to sites meeting PFPR threshold
+  print(nrow(low_10))
+  intvn_10<- append_low_transmission_sites(low_transmission = low_10, intvn_10)
 
+  low_35<- pull_low_transmission_sites(iso3c, site_data, bl, threshold = .35) # pull sites below PFPR threshold
+  intvn_35<- subset_high_transmission_sites(intvn, threshold = .35, site_data) #subset to sites meeting PFPR threshold
+  print(nrow(low_35))
+  intvn_35<- append_low_transmission_sites(low_transmission = low_35, intvn_35)
+
+
+  # for data request, repeat final processing for both scenarios:
+  # 1) scenario with a 10% pfpr cutoff
+  # 2) scenario with a 35% pfpr cutoff
   message('aggregating')
-  dt<- aggregate_outputs(intvn, pop_single_yr)
+  dt_10<- aggregate_outputs(intvn_10, pop_single_yr)
+  dt_35<- aggregate_outputs(intvn_35, pop_single_yr)
 
   message('scaling cases')
-  output<- add_proportions(dt)
 
-  if(iso3c== 'CIV'){
-    output<- scale_cases(output, scaling_data= scaling,  site_data = wmr)
+  output<- scale_cases(output, scaling_data= scaling,  site_data = site_data)
 
-  }else{
-    output<- scale_cases(output, scaling_data= scaling,  site_data = site_data)
+  }
 
   }
 
   # scale cases based on difference between site file PAR and VIMC PAR
   message('scaling PAR')
-  processed_output<- scale_par(output, iso3c= {{iso3c}})
+  processed_output_10<- scale_par(output_10, iso3c= {{iso3c}})
+  processed_output_35<- scale_par(output_35, iso3c= {{iso3c}})
 
   message('formatting')
   # format and save (
-  processed_output<- processed_output |>
+  processed_output_10<- processed_output_10 |>
     mutate(cases = round(cases),
            deaths = round(deaths),
            yll= round(ylls),
@@ -129,13 +138,46 @@ final_postprocessing<- function(draw){
            cases,
            dalys,
            deaths,
-           yll)
+           yll) |>
+    mutate(pfpr_threshold = .10)
 
+  processed_output_35<- processed_output_35 |>
+    mutate(cases = round(cases),
+           deaths = round(deaths),
+           yll= round(ylls),
+           dalys = round(dalys),
+           cohort_size = cohort_size) |>
+    rename(run_id = parameter_draw) |>
+    select(-model_proportion_risk,
+           -proportion_risk,
+           -scaling_ratio,
+           -prop_severe,
+           -prop_deaths,
+           -dalys_pp,
+           -ylls,
+           -life_expectancy) |>
+    select(run_id,
+           scenario,
+           disease,
+           year,
+           age,
+           country,
+           country_name,
+           cohort_size,
+           cases,
+           dalys,
+           deaths,
+           yll) |>
+  mutate(pfpr_threshold = .35)
+
+  # bind outputs together
+  processed_output<- rbind(processed_output_10, processed_output_35)
   return(processed_output)
 
 }
 
 # save -------------------------------------------------------------------------
+max_draw<- 50
 outputs<- lapply(c(0:max_draw), final_postprocessing)
 saveRDS(outputs, 'final_output.rds')
 
@@ -201,9 +243,9 @@ dose_postprocessing<- function(draw){
   
 }
 
-dose_output<- lapply(c(0:max_draw), dose_postprocessing)
+#dose_output<- lapply(c(0:max_draw), dose_postprocessing)
 
-saveRDS(dose_output, 'dose_output.rds')
+#saveRDS(dose_output, 'dose_output.rds')
 
 message('done with postprocessing')
 

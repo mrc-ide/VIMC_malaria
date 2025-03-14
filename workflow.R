@@ -60,7 +60,7 @@ task<- hipercow::task_create_expr(
   )
 # # launch ethiopia calibrations and save somewhere central ----------------------
 # STEP 3: run postprocessing on outputs   --------------------------------------
-for(iso in c('CIV') ){
+for(iso in c('CMR', 'COD', 'NGA') ){
 
 message(iso)
 
