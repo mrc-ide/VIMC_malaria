@@ -60,11 +60,11 @@ task<- hipercow::task_create_expr(
   )
 # # launch ethiopia calibrations and save somewhere central ----------------------
 # STEP 3: run postprocessing on outputs   --------------------------------------
-for(iso in c('SDN', 'COD') ){
+for(iso in c('CMR', 'COD', 'NGA') ){
 
 message(iso)
 
-task<- hipercow::task_create_expr(
+#task<- hipercow::task_create_expr(
 orderly2::orderly_run(
     "postprocessing",
     parameters = list(
@@ -72,7 +72,7 @@ orderly2::orderly_run(
       description = 'booster_update',
       quick_run = FALSE
     ))
-)
+#)
 }
 
 
