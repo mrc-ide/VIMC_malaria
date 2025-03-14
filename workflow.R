@@ -17,17 +17,19 @@ iso3cs<- unique(coverage$country_code)
 dir<- getwd()
 
 # # generate parameter map for analysis ------------------------------------------
-map<- make_parameter_map(iso3cs=iso3cs,
-                         scenarios = c('no-vaccination', 'malaria-rts3-rts4-default', 'malaria-r3-r4-default'),
-                          description = 'booster_update',
+map<- make_parameter_map(iso3cs= c('KEN', 'MRT', 'UGA'),
+                         scenarios = c('no-vaccination'),
+                          description = 'new_site_files',
                           parameter_draws = 0,
                           quick_run= FALSE)
-test<- check_not_a_rerun('process_country', map, date_time = 0)
 
+map$scenario<- 'proxy'
+# check function
+test<- check_not_a_rerun(report_name = 'process_country', map = map, date = 0)
 #map<- check_reports_completed('process_country', map, date_time = 0)
 # # STEP 1: run process_inputs report --------------------------------------------
 #lapply(iso3cs, function(x) orderly2::orderly_run('process_inputs', parameters = list(iso3c = x)))
-reports<- vimcmalaria::completed_reports('process_country') |> filter(description == 'booster_update')
+#reports<- vimcmalaria::completed_reports('process_country') |> filter(description == 'booster_update')
 #
 # unique(reports)
 # # STEP 2: run process_country for all countries (on cluster)  ------------------
@@ -41,12 +43,10 @@ hipercow::hipercow_environment_create()
 hipercow::hipercow_configuration()
 
 #hipercow::task_log_watch(task)
-map<- map |> filter(site_number != 32 & site_number != 2)
 # # submit groups of jobs by number of cores to submit  ------------------------
-number_order<- c(32, 30, 2, 28, 4, 24, 8, 23, 9, 20, 12, 18, 13, 17, 15, 16,7,3, 1, 5, 6, 7, 10, 11, 14) # intersperse the tasks so the cluster is at optimal usage
+#number_order<- c(32, 30, 2, 28, 4, 24, 8, 23, 9, 20, 12, 18, 13, 17, 15, 16,7,3, 1, 5, 6, 7, 10, 11, 14) # intersperse the tasks so the cluster is at optimal usage
 lapply(unique(map$site_number), submit_by_core, dt = map, test = FALSE)
 
-submit_by_core(32, map, test = FALSE)
 
 for(iso in iso3cs)
 task<- hipercow::task_create_expr(
@@ -69,7 +69,7 @@ orderly2::orderly_run(
     "postprocessing",
     parameters = list(
       iso3c = iso,
-      description = 'booster_update',
+      description = 'new_site_files',
       quick_run = FALSE
     ))
 #)
@@ -77,22 +77,22 @@ orderly2::orderly_run(
 
 
 # # STEP 4: run diagnostic reports for outputs  ----------------------------------
-for(iso in iso3cs){
+for(iso in iso3cs[30:31]){
 
   message(iso)
-task<- hipercow::task_create_expr(
+#task<- hipercow::task_create_expr(
   orderly2::orderly_run(
     "diagnostics",
     parameters = list(
       iso3c = iso,
-      description = 'fix_booster_coverage',
+      description = 'new_site_files',
       quick_run = FALSE
     ))
-)
+#)
 }
 
 # compile outputs to shared filepath
-compile_diagnostics(descrip = 'booster_update', date_time = 20241110000000)
+compile_diagnostics(descrip = 'new_site_files', date_time = 0)
 
 files<- list.files('montagu/', full.names = TRUE)
 files<- files[files %like% 'r3']
@@ -142,3 +142,5 @@ task<- hipercow::task_create_expr(vimcmalaria::compile_and_save('booster_update'
 
 
 hipercow::task_log_watch(task)
+
+

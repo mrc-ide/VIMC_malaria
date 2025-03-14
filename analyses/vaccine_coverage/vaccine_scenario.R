@@ -161,9 +161,9 @@ devise_vaccine_scenario <- function(iso) {
   # interpolate between 65% and 100% of this value from 2022 to 2030
   # Define the years and the corresponding values
   years <- intro:2100
-  value_intro <- (0.75 * dtp_coverage) / 100 # Value in intro year
-  value_2030 <-  (dtp_coverage) / 100 # Value in 2022
-  value_2060<-  0.95 #assume every country reaches 95% threshold by 2100
+  value_intro <- (.4 * dtp_coverage) / 100 # Value in intro year
+  value_2030 <-  (.85* dtp_coverage) / 100 # Value in 2022
+  value_2060<-  0.95 #assume every country reaches 95% threshold by 2060
 #
 #   # make sure the maximum is no more than 95%
   if (value_2030 > 0.90) {value_2030 <- 0.90 } 
@@ -187,8 +187,8 @@ devise_vaccine_scenario <- function(iso) {
 
   # add in booster coverage, which should be 80% of total coverage in the preceding year
   result <- result |>
-    mutate(booster = .80 * coverage) |>
-    mutate(booster = ifelse(year == intro, 0, booster)) |> # if it is the year of introduction, no booster
+    mutate(booster = .80) |>
+    mutate(booster = ifelse(year <= intro, 0, booster)) |> # if it is the year of introduction, no booster
     data.table()
 
   return(result)
@@ -238,11 +238,11 @@ vimc_cov <- vimc |>
   #filter(age_first== 0) |>
   rename(iso3c = country_code) |>
   mutate(scenario = 'vimc') |>
-  mutate(coverage = coverage / proportion_risk) |>  # convert coverage to per population instead of per population at risk
+ mutate(coverage = coverage / proportion_risk) |>  # convert coverage to per population instead of per population at risk
   mutate(coverage= ifelse(is.na(coverage), 0, coverage)) |>
   select(year,  coverage, iso3c, age_first, scenario)
 
-initial<- vimc_cov |> filter(age_first == 0)   |> select(-age_first)
+initial<- vimc_cov |> filter(age_first == 0)   |> select(-age_first) 
 boosted<- vimc_cov |> filter(age_first == 1) |> rename(booster = coverage) |> select(-age_first)
 vimc_cov<- merge(initial, boosted, by = c('year', 'iso3c', 'scenario'))
 
@@ -275,10 +275,11 @@ compare_coverage<- function(iso){
 
 }
 
-pdf('comparison_scenario_test5.pdf')
+pdf('comparison_scenario_final2.pdf')
 
 lapply(unique(cov$iso3c), compare_coverage)
 
 dev.off()
 
 
+saveRDS(proxy_scenario, 'proxy_scenario.rds')

@@ -10,6 +10,31 @@ orderly2::orderly_artefact('VIMC input', 'vimc_input.rds')
 
 
 # pull coverage data -----------------------------------------------------------
+# first pull in proxy data 
+proxy<- readRDS('proxy_scenario.rds') 
+
+# specify vaccine type based on what is currently being implemented
+proxy<- proxy |>
+   mutate(vaccine = ifelse(iso3c %in% c('BDI', 'BEN', 'BFA', 'CMR', 
+                                        'COD', 'GHA', 'KEN', 'LBR', 
+                                        'MWI', 'NER', 'SLE'),
+                                      'RTS,S', 'R21')) |>
+  rename(country_code = iso3c) 
+  
+
+primary<- copy(proxy) |>
+  select(-booster) |>
+  mutate(vaccine = ifelse(vaccine == 'R21', 'R3', 'RTS3'))
+
+secondary<- copy(proxy) |>
+  select(-coverage) |>
+  rename(coverage = booster) |>
+  mutate(vaccine = ifelse(vaccine == 'R21', 'R4', 'RTS4'))
+
+full<- rbind(primary, secondary, fill = TRUE)
+
+
+# VIMC input data
 coverage_files<- list.files('vimc_inputs/vaccine_coverage/', full.names = T)
 coverage_dt<- rbindlist(lapply(coverage_files, read.csv))
 
@@ -25,7 +50,7 @@ novax<- coverage_dt |>           # pull another projection for data table struct
   mutate(scenario = 'no-vaccination')
 
 coverage_dt<- rbind(coverage_dt, novax)
-
+coverage_dt<- rbind(coverage_dt, full, fill = TRUE)
 # pull population data (single year) -------------------------------------------
 demog_single_yr<- read.csv('vimc_inputs/demography/202409malaria-1_dds-202208_int_pop_both.csv') |>
   filter(country_code == iso3c) |>
@@ -57,7 +82,7 @@ vimc_input<- list('coverage_input' = coverage_dt,
 saveRDS(vimc_input, 'vimc_input.rds')
 
 # pull site data  --------------------------------------------------------------
-site_data <- readRDS(paste0('site_files/', iso3c, '_new_eir.rds'))
+site_data<- site::fetch_site(iso3c = {iso3c})
 saveRDS(site_data, 'site_file.rds')
 
 

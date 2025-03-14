@@ -28,7 +28,6 @@ orderly2::orderly_dependency("process_inputs", "latest(parameter:iso3c == this:i
 vimc_input<- readRDS('vimc_input.rds')
 site_data <- readRDS('site_file.rds')
 
-
 # vimc inputs ----
 coverage_data<- vimc_input$coverage_input
 le <- vimc_input$le
@@ -39,10 +38,7 @@ pop_single_yr<- vimc_input$population_input_single_yr
 site_df<- remove_zero_eirs(iso3c, site_data)
 map<- vimcmalaria::make_analysis_map(site_df, site_data, test = FALSE, run_all = FALSE)
 
-if(iso3c == 'ETH'){
 
-  site_data$interventions$irs_cov = 0
-}
 # run analysis function for each site + urban/rural combination ----
 cluster_cores <- Sys.getenv("CCP_NUMCPUS")
 if (cluster_cores == "") {

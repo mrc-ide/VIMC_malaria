@@ -244,7 +244,7 @@ incidence_rate_over_age<- function(output, scenario, coverage_data){
 plot_intvn_coverage<- function(site_data){
   p<- plot_interventions_combined(
     interventions = site_data$interventions,
-    population = site_data$population,
+    population = site_data$population$population_total,
     group_var = c("country", "name_1"),
     include = c("itn_use", "itn_input_dist", "tx_cov", "smc_cov",'irs_cov', "pmc_cov", "rtss_cov"),
     labels = c("ITN usage", "ITN model input", "Treatment","SMC", "IRS", "PMC", "RTSS")
@@ -413,19 +413,19 @@ cases_deaths_diagnostic<- function(site){
 
   lower <-
     melt(dt,
-         measure.vars = c('wmr_cases_l', 'wmr_deaths_l', 'incidence_l', 'mortality_l'))  |>
+         measure.vars = c('wmr_cases_l', 'wmr_deaths_l', 'wmr_incidence_l', 'wmr_mortality_l'))  |>
     select(year, variable, value) |>
     rename(lower = value)
 
   upper <-
     melt(dt,
-         measure.vars = c('wmr_cases_u', 'wmr_deaths_u', 'incidence_u', 'mortality_u')) |>
+         measure.vars = c('wmr_cases_u', 'wmr_deaths_u', 'wmr_incidence_u', 'wmr_mortality_u')) |>
     select(year, variable, value) |>
     rename(upper = value)
 
   median <-
     melt(dt,
-         measure.vars = c('wmr_cases', 'wmr_deaths', 'incidence', 'mortality')) |>
+         measure.vars = c('wmr_cases', 'wmr_deaths', 'wmr_incidence', 'wmr_mortality')) |>
     select(year, variable, value)
 
   lower[variable %like% 'cases', variable := 'cases']
