@@ -7,6 +7,7 @@
 *.xlsx
 *.rds
 *.RDS
+*.pdf
 2022/
 raw_data/
 data/
