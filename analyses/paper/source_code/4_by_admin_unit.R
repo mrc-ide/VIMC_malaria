@@ -20,8 +20,8 @@ library(data.table)
 
 completed <- completed_reports("process_country") |>
   dplyr::filter(
-    description == "booster_update",
-    scenario== 'malaria-r3-r4-default',
+    description == "new_site_files",
+    scenario== 'no-vaccination',
     quick_run == FALSE,
     parameter_draw == 0
   ) |>
@@ -47,15 +47,17 @@ get_site_outputs<- function(index, map, output_filepath){
   sites<- data.table::rbindlist(lapply(output$site_output, function(x) return(x$processed_output))) #pull out processed site_level output
 
 
-  saveRDS(sites, paste0('J:/VIMC/VIMC_malaria/analyses/paper/inputs/site_output/', iso3c, '_site_output.rds'))
+  saveRDS(sites, paste0('J:/VIMC/VIMC_malaria/analyses/paper/inputs/site_output/', iso3c, '_site_output_novax.rds'))
 
   return(sites)
 }
 
-lapply(c(1:nrow(completed), get_site_output, map= completed, output_filepath= 'J:/VIMC/VIMC_malaria/archive/postprocessing/'))
+lapply(c(1:nrow(completed)), get_site_outputs, map= completed, output_filepath= 'J:/VIMC/VIMC_malaria/archive/process_country/'))
+
+
 # admin level site results
 #site_output<- lapply(c(1:nrow(completed)), get_site_outputs, map = completed, output_filepath = 'archive/process_country/')
-files<- list.files('analyses/draft/site_output/', full.names = TRUE)
+files<- list.files('analyses/paper/inputs/site_output/', full.names = TRUE)
 outputs<- rbindlist(lapply(files, readRDS))
 outputs<- outputs |>
   mutate(id = paste0(site_name, '_', urban_rural))
