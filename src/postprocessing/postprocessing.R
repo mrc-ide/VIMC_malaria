@@ -79,7 +79,7 @@ final_postprocessing<- function(draw){
   # commenting out as now modelling introduction in all sites regardless of transmission intensity
   message('adding low transmission sites')
   
-  low<- pull_low_transmission_sites(iso3c, site_data, bl)
+  low<- pull_low_transmission_sites(iso3c, site_data, bl, threshold = 0.10)
   print(nrow(low))
   intvn<- append_low_transmission_sites(low_transmission = low, intvn)
 
@@ -89,7 +89,7 @@ final_postprocessing<- function(draw){
   message('scaling cases')
   output<- add_proportions(dt)
 
-  if(iso3c= 'CIV'){
+  if(iso3c== 'CIV'){
     output<- scale_cases(output, scaling_data= scaling,  site_data = wmr)
 
   }else{

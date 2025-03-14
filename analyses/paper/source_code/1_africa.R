@@ -113,12 +113,14 @@ write.csv(supplement2, 'analyses/paper/tables/scenario_outputs_supplement.csv')
 
   # overall impact---------------------------------------------------------------------------------------
   # baseline scenario
+
   bl<- vax |>
     group_by(scenario,run_id) |>
-    summarise(cases_baseline = sum(cases_novax, na.rm= TRUE), # pull ivory coast site file
-              deaths_baseline = sum(deaths_novax, na.rm =  TRUE),
+    summarise(cases_baseline = sum(cases_novax), # pull ivory coast site file
+              deaths_baseline = sum(deaths_novax),
               .groups = 'keep')
 
+#baseline cases and deaths
   get_values(bl |> filter(scenario == 'Routine') |> pull(cases_baseline))
   get_values(bl |> filter(scenario == 'Routine') |> pull(deaths_baseline))
 
@@ -144,9 +146,11 @@ write.csv(supplement2, 'analyses/paper/tables/scenario_outputs_supplement.csv')
 
 
 
-# number plug text
+# cases and deaths averted 
 get_values(africa |> filter(scenario == 'Routine') |> pull(cases_averted))
 get_values(africa |> filter(scenario == 'Routine') |> pull(deaths_averted))
+
+# these numbers present X% of cases and deaths
 get_values(africa |> filter(scenario == 'Routine') |> pull(percent_cases_averted))
 get_values(africa |> filter(scenario == 'Routine') |> pull(percent_deaths_averted))
 

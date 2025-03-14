@@ -6,6 +6,7 @@ library(tidyr)
 library(ggforce)
 library(ggpubr)
 library(data.table)
+library(stringr)
 
 
 
@@ -19,7 +20,7 @@ library(data.table)
            axis.ticks.y= element_blank(),
            panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 # FIGURE 2: cases + deaths averted by age
-vax<- readRDS('analyses/draft/vax.rds')
+vax<- readRDS('analyses/paper/inputs/vax.rds')
 
 vax_age<- copy(vax)
 vax_age$age<- cut(vax_age$age, breaks = c(0, 5, 15, 101), include.lowest = TRUE)
@@ -191,7 +192,7 @@ table_2<- vax_age |>
 
 # pull cases averted summarized over age
 table_2<- vax_age |>
-  filter(scenario== 'R21') |>
+  filter(scenario== 'Routine') |>
   group_by(scenario, age) |>
   summarise(cases_averted = sum(cases_averted),
             deaths_averted = sum(deaths_averted),

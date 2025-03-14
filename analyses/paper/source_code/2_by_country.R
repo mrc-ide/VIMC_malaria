@@ -11,8 +11,8 @@ library(sf)
 
 cols<- c('#CE5137', '#1B4F72', '#45B39D', '#BA4A00')
 
-#saveRDS(vax, 'analyses/draft/vax.rds')
-vax<- readRDS('analyses/draft/vax.rds')
+saveRDS(vax, 'analyses/paper/inputs/vax.rds')
+vax<- readRDS('analyses/paper/inputs/vax.rds')
 
 table_1 <- vax |>
   group_by(scenario, country, country_name, run_id) |>
@@ -77,12 +77,10 @@ ggarrange(p1, p2, ncol = 2)
 
 #  same table, but per FVP over the simulation period
 # pull counts of fvps and total doses delivered by country and scenario
-total_doses<- compile_dose_outputs('booster_update', iso = 'all') |> data.table()
-total_doses[scenario %like% 'r3', scenario := 'R21']
-total_doses[scenario %like% 'rts3', scenario := 'RTS,S']
+total_doses<- compile_dose_outputs('new_site_files', iso = 'all') |> data.table() |> filter(scenario %in% c('proxy', 'no-vaccination'))
 total_doses[scenario %like% 'no-vaccination', scenario := 'Control']
 
-total_doses<- total_doses[!scenario == 'RTS,S']
+
 
 total_doses<- total_doses |>
   filter(year <= 2037)|>
@@ -137,7 +135,7 @@ ggarrange(p1, p2, p3, p4, ncol =2, nrow= 2)
 
 
 # results section results per dose (average and IQR)
-r21<- get_values(total_doses |> filter(scenario == 'R21') |> pull(cases_mean))
+proxt<- get_values(total_doses |> filter(scenario == 'proxy') |> pull(cases_mean))
 
 
 
