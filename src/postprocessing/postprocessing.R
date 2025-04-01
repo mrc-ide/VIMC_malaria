@@ -103,7 +103,7 @@ final_postprocessing<- function(draw){
 
   }
 
-  }
+  
 
   # scale cases based on difference between site file PAR and VIMC PAR
   message('scaling PAR')
@@ -243,9 +243,9 @@ dose_postprocessing<- function(draw){
   
 }
 
-#dose_output<- lapply(c(0:max_draw), dose_postprocessing)
+dose_output<- lapply(c(0:max_draw), dose_postprocessing)
 
-#saveRDS(dose_output, 'dose_output.rds')
+saveRDS(dose_output, 'dose_output.rds')
 
 message('done with postprocessing')
 

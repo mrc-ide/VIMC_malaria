@@ -36,7 +36,17 @@ population <- params$population
 population_by_age<- params$population_by_age
 country_name<- params$country_name
 
-pfprs<- readRDS('pfpr10plus_admins.rds')
+pfprs<- site_data$prevalence |> |>
+    dplyr::filter(year == 2024) |>
+    dplyr::mutate(run_model = ifelse(pfpr > 0.10, TRUE, FALSE)) |>
+    mutate(run_model = ifelse(name_1 == 'Toliary', TRUE, run_model)) |> #hardcoded exceptions
+    mutate(run_model = ifelse(name_1 %like% 'Gambela', TRUE, run_model)) |>
+    mutate(run_model = ifelse(name_1 %like% 'Bay', TRUE, run_model)) |>
+    mutate(run_model = ifelse(name_1 %like% 'Nouakchott', TRUE, run_model)) |>
+    mutate(run_model = ifelse(name_1 %like% 'Bolama', TRUE, run_model)) |>
+    mutate(run_model = ifelse(name_1 == 'South Darfur', TRUE, run_model)) |>
+    mutate(run_model = ifelse(name_1 == 'West Kurdufan', TRUE, run_model))
+
 source('diagnostic_report_functions.R')
 
 ```
