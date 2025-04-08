@@ -3,6 +3,33 @@ This repository contains code used to estimate the impact of malaria vaccines on
 
 The helper functions developed for this workflow can be found in the [vimcmalaria](https://github.com/mrc-ide/vimcmalaria) package. This package is a holding place for helper functions used in this workflow, and therefore may not be useful when applied to other contexts. More documentation + testing for this package is forthcoming.
 
+## Directory
+```
+.
+├── analyses                             # Ad-hoc analyses for project-specific work
+|   ├── MIM                              # Generate plots for Pan-African Malaria Conference poster (MIM)
+|   ├── decomp                           # Run a generic vaccine impact model and compare how impact metrics vary if non-vaccine malaria interventions are included (was not used)
+|   ├── ethiopia                         # recalibrate Ethiopia admin-1 units to lower baseline transmission intensity (no longer used)
+|   ├── gf_data_request                  # Data request from BMGF regarding subnational tailoring (see gf_data_request branch for more code)
+|   ├── itns                             # refit ITN usage in consolidated site files using netz package (diagnostic)
+|   ├── mvip                             # Pulled mortality metrics from previous model runs to compare to impact metrics from Malaria Vaccine Implementation Programme
+|   ├── paper                            # Generate tables and figures for manuscript
+|   ├── site_files                       # compare outputs run with new vs. old site files
+|   ├── vaccine_scenario                 # Generate proxy vaccine coverage scenario for manuscript based on DTP3 coverage, vaccine type, and year of introduction
+├── src                                  # Source code for VIMC malaria main workflow (start here)
+|   ├── process_inputs                   # Format VIMC demography, vaccine coverage, and malariasimulation site file inputs for analysis
+|   |   ├── process_inputs.R                   
+|   ├── process_country                  # Paramaterize, run models, and do initial postprocessing
+|   |   ├── process_country.R                   
+|   ├── postprocessing                   # Do additional postprocessing, including scaling national outputs to World Malaria Report data and aggregation
+|   |   ├── postprocessing.R                   
+|   ├── diagnostics                      # Generate an Rmarkdown as a diagnostic report of vaccine impact results
+|   |   ├── diagnostics.R                   
+├── VIMC_malaria.Rproj                   # R.Studio project file
+└── README.md                            # Project overview
+
+```
+
 ###  Quick Start
 In order to run this workflow, run the ["workflow.R"](https://github.com/mrc-ide/VIMC_malaria/blob/main/workflow.R) script. 
 - `Process_inputs` formats the input files needed for this workflow.
@@ -75,5 +102,5 @@ Outputs are processed in the following steps.
 
 Aggregate outputs up to country level [("process_country")](https://github.com/mrc-ide/VIMC_malaria/blob/main/src/process_country/orderly.R) via simple summation.
 
-### Visalize results
+### Visualize results
 Produce diagnostic report. Note that for this report to run properly, you must have processed outputs (from "process_country") for the no-vaccination scenario in addition to the intervention scenario you specify. You cannot run a diagnostic report for the no-vaccination scenario alone.
