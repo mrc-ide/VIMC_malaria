@@ -16,7 +16,7 @@ The helper functions developed for this workflow can be found in the [vimcmalari
 |   ├── paper                            # Generate tables and figures for manuscript
 |   ├── site_files                       # compare outputs run with new vs. old site files
 |   ├── vaccine_scenario                 # Generate proxy vaccine coverage scenario for manuscript based on DTP3 coverage, vaccine type, and year of introduction
-├── src                                  # Source code for VIMC malaria main workflow (start here)
+├── src                                  # Source code for VIMC malaria main workflow
 |   ├── process_inputs                   # Format VIMC demography, vaccine coverage, and malariasimulation site file inputs for analysis
 |   |   ├── process_inputs.R                   
 |   ├── process_country                  # Paramaterize, run models, and do initial postprocessing
@@ -26,6 +26,10 @@ The helper functions developed for this workflow can be found in the [vimcmalari
 |   ├── diagnostics                      # Generate an Rmarkdown as a diagnostic report of vaccine impact results
 |   |   ├── diagnostics.R                   
 ├── VIMC_malaria.Rproj                   # R.Studio project file
+├── orderly_config.yml                   # Configuration for orderly workflow. Do not modify
+├── pkgdepends.txt                       # Package dependencies for cluster installation
+├── postie_0.1.2.txt                     # Postie package version for VIMC workflow (because DALYs are recalculated based on VIMC inputs). Might be a separate branch, should be updated in the future
+├── workflow.R                           # Script to initialize orderly workflow, set up cluster environment with hipercow package, and run analysis. Start here
 └── README.md                            # Project overview
 
 ```
