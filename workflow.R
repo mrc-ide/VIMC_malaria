@@ -17,10 +17,10 @@ iso3cs<- unique(coverage$country_code)
 dir<- getwd()
 
 # # generate parameter map for analysis ------------------------------------------
-map<- make_parameter_map(iso3cs= c('KEN', 'MRT', 'UGA'),
+map<- make_parameter_map(iso3cs= iso3cs,
                          scenarios = c('no-vaccination'),
-                          description = 'new_site_files',
-                          parameter_draws = 0,
+                          description = 'paper_runs',
+                          parameter_draws = c(1:5),
                           quick_run= FALSE)
 
 map$scenario<- 'proxy'
