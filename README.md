@@ -56,7 +56,7 @@ The following parameters must be changed for each run:
 - `scenario`: vaccine scenario you would like to run models for. Options:
     * `no-vaccination`: No vaccines implemented. 
     * `r3-r4-default`: Full series of R21 (with booster), based on GAVI forecasts.
-    * `rts3-rts4-default`: 80% of full series of RTS,S (80% coverage for entire modelling time period)
+    * `rts3-rts4-default`: Full series of RTS,S (with booster), based on GAVI forecasts.
     * `proxy`: proxy routine coverage scenario based on public GAVI estimates of protected children, routine DTP3 coverage, and vaccine choice by country (R21 vs. RTS,S). 
       
 The `make_parameter_map` function will create input parameter data frames (at the site and country level) for all of the sites in the 31 VIMC-modelled countries, as well as each VIMC vaccination scenario. 
