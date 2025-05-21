@@ -291,7 +291,7 @@ scenario_comparison_plot<- function(output, country_name){
 
   return(p)
 }
-deaths_over_time<- function(output, scenario, coverage_data){
+deaths_over_time<- function(output, scenario, coverage_data, site_data){
 
   intro_yr<- min(coverage_data[scenario == {{scenario}}& coverage> 0, year])
   output<- output |>
@@ -309,6 +309,7 @@ deaths_over_time<- function(output, scenario, coverage_data){
   p<-   ggplot()+
     geom_line(data = median_run, mapping = aes(x= year, y= deaths, color =scenario))  +
     geom_line(data = stochastic_run, mapping = aes(x= year, y= deaths, color = scenario, group = parameter_draw), alpha = 0.05)  +
+      geom_line(data= site_data$cases_deaths, mapping = aes(x= year, y= wmr_deaths), color= 'darkgreen')+
     geom_vline(xintercept= intro_yr, linetype= "dotted") +
     labs(x= 'Time (in years)', y= 'Deaths',
          title= paste0('Deaths over time'),

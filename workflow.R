@@ -18,15 +18,14 @@ dir<- getwd()
 
 # # generate parameter map for analysis ------------------------------------------
 map<- make_parameter_map(iso3cs= iso3cs,
-                         scenarios = c('no-vaccination'),
-                          description = 'paper_runs',
-                          parameter_draws = c(1:5),
+                         scenarios = c('no-vaccination', 'malaria-r3-r4-default'),
+                          description = 'gavi_reruns_2025',
+                          parameter_draws = c(0),
                           quick_run= FALSE)
 
-map$scenario<- 'proxy'
 # check function
 test<- check_not_a_rerun(report_name = 'process_country', map = map, date = 0)
-#map<- check_reports_completed('process_country', map, date_time = 0)
+map<- check_reports_completed('process_country', map, date_time = 0)
 # # STEP 1: run process_inputs report --------------------------------------------
 #lapply(iso3cs, function(x) orderly2::orderly_run('process_inputs', parameters = list(iso3c = x)))
 #reports<- vimcmalaria::completed_reports('process_country') |> filter(description == 'booster_update')
@@ -60,16 +59,16 @@ task<- hipercow::task_create_expr(
   )
 # # launch ethiopia calibrations and save somewhere central ----------------------
 # STEP 3: run postprocessing on outputs   --------------------------------------
-for(iso in c('CMR', 'COD', 'NGA') ){
+for(iso in iso3cs[31:31]){
 
 message(iso)
 
 #task<- hipercow::task_create_expr(
 orderly2::orderly_run(
-    "postprocessing",
+    "diagnostics",
     parameters = list(
       iso3c = iso,
-      description = 'new_site_files',
+      description = 'gavi_reruns_2025',
       quick_run = FALSE
     ))
 #)
@@ -77,7 +76,7 @@ orderly2::orderly_run(
 
 
 # # STEP 4: run diagnostic reports for outputs  ----------------------------------
-for(iso in iso3cs[30:31]){
+for(iso in iso3cs){
 
   message(iso)
 #task<- hipercow::task_create_expr(
@@ -92,7 +91,7 @@ for(iso in iso3cs[30:31]){
 }
 
 # compile outputs to shared filepath
-compile_diagnostics(descrip = 'new_site_files', date_time = 0)
+compile_diagnostics(descrip = 'gavi_reruns_2025', date_time = 0)
 
 files<- list.files('montagu/', full.names = TRUE)
 files<- files[files %like% 'r3']

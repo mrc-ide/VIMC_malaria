@@ -1,6 +1,6 @@
 # postprocess in bulk
 orderly2::orderly_parameters(iso3c = 'NGA',
-                             description =  'new_site_files',
+                             description =  'gavi_runs_2025',
                              quick_run = FALSE)
 
 
@@ -46,7 +46,8 @@ completed<- completed_reports('process_country') |>
   dplyr::distinct(iso3c, scenario, quick_run, parameter_draw, description, .keep_all = TRUE) |>
   dplyr::arrange(iso3c, scenario, parameter_draw)
 
-max_draw<- max(completed[scenario == 'no-vaccination', parameter_draw])
+#max_draw<- max(completed[scenario == 'no-vaccination', parameter_draw])
+max_draw<- 0
 
 # vimc inputs
 inputs<- completed_reports('process_inputs') |>
@@ -79,8 +80,7 @@ final_postprocessing<- function(draw){
   # commenting out as now modelling introduction in all sites regardless of transmission intensity
   message('adding low transmission sites')
   
-  low<- pull_low_transmission_sites(iso3c, site_data, bl, threshold = 0.10, threshold = .10) # pull sites below PFPR threshold
-  intvn<- subset_high_transmission_sites(intvn, threshold = .10, site_data) #subset to sites meeting PFPR threshold
+  low<- pull_low_transmission_sites(iso3c, site_data, bl) # pull sites below PFPR threshold
   print(nrow(low))
   intvn<- append_low_transmission_sites(low_transmission = low, intvn)
 
@@ -88,12 +88,14 @@ final_postprocessing<- function(draw){
   message('aggregating')
   dt<- aggregate_outputs(intvn, pop_single_yr)
 
+
   message('scaling cases')
-  output<- scale_cases(output, scaling_data= scaling,  site_data = site_data)
+  output<- scale_cases_deaths(dt, scaling_data= scaling,  site_data = site_data)
 
-
+  output<- add_proportions(output)
   # scale cases based on difference between site file PAR and VIMC PAR
   message('scaling PAR')
+  
   processed_output<- scale_par(output, iso3c= {{iso3c}})
 
   message('formatting')
@@ -134,7 +136,7 @@ final_postprocessing<- function(draw){
 }
 
 # save -------------------------------------------------------------------------
-max_draw<- 50
+#max_draw<- 50
 outputs<- lapply(c(0:max_draw), final_postprocessing)
 saveRDS(outputs, 'final_output.rds')
 

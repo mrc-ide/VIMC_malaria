@@ -36,7 +36,7 @@ population <- params$population
 population_by_age<- params$population_by_age
 country_name<- params$country_name
 
-pfprs<- site_data$prevalence |> |>
+pfprs<- site_data$prevalence |> 
     dplyr::filter(year == 2024) |>
     dplyr::mutate(run_model = ifelse(pfpr > 0.10, TRUE, FALSE)) |>
     mutate(run_model = ifelse(name_1 == 'Toliary', TRUE, run_model)) |> #hardcoded exceptions
@@ -147,15 +147,6 @@ p
 
 ## Incidence over time {.tabset}
 
-### rts3-rts4-default 
-
-```{r} 
-incidence_over_time(burden_output$by_year,  
-                    scenario= 'malaria-rts3-rts4-default', 
-                     site_data, 
-                     coverage_data) 
-```
-
 
 
 
@@ -171,14 +162,6 @@ incidence_over_time(burden_output$by_year,
 ## Incidence over age {.tabset}
 
 
-### rts3-rts4-default 
-
-```{r} 
-incidence_over_age(burden_output$by_age,
-                     scenario= 'malaria-rts3-rts4-default', 
-                     coverage_data) 
-```
-
 
 
 ### r3-r4-default 
@@ -191,13 +174,6 @@ incidence_over_age(burden_output$by_age,
 ```
 
 ## Incidence rate over time {.tabset}
-
-### rts3-rts4-default
-```{r} 
-incidence_rate_over_time(burden_output$by_year, 
-scenario= 'malaria-rts3-rts4-default', 
-coverage_data) 
-```
 
 
 
@@ -213,15 +189,6 @@ incidence_rate_over_time(burden_output$by_year,
 
 
 
-### rts3-rts4-default 
-
-```{r}
-incidence_rate_over_age(burden_output$by_age, 
-                     scenario= 'malaria-rts3-rts4-default',
-              coverage_data) 
-
-
-``` 
 
 
 ### r3-r4-default 
@@ -237,16 +204,6 @@ incidence_rate_over_age(burden_output$by_age,
 ## Cases averted over time {.tabset}
 
 
-### rts3-rts4-default 
-
-```{r}
-cases_averted_over_time(averted_output$by_year,  
-                         scenario= 'malaria-rts3-rts4-default', 
-                         country_name = {{country_name}}) 
-
-
-```
-
 
 ### r3-r4-default 
 
@@ -259,17 +216,6 @@ cases_averted_over_time(averted_output$by_year,
 
 
 ## Cases averted over time per dose {.tabset}
-
-### rts3-rts4-default 
-
-```{r cases_rts3}
- 
-cases_averted_per_dose(dose_output$country_doses, 
-                        scenario= 'malaria-rts3-rts4-default', 
-                        country_name = {{country_name}}) 
-
-``` 
-
 
 
 ### r3-r4-default 
@@ -284,13 +230,6 @@ cases_averted_per_dose(dose_output$country_doses,
 
 ## Cases averted over time per FVP {.tabset}
 
-### rts3-rts4-default 
-
-```{r cases_fvp_rts} 
-cases_averted_per_fvp(dose_output$country_doses,  
-                         scenario= 'malaria-rts3-rts4-default', 
-                         country_name = {{country_name}})
-```
 
 
 #### r3-r4-default 
@@ -303,15 +242,6 @@ cases_averted_per_fvp(dose_output$country_doses,
 
 
 ## Cases averted over age {.tabset}
-
-
-### rts3-rts4-default 
-
-```{r cases_age_rts} 
-cases_averted_over_age(averted_output$by_age,  
-                         scenario= 'malaria-rts3-rts4-default', 
-                         country_name = {{country_name}}) 
-```
 
 
 ### r3-r4-default 
@@ -327,22 +257,14 @@ cases_averted_over_age(averted_output$by_age,
 
 ## Deaths over time {.tabset}
 
-### rts3-rts4-default 
-```{r} 
-deaths_over_time(burden_output$by_year, 
-                     scenario= 'malaria-rts3-rts4-default',
-                     coverage_data) 
-
-``` 
-
- 
 
 ### r3-r4-default 
 
 ```{r}
 deaths_over_time(burden_output$by_year, 
                     scenario= 'malaria-r3-r4-default', 
-                     coverage_data) 
+                     coverage_data,
+                     site_data) 
 ```
 
 
@@ -351,26 +273,10 @@ deaths_over_time(burden_output$by_year,
 ## Deaths over age {.tabset}
 
 
-### rts3-rts4-default 
-
-```{r}
-deaths_over_age(burden_output$by_age, 
-                scenario= 'malaria-r3-r4-default',
-                coverage_data) 
-
-```
 
 ## Deaths averted over time {.tabset}
 
 
-### rts3-rts4-default
-
-```{r}
-deaths_averted_over_time(averted_output$by_year, 
-                         scenario= 'malaria-rts3-rts4-default', 
-                        country_name = {{country_name}}) 
- 
-``` 
 
 
 
@@ -388,14 +294,6 @@ deaths_averted_over_time(averted_output$by_year,
 ## Deaths averted over time per dose {.tabset}
 
 
-### rts3-rts4-default
-
-```{r} 
- deaths_averted_per_dose(dose_output$country_doses,  
-                         scenario= 'malaria-rts3-rts4-default',
-                        country_name = {{country_name}}) 
-```
-
 
 
 ### r3-r4-default 
@@ -411,14 +309,6 @@ deaths_averted_per_dose(dose_output$country_doses,
 ## Deaths averted over time per fvp {.tabset}
 
 
-### rts3-rts4-default 
-
-```{r}
-deaths_averted_per_fvp(dose_output$country_doses,
-                         scenario= 'malaria-rts3-rts4-default',
-                        country_name = {{country_name}}) 
-```
-
 
 
 ### r3-r4-default 
@@ -430,14 +320,6 @@ deaths_averted_per_fvp(dose_output$country_doses,
 ```
 
 ## Deaths averted over age {.tabset}
-
-### rts3-rts4-default 
-
-```{r} 
-deaths_averted_over_age(averted_output$by_age,  
-                         scenario= 'malaria-rts3-rts4-default', 
-                         country_name = {{country_name}}) 
-```
 
 
 
@@ -455,15 +337,6 @@ deaths_averted_over_age(averted_output$by_age,
 ## DALYs over time {.tabset}
 
 
-### rts3-rts4-default 
-
-```{r} -->
- dalys_over_time(burden_output$by_year,  
-                     scenario= 'malaria-rts3-rts4-default', 
-                    coverage_data) 
- 
-```
-
 
 ### r3-r4-default 
 
@@ -475,27 +348,10 @@ dalys_over_time(burden_output$by_year,
 
 
 
-## DALYs averted over age {.tabset}
 
-
-### rts3-rts4-default 
-
-```{r} 
-dalys_averted_over_age(averted_output$by_age, 
-                         scenario= 'malaria-rts3-rts4-default', 
-                         country_name = {{country_name}}) 
-```
 
 ## DALYs averted over time {.tabset}
 
-
-### rts3-rts4-default 
-
-```{r}
-dalys_averted_over_time(averted_output$by_year, 
-                         scenario= 'malaria-rts3-rts4-default', 
-                         country_name = {{country_name}}) 
-```
 
 
 
