@@ -59,13 +59,13 @@ task<- hipercow::task_create_expr(
   )
 # # launch ethiopia calibrations and save somewhere central ----------------------
 # STEP 3: run postprocessing on outputs   --------------------------------------
-for(iso in iso3cs[31:31]){
+for(iso in c('MRT', 'UGA', 'KEN')){
 
 message(iso)
 
 #task<- hipercow::task_create_expr(
 orderly2::orderly_run(
-    "diagnostics",
+    "postprocessing",
     parameters = list(
       iso3c = iso,
       description = 'gavi_reruns_2025',
@@ -90,38 +90,25 @@ for(iso in iso3cs){
 #)
 }
 
-# compile outputs to shared filepath
+# compile diagnostic outputs to shared filepath
 compile_diagnostics(descrip = 'gavi_reruns_2025', date_time = 0)
 
-files<- list.files('montagu/', full.names = TRUE)
-files<- files[files %like% 'r3']
+# compile files for submisxion
+final_output<- compile_final_outputs('gavi_reruns_2025')
+final_output<- final_output |>
+  select(-run_id, -pfpr_threshold)
 
-for(scen in c('malaria-r3-bluesky', 'malaria-r3-default', 'malaria-r3-r4-bluesky', 'malaria-r3-r4-default')){
+for(scen in unique(final_output$scenario)){
 
-  full<- read.csv(paste0('montagu/central-burden-est-', scen, '.csv'))
-  message(nrow(full))
-  full<- full |>
-    filter(country != 'ETH')
+  message(scen)
 
-
-
-  eth<- compile_final_outputs('fix_rtss_booster') |>
-    filter(country== 'ETH') |>
+  final<- final_output |>
     filter(scenario == scen) |>
-    select(-run_id) |>
     select(-scenario)
 
-
-  full<- rbind(full, eth)#
-
-  message(nrow(full))
-
-  write.csv(full, paste0('montagu/update/central-burden-est-', scen, '.csv'), row.names = FALSE)
+  write.csv(final, paste0('central-burden-est-', scen, '.csv'))
 
 }
-
-
-
 
 site_output<- lapply(c(1:nrow(completed)), get_site_outputs, map = completed, output_filepath = 'archive/process_country/')
 
@@ -131,15 +118,9 @@ site_output<- lapply(c(1:nrow(completed)), get_site_outputs, map = completed, ou
 
 
 
-
-# compile final outputs
-
-
+# compile final outputs (for a set of stochastic runs)
 task<- hipercow::task_create_expr(vimcmalaria::compile_and_save('booster_update', 'no-vaccination'))
 task<- hipercow::task_create_expr(vimcmalaria::compile_and_save('booster_update', 'malaria-r3-r4-default'))
 task<- hipercow::task_create_expr(vimcmalaria::compile_and_save('booster_update', 'malaria-rts3-rts4-default'))
-
-
-hipercow::task_log_watch(task)
 
 
