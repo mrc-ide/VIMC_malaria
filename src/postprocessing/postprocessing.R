@@ -1,6 +1,6 @@
 # postprocess in bulk
-orderly2::orderly_parameters(iso3c = 'NGA',
-                             description =  'gavi_runs_2025',
+orderly2::orderly_parameters(iso3c = 'KEN',
+                             description =  'gavi_reruns_2025',
                              quick_run = FALSE)
 
 
@@ -88,15 +88,16 @@ final_postprocessing<- function(draw){
   message('aggregating')
   dt<- aggregate_outputs(intvn, pop_single_yr)
 
-
-  message('scaling cases')
-  output<- scale_cases_deaths(dt, scaling_data= scaling,  site_data = site_data)
-
-  output<- add_proportions(output)
+  test<- add_proportions(dt)
   # scale cases based on difference between site file PAR and VIMC PAR
   message('scaling PAR')
   
-  processed_output<- scale_par(output, iso3c= {{iso3c}})
+  input<- scale_par(test, iso3c= {{iso3c}})
+
+  message('scaling cases')
+  output<- scale_cases_deaths(input, scaling_data= scaling,  site_data = site_data, iso3c = {{iso3c}})
+
+
 
   message('formatting')
   # format and save (

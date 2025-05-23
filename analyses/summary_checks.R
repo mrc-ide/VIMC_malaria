@@ -19,22 +19,8 @@ filepath<- paste0('diagnostics/summary_diagnostics/', descrip) # filepath to sav
 dir.create(filepath)
 
 # pull outputs to plot
-outputs <- rbindlist(lapply(iso3cs, vimcmalaria::pull_postprocessed_output, description = descrip, quick_run = FALSE))
+final <-compile_final_outputs('gavi_reruns_2025')
 
-retrieve_final <- function(directory) {
-  output <- rbindlist(readRDS(paste0("archive/postprocessing/", directory, "/final_output.rds")))
-
-
-  return(output)
-}
-retrieve_dose <- function(directory) {
-  output <- readRDS(paste0("archive/postprocessing/", directory, "/dose_output.rds"))
-
-  return(output)
-}
-
-final <- rbindlist(lapply(outputs$directory_name, retrieve_final))
-doses <- lapply(outputs$directory_name, retrieve_dose)
 
 pull_wmr <- function(iso3c) {
   site <- site::fetch_site(iso3c)

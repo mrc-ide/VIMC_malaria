@@ -18,7 +18,7 @@ dir<- getwd()
 
 # # generate parameter map for analysis ------------------------------------------
 map<- make_parameter_map(iso3cs= iso3cs,
-                         scenarios = c('no-vaccination', 'malaria-r3-r4-default'),
+                         scenarios = c('malaria-rts3-rts4-default'),
                           description = 'gavi_reruns_2025',
                           parameter_draws = c(0),
                           quick_run= FALSE)
@@ -59,11 +59,11 @@ task<- hipercow::task_create_expr(
   )
 # # launch ethiopia calibrations and save somewhere central ----------------------
 # STEP 3: run postprocessing on outputs   --------------------------------------
-for(iso in c('MRT', 'UGA', 'KEN')){
+for(iso in iso3cs){
 
 message(iso)
 
-#task<- hipercow::task_create_expr(
+task<- hipercow::task_create_expr(
 orderly2::orderly_run(
     "postprocessing",
     parameters = list(
@@ -71,7 +71,7 @@ orderly2::orderly_run(
       description = 'gavi_reruns_2025',
       quick_run = FALSE
     ))
-#)
+)
 }
 
 
@@ -106,7 +106,7 @@ for(scen in unique(final_output$scenario)){
     filter(scenario == scen) |>
     select(-scenario)
 
-  write.csv(final, paste0('central-burden-est-', scen, '.csv'))
+  write.csv(final, paste0('montagu/central-burden-est-', scen, '.csv'), row.names= F)
 
 }
 
@@ -124,3 +124,18 @@ task<- hipercow::task_create_expr(vimcmalaria::compile_and_save('booster_update'
 task<- hipercow::task_create_expr(vimcmalaria::compile_and_save('booster_update', 'malaria-rts3-rts4-default'))
 
 
+
+test<- dt |>
+  group_by(year, scenario)|>
+  summarise(cases= sum(cases),
+            deaths= sum(deaths),
+          .groups = 'keep')
+
+ggplot()+
+  geom_line(data = test, mapping = aes(x= year, y= deaths, color= scenario))  +
+  geom_line(data= site_data$cases_deaths, mapping = aes(x= year, y= wmr_deaths), color= 'darkgreen')+
+  labs(x= 'Time (in years)', y= 'Deaths',
+       title= paste0('Deaths over time'),
+       color= 'Scenario', fill= 'Scenario') +
+  scale_color_manual(values= wes_palette('Darjeeling1', n= 2)) +
+  scale_fill_manual(values= wes_palette('Darjeeling1', n= 2)) 
