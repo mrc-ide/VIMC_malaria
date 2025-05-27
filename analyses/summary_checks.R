@@ -15,7 +15,7 @@ iso3cs <- unique(coverage$country_code)
 source("src/diagnostics/diagnostic_report_functions.R")
 
 descrip<- 'gavi_reruns_2025' #set of runs to run diagnostics for
-filepath<- paste0('diagnostics/summary_diagnostics/', descrip) # filepath to save diagnostics to
+filepath<- paste0('diagnostics/summary_diagnostics/', descrip, '/') # filepath to save diagnostics to
 dir.create(filepath)
 
 # pull outputs to plot

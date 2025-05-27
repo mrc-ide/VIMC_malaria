@@ -1,8 +1,6 @@
 # postprocess in bulk
-orderly2::orderly_parameters(iso3c = 'KEN',
-                             description =  'gavi_reruns_2025',
-                             quick_run = FALSE)
-
+orderly2::orderly_parameters(iso3c = NULL,
+                             description = NULL, quick_run = NULL)
 
 # packages  --------------------------------------------------------------------
 library(site)
@@ -80,7 +78,7 @@ final_postprocessing<- function(draw){
   # commenting out as now modelling introduction in all sites regardless of transmission intensity
   message('adding low transmission sites')
   
-  low<- pull_low_transmission_sites(iso3c, site_data, bl) # pull sites below PFPR threshold
+  low<- pull_low_transmission_sites(iso3c, bl) # pull sites below PFPR threshold
   print(nrow(low))
   intvn<- append_low_transmission_sites(low_transmission = low, intvn)
 
@@ -101,7 +99,7 @@ final_postprocessing<- function(draw){
 
   message('formatting')
   # format and save (
-  processed_output<- processed_output |>
+  processed_output<- output |>
     mutate(cases = round(cases),
            deaths = round(deaths),
            yll= round(ylls),

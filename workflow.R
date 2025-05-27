@@ -17,8 +17,8 @@ iso3cs<- unique(coverage$country_code)
 dir<- getwd()
 
 # # generate parameter map for analysis ------------------------------------------
-map<- make_parameter_map(iso3cs= iso3cs,
-                         scenarios = c('malaria-rts3-rts4-default'),
+map<- make_parameter_map(iso3cs= c('GHA', 'GNB'),
+                         scenarios = c('no-vaccination'),
                           description = 'gavi_reruns_2025',
                           parameter_draws = c(0),
                           quick_run= FALSE)
@@ -76,7 +76,7 @@ orderly2::orderly_run(
 
 
 # # STEP 4: run diagnostic reports for outputs  ----------------------------------
-for(iso in iso3cs){
+for(iso in iso3cs[7:31]){
 
   message(iso)
 #task<- hipercow::task_create_expr(
@@ -84,7 +84,7 @@ for(iso in iso3cs){
     "diagnostics",
     parameters = list(
       iso3c = iso,
-      description = 'new_site_files',
+      description = 'gavi_reruns_2025',
       quick_run = FALSE
     ))
 #)
@@ -125,11 +125,12 @@ task<- hipercow::task_create_expr(vimcmalaria::compile_and_save('booster_update'
 
 
 
-test<- dt |>
+test<- output |>
   group_by(year, scenario)|>
   summarise(cases= sum(cases),
             deaths= sum(deaths),
           .groups = 'keep')
+
 
 ggplot()+
   geom_line(data = test, mapping = aes(x= year, y= deaths, color= scenario))  +
@@ -137,5 +138,19 @@ ggplot()+
   labs(x= 'Time (in years)', y= 'Deaths',
        title= paste0('Deaths over time'),
        color= 'Scenario', fill= 'Scenario') +
-  scale_color_manual(values= wes_palette('Darjeeling1', n= 2)) +
-  scale_fill_manual(values= wes_palette('Darjeeling1', n= 2)) 
+        geom_vline(xintercept = 2021, linetype = "dotted") +
+          geom_vline(xintercept = 2023, linetype = "dotted") +      
+  scale_color_manual(values= wes_palette('Darjeeling1', n= 3)) +
+  scale_fill_manual(values= wes_palette('Darjeeling1', n= 3)) 
+
+
+ggplot()+
+  geom_line(data = test, mapping = aes(x= year, y= cases, color= scenario))  +
+  geom_line(data= site_data$cases_deaths, mapping = aes(x= year, y= wmr_cases), color= 'darkgreen')+
+  labs(x= 'Time (in years)', y= 'Cases',
+       title= paste0('Cases over time'),
+       color= 'Scenario', fill= 'Scenario') +
+        geom_vline(xintercept = 2021, linetype = "dotted") +
+          geom_vline(xintercept = 2023, linetype = "dotted") +      
+  scale_color_manual(values= wes_palette('Darjeeling1', n= 3)) +
+  scale_fill_manual(values= wes_palette('Darjeeling1', n= 3)) 
