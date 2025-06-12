@@ -145,7 +145,7 @@ incidence_over_time<- function(output, scenario, site_data, coverage_data){
 
   p<-   ggplot()+
     geom_line(data = median_run, mapping = aes(x= year, y= cases, color =scenario))  +
-    geom_line(data = stochastic_run, mapping = aes(x= year, y= cases, color = scenario, group = parameter_draw), alpha = 0.1)  +
+    geom_line(data = stochastic_run, mapping = aes(x= year, y= cases, color = scenario, group = parameter_draw), alpha = 0.01)  +
     geom_line(data= site_data$cases_deaths, mapping = aes(x= year, y= wmr_cases), color= 'darkgreen')+
     geom_vline(xintercept= intro_yr, linetype= "dotted") +
     labs(x= 'Time (in years)', y= 'Cases',
@@ -173,7 +173,7 @@ incidence_over_age<- function(output, scenario, coverage_data){
   p<-   ggplot()+
     geom_line(data = median_run, mapping = aes(x= age, y= cases, color =scenario))  +
     geom_line(data = stochastic_run, mapping = aes(x= age, y= cases, color = scenario,
-                                                   group = parameter_draw), alpha = 0.05)  +
+                                                   group = parameter_draw), alpha = 0.01)  +
     #facet_wrap_paginate(~scenario) +
     labs(x= 'Time (in years)', y= 'Cases',
          title= paste0('Cases over age'),
@@ -203,7 +203,7 @@ incidence_rate_over_time<- function(output, scenario, coverage_data){
 
   p<-   ggplot()+
     geom_line(data = median_run, mapping = aes(x= year, y= cases/cohort_size, color =scenario))  +
-    geom_line(data = stochastic_run, mapping = aes(x= year, y= cases/cohort_size, color = scenario, group = parameter_draw), alpha = 0.05)  +
+    geom_line(data = stochastic_run, mapping = aes(x= year, y= cases/cohort_size, color = scenario, group = parameter_draw), alpha = 0.01)  +
     geom_vline(xintercept= intro_yr, linetype= "dotted") +
     labs(x= 'Time (in years)', y= 'Incidence',
          title= paste0('Incidence over time'),
@@ -229,7 +229,7 @@ incidence_rate_over_age<- function(output, scenario, coverage_data){
               .groups = 'keep')
   p<-   ggplot()+
     geom_line(data = median_run, mapping = aes(x= age, y= cases/cohort_size, color =scenario))  +
-    geom_line(data = stochastic_run, mapping = aes(x= age, y= cases/cohort_size, color = scenario, group = parameter_draw), alpha = 0.05)  +
+    geom_line(data = stochastic_run, mapping = aes(x= age, y= cases/cohort_size, color = scenario, group = parameter_draw), alpha = 0.01)  +
     #facet_wrap_paginate(~scenario) +
     labs(x= 'Time (in years)', y= 'Incidence',
          title= paste0('Incidence over age'),
@@ -308,7 +308,7 @@ deaths_over_time<- function(output, scenario, coverage_data){
 
   p<-   ggplot()+
     geom_line(data = median_run, mapping = aes(x= year, y= deaths, color =scenario))  +
-    geom_line(data = stochastic_run, mapping = aes(x= year, y= deaths, color = scenario, group = parameter_draw), alpha = 0.05)  +
+    geom_line(data = stochastic_run, mapping = aes(x= year, y= deaths, color = scenario, group = parameter_draw), alpha = 0.01)  +
     geom_vline(xintercept= intro_yr, linetype= "dotted") +
     labs(x= 'Time (in years)', y= 'Deaths',
          title= paste0('Deaths over time'),
@@ -335,7 +335,7 @@ deaths_over_age<- function(output, scenario, coverage_data){
 
   p<-   ggplot()+
     geom_line(data = median_run, mapping = aes(x= age, y= deaths, color =scenario))  +
-    geom_line(data = stochastic_run, mapping = aes(x= age, y= deaths, color = scenario, group = parameter_draw), alpha = 0.05)  +
+    geom_line(data = stochastic_run, mapping = aes(x= age, y= deaths, color = scenario, group = parameter_draw), alpha = 0.01)  +
     #facet_wrap_paginate(~scenario) +
     labs(x= 'Time (in years)', y= 'Deaths',
          title= paste0('Deaths over age'),
@@ -364,7 +364,7 @@ dalys_over_time<- function(output, scenario, coverage_data){
 
   p<-   ggplot()+
     geom_line(data = median_run, mapping = aes(x= year, y= dalys, color =scenario))  +
-    geom_line(data = stochastic_run, mapping = aes(x= year, y= dalys, color = scenario, group = parameter_draw), alpha = 0.05)  +
+    geom_line(data = stochastic_run, mapping = aes(x= year, y= dalys, color = scenario, group = parameter_draw), alpha = 0.01)  +
     geom_vline(xintercept= intro_yr, linetype= "dotted") +
     labs(x= 'Time (in years)', y= 'DALYs',
          title= paste0('DALYs over time'),
@@ -392,7 +392,7 @@ dalys_over_age<- function(output, scenario, coverage_data){
 
   p<-   ggplot()+
     geom_line(data = median_run, mapping = aes(x= age, y= dalys, color =scenario))  +
-    geom_line(data = stochastic_run, mapping = aes(x= age, y= dalys, color = scenario, group = parameter_draw), alpha = 0.05)  +
+    geom_line(data = stochastic_run, mapping = aes(x= age, y= dalys, color = scenario, group = parameter_draw), alpha = 0.01)  +
     #facet_wrap_paginate(~scenario) +
     labs(x= 'Time (in years)', y= 'DALYs',
          title= paste0('DALYs over age'),

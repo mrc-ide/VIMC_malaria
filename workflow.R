@@ -35,7 +35,7 @@ reports<- vimcmalaria::completed_reports('process_country') |> filter(descriptio
 run_local_reports(map, 'process_country')
 
 # # cluster setup ------
-hipercow::hipercow_init(driver = 'windows')
+#hipercow::hipercow_init(driver = 'windows')
 hipercow::hipercow_provision()
 hipercow::hipercow_environment_create()
 hipercow::hipercow_configuration()
@@ -60,19 +60,19 @@ task<- hipercow::task_create_expr(
   )
 # # launch ethiopia calibrations and save somewhere central ----------------------
 # STEP 3: run postprocessing on outputs   --------------------------------------
-for(iso in c('CMR', 'COD', 'NGA') ){
+for(iso in iso3cs ){
 
 message(iso)
 
-#task<- hipercow::task_create_expr(
+task<- hipercow::task_create_expr(
 orderly2::orderly_run(
-    "postprocessing",
+    "diagnostics",
     parameters = list(
       iso3c = iso,
       description = 'booster_update',
       quick_run = FALSE
     ))
-#)
+)
 }
 
 

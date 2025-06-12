@@ -53,7 +53,7 @@ inputs<- unique(inputs, by = 'iso3c')
 # pull model outputs for scaling to WMR cases: no-vaccination draw 0
 scaling_filepath<- completed |> filter(parameter_draw == 0,
                                        scenario == 'no-vaccination')
-scaling<- readRDS(paste0('J:/september_runs/VIMC_malaria/archive/process_country/', scaling_filepath$directory_name, '/outputs.rds'))
+scaling<- readRDS(paste0('J:/VIMC_archive/VIMC_runs_sept_2024/VIMC_malaria/archive/process_country/', scaling_filepath$directory_name, '/outputs.rds'))
 scaling<- scaling$country_output
 
 
@@ -67,47 +67,35 @@ final_postprocessing<- function(draw){
   intvn_filepaths<- completed |> filter(parameter_draw == draw)
 
   # pull model outputs for all scenarios
-  intvn<- rbindlist(lapply(c(1:nrow(intvn_filepaths)), get_site_output, map = intvn_filepaths, output_filepath = 'J:/september_runs/VIMC_malaria/archive/process_country/' ))
+  intvn<- rbindlist(lapply(c(1:nrow(intvn_filepaths)), get_site_output, map = intvn_filepaths, output_filepath = 'J:/VIMC_archive/VIMC_runs_sept_2024/VIMC_malaria/archive/process_country/' ))
   
   # pull model outputs for all baseline scenarios (as a separate input into intervention processing)
-  bl<- rbindlist(lapply(c(1:nrow(bl_filepaths)), get_site_output, map = bl_filepaths, output_filepath = 'J:/september_runs/VIMC_malaria/archive/process_country/'))
+  bl<- rbindlist(lapply(c(1:nrow(bl_filepaths)), get_site_output, map = bl_filepaths, output_filepath = 'J:/VIMC_archive/VIMC_runs_sept_2024/VIMC_malaria/archive/process_country/'))
 
   # commenting out as now modelling introduction in all sites regardless of transmission intensity
-   message('adding low transmission sites')
+  message('adding low transmission sites')
   
-  low_10<- pull_low_transmission_sites(iso3c, site_data, bl, threshold = .10) # pull sites below PFPR threshold
-  intvn_10<- subset_high_transmission_sites(intvn, threshold = .10, site_data) #subset to sites meeting PFPR threshold
-  print(nrow(low_10))
-  intvn_10<- append_low_transmission_sites(low_transmission = low_10, intvn_10)
+  low<- pull_low_transmission_sites(iso3c, site_data, bl, threshold = .10) # pull sites below PFPR threshold
+  
+  # append transmission sites where no vaccine was implemented
+  print(nrow(low))
+  intvn<- append_low_transmission_sites(low_transmission = low, intvn)
 
-  low_35<- pull_low_transmission_sites(iso3c, site_data, bl, threshold = .35) # pull sites below PFPR threshold
-  intvn_35<- subset_high_transmission_sites(intvn, threshold = .35, site_data) #subset to sites meeting PFPR threshold
-  print(nrow(low_35))
-  intvn_35<- append_low_transmission_sites(low_transmission = low_35, intvn_35)
+  # message('aggregating')
+  dt<- aggregate_outputs(intvn, pop_single_yr)
 
+  # message('scaling cases')
+  output<- add_proportions(dt)
 
-  # for data request, repeat final processing for both scenarios:
-  # 1) scenario with a 10% pfpr cutoff
-  # 2) scenario with a 35% pfpr cutoff
-  message('aggregating')
-  dt_10<- aggregate_outputs(intvn_10, pop_single_yr)
-  dt_35<- aggregate_outputs(intvn_35, pop_single_yr)
-
-  message('scaling cases')
-  output_10<- add_proportions(dt_10)
-  output_35<- add_proportions(dt_35)
-
-  output_10<- scale_cases(output_10, scaling_data= scaling,  site_data = site_data)
-  output_35<- scale_cases(output_35, scaling_data= scaling,  site_data = site_data)
+  output<- scale_cases_deaths(output, scaling_data= scaling,  site_data = site_data)
 
   # scale cases based on difference between site file PAR and VIMC PAR
   message('scaling PAR')
-  processed_output_10<- scale_par(output_10, iso3c= {{iso3c}})
-  processed_output_35<- scale_par(output_35, iso3c= {{iso3c}})
+  processed_output<- scale_par(output, iso3c= {{iso3c}})
 
   message('formatting')
   # format and save (
-  processed_output_10<- processed_output_10 |>
+  processed_output<- processed_output |>
     mutate(cases = round(cases),
            deaths = round(deaths),
            yll= round(ylls),
@@ -133,46 +121,13 @@ final_postprocessing<- function(draw){
            cases,
            dalys,
            deaths,
-           yll) |>
-    mutate(pfpr_threshold = .10)
+           yll)
 
-  processed_output_35<- processed_output_35 |>
-    mutate(cases = round(cases),
-           deaths = round(deaths),
-           yll= round(ylls),
-           dalys = round(dalys),
-           cohort_size = cohort_size) |>
-    rename(run_id = parameter_draw) |>
-    select(-model_proportion_risk,
-           -proportion_risk,
-           -scaling_ratio,
-           -prop_severe,
-           -prop_deaths,
-           -dalys_pp,
-           -ylls,
-           -life_expectancy) |>
-    select(run_id,
-           scenario,
-           disease,
-           year,
-           age,
-           country,
-           country_name,
-           cohort_size,
-           cases,
-           dalys,
-           deaths,
-           yll) |>
-  mutate(pfpr_threshold = .35)
-
-  # bind outputs together
-  processed_output<- rbind(processed_output_10, processed_output_35)
-  return(processed_output)
+return(processed_output) 
 
 }
 
 # save -------------------------------------------------------------------------
-max_draw<- 50
 outputs<- lapply(c(0:max_draw), final_postprocessing)
 saveRDS(outputs, 'final_output.rds')
 
@@ -182,7 +137,7 @@ dose_postprocessing<- function(draw){
   intvn_filepaths<- completed |> filter(parameter_draw == draw)
   
   # pull model outputs for all scenarios
-  raw<- bind_rows(lapply(c(1:nrow(intvn_filepaths)), get_raw_output, map = intvn_filepaths, output_filepath = 'J:/september_runs/VIMC_malaria/archive/process_country/' ))
+  raw<- bind_rows(lapply(c(1:nrow(intvn_filepaths)), get_raw_output, map = intvn_filepaths, output_filepath = 'J:/VIMC_archive/VIMC_runs_sept_2024/VIMC_malaria/archive/process_country/' ))
   raw<- raw |>
     mutate(site = paste0(site_name, '_', urban_rural, '_', scenario),
            site_ur = paste0(site_name, '_', urban_rural))
@@ -217,18 +172,21 @@ dose_postprocessing<- function(draw){
          
              
            doses<- raw |>
-             select(timestep, n_pev_epi_dose_1, n_pev_epi_dose_2, n_pev_epi_dose_3, n_pev_epi_booster_1, scenario, site) |>
+             select(timestep, n_age_365_729, n_pev_epi_dose_1, n_pev_epi_dose_2, n_pev_epi_dose_3, n_pev_epi_booster_1, scenario, site, site_ur) |>
              mutate(year = as.integer(timestep/365)) |>
-             group_by(site, year, scenario) |>
+             group_by(site, site_ur, year, scenario) |>
              summarise(n_pev_epi_dose_1 = sum(n_pev_epi_dose_1),
                        n_pev_epi_dose_2 = sum(n_pev_epi_dose_2),
                        n_pev_epi_dose_3 = sum(n_pev_epi_dose_3),
                        n_pev_epi_booster_1 = sum(n_pev_epi_booster_1),
+                       n_age_365_729 = mean(n_age_365_729),
                        .groups = 'keep') |>
-               mutate(fvp = n_pev_epi_dose_3) |> # to align with Nora and HIllary's paper
+               mutate(fvp = n_pev_epi_booster_1) |> # to align with Nora and HIllary's paper
                mutate(doses_total = n_pev_epi_dose_1 + n_pev_epi_dose_2 +n_pev_epi_dose_3 + n_pev_epi_booster_1) |>
+               mutate(dose_rate = fvp/n_age_365_729) |>
              select(-n_pev_epi_dose_1, -n_pev_epi_dose_2, -n_pev_epi_dose_3, -n_pev_epi_booster_1) |>
-             mutate(year = year +1998) #there was misalignment here
+             mutate(year = year +1999)|>
+             select(year, site, dose_rate) #there was misalignment here 
              
            dose_output<- merge(averted, doses, by = c('year', 'site')) 
            dose_output <- dose_output |>
@@ -238,9 +196,9 @@ dose_postprocessing<- function(draw){
   
 }
 
-#dose_output<- lapply(c(0:max_draw), dose_postprocessing)
+dose_output<- lapply(c(0:max_draw), dose_postprocessing) 
 
-#saveRDS(dose_output, 'dose_output.rds')
+saveRDS(dose_output, 'dose_output.rds')
 
 message('done with postprocessing')
 

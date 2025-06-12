@@ -8,14 +8,12 @@ mrc-ide/scene@627c642
 mrc-ide/orderly2
 mrc-ide/vimcmalaria
 
-
-data.table
+Rdatatable/data.table
 dplyr
 openxlsx
 ggplot2
 tidyr
 tibble
-data.table
 countrycode
 retry
 wesanderson

@@ -248,48 +248,7 @@ cases_averted_over_time(averted_output$by_year,
 ```
 
 
-## Cases averted over time per dose {.tabset}
 
-### rts3-rts4-default 
-
-```{r cases_rts3}
- 
-cases_averted_per_dose(dose_output$country_doses, 
-                        scenario= 'malaria-rts3-rts4-default', 
-                        country_name = {{country_name}}) 
-
-``` 
-
-
-
-### r3-r4-default 
-
-```{r case_av_r4_default}
-cases_averted_per_dose(dose_output$country_doses, 
-                       scenario= 'malaria-r3-r4-default', 
-                         country_name = {{country_name}}) 
-
-```
-
-
-## Cases averted over time per FVP {.tabset}
-
-### rts3-rts4-default 
-
-```{r cases_fvp_rts} 
-cases_averted_per_fvp(dose_output$country_doses,  
-                         scenario= 'malaria-rts3-rts4-default', 
-                         country_name = {{country_name}})
-```
-
-
-#### r3-r4-default 
-
-```{r cases_fvp_r3}
- cases_averted_per_fvp(dose_output$country_doses,  
-                         scenario= 'malaria-r3-r4-default', 
-                         country_name = {{country_name}}) 
-```
 
 
 ## Cases averted over age {.tabset}
@@ -375,50 +334,6 @@ deaths_averted_over_time(averted_output$by_year,
 
 
 
-## Deaths averted over time per dose {.tabset}
-
-
-### rts3-rts4-default
-
-```{r} 
- deaths_averted_per_dose(dose_output$country_doses,  
-                         scenario= 'malaria-rts3-rts4-default',
-                        country_name = {{country_name}}) 
-```
-
-
-
-### r3-r4-default 
-
-```{r} -->
-deaths_averted_per_dose(dose_output$country_doses, 
-                         scenario= 'malaria-r3-r4-default', 
-                         country_name = {{country_name}}) 
-
-```
-
-
-## Deaths averted over time per fvp {.tabset}
-
-
-### rts3-rts4-default 
-
-```{r}
-deaths_averted_per_fvp(dose_output$country_doses,
-                         scenario= 'malaria-rts3-rts4-default',
-                        country_name = {{country_name}}) 
-```
-
-
-
-### r3-r4-default 
-
-```{r}
-deaths_averted_per_fvp(dose_output$country_doses, 
-                         scenario= 'malaria-r3-r4-default', 
-                         country_name = {{country_name}}) 
-```
-
 ## Deaths averted over age {.tabset}
 
 ### rts3-rts4-default 
@@ -476,6 +391,14 @@ dalys_averted_over_age(averted_output$by_age,
                          country_name = {{country_name}}) 
 ```
 
+### r3-r4-default 
+
+```{r} 
+dalys_averted_over_age(averted_output$by_age, 
+                         scenario= 'malaria-r3-r4-default', 
+                         country_name = {{country_name}}) 
+```
+
 ## DALYs averted over time {.tabset}
 
 
@@ -488,15 +411,10 @@ dalys_averted_over_time(averted_output$by_year,
 ```
 
 
+### r3-r4-default 
 
-## Averted by dose {.tabset} 
-
-#### r3-r4-default 
-
-```{r} 
+```{r}
 dalys_averted_over_time(averted_output$by_year, 
-                        scenario= 'malaria-r3-r4-default', 
+                         scenario= 'malaria-r3-r4-default', 
                          country_name = {{country_name}}) 
 ```
-
-
