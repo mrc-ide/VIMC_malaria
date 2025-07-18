@@ -1,7 +1,7 @@
 # run diagnostic report by country
-orderly2::orderly_parameters(iso3c = NULL,
-                             description = NULL,
-                             quick_run= NULL)
+orderly2::orderly_parameters(iso3c = 'CAF',
+                             description = 'gavi_reruns_2025',
+                             quick_run= FALSE)
 
 source('diagnostic_report_functions.R')
 library(data.table)
@@ -81,4 +81,18 @@ message('rendering')
                                'population_by_age' = population_by_age))
 
 
+
+
+
+test<- averted_output$by_age
+
+
+ggplot(test, mapping = aes(x= age, y= deaths_averted, color= scenario))+
+  geom_line()+
+  labs(title = 'Deaths averted by age and scenario',
+       subtitle = 'Burkina Faso',
+       x= 'Age',
+      y= 'Deaths averted') +
+  scale_color_manual(values= wes_palette('Darjeeling1', n= 2)) +
+  plotting_theme
 

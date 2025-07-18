@@ -1,10 +1,10 @@
 # process country  -------------------------------------------------------------
 # orderly metadata  ----
-orderly2::orderly_parameters(iso3c = NULL,
-                             scenario = NULL,
-                             quick_run = NULL,
-                             parameter_draw = NULL,
-                             description = NULL)
+orderly2::orderly_parameters(iso3c = 'GNB',
+                             scenario = 'no-vaccination',
+                             quick_run = TRUE,
+                             parameter_draw = 0,
+                             description = 'testing')
 
 orderly2::orderly_description('Analyze vaccine impact at the country level')
 orderly2::orderly_artefact('Processed output', 'outputs.rds')
@@ -37,7 +37,6 @@ pop_single_yr<- vimc_input$population_input_single_yr
 # make a map of input parameters for site function
 site_df<- remove_zero_eirs(iso3c, site_data)
 map<- vimcmalaria::make_analysis_map(site_df, test = FALSE, run_all = FALSE)
-
 
 # run analysis function for each site + urban/rural combination ----
 cluster_cores <- Sys.getenv("CCP_NUMCPUS")

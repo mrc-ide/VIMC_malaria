@@ -9,6 +9,7 @@ library(vimcmalaria)
 library(dplyr)
 library(ggpubr)
 library(ggforce)
+library(scales)
 
 coverage <- read.csv("src/process_inputs/vimc_inputs/vaccine_coverage/coverage_202409malaria-1_malaria-r3-r4-default.csv")
 iso3cs <- unique(coverage$country_code)
@@ -20,7 +21,7 @@ dir.create(filepath)
 
 # pull outputs to plot
 final <-compile_final_outputs('gavi_reruns_2025')
-
+saveRDS(final, paste0(filepath, 'final_outputs_gavi_runs.rds'))
 
 pull_wmr <- function(iso3c) {
   site <- site::fetch_site(iso3c)

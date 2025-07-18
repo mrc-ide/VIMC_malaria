@@ -64,13 +64,14 @@ completed <- completed_reports("process_country") |>
 
 
 # pull country level output -------------- --------------------------------------unique
-default<- compile_final_outputs('new_site_files')
+default<- compile_final_outputs('paper_runs')
 default <- default |>
-  filter(scenario == "proxy" | scenario == "no-vaccination") |>
+  #filter(scenario == "malaria-r" | scenario == "no-vaccination") |>
   data.table()
 
 
-default[scenario %like% 'proxy', scenario := 'Routine']
+default[scenario %like% 'malaria-r3-r4-default', scenario := 'R21']
+default[scenario %like% 'malaria-rts3-rts4-default', scenario := 'RTS,S']
 default[scenario == 'no-vaccination', scenario := 'Control']
 total<- copy(default)
 
@@ -111,6 +112,7 @@ write.csv(supplement2, 'analyses/paper/tables/scenario_outputs_supplement.csv')
            dalys_averted = dalys_novax - dalys)
 
 
+vax<- readRDS('analyses/paper/inputs/vax.rds')
   # overall impact---------------------------------------------------------------------------------------
   # baseline scenario
 

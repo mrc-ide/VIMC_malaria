@@ -1,6 +1,7 @@
 # postprocess in bulk
-orderly2::orderly_parameters(iso3c = NULL,
-                             description = NULL, quick_run = NULL)
+orderly2::orderly_parameters(iso3c = 'ETH',
+                             description = 'gavi_reruns_2025', 
+                             quick_run = FALSE)
 
 # packages  --------------------------------------------------------------------
 library(site)
@@ -71,6 +72,9 @@ final_postprocessing<- function(draw){
 
   # pull model outputs for all scenarios
   intvn<- rbindlist(lapply(c(1:nrow(intvn_filepaths)), get_site_output, map = intvn_filepaths, output_filepath = 'J:/VIMC/VIMC_malaria/archive/process_country/' ))
+  
+  sites_modelled<- intvn |> filter(scenario == 'malaria-r3-r4-default') |> pull(site_name)
+  print(paste0('sites vaccinated: ', sites_modelled))
   
   # pull model outputs for all baseline scenarios (as a separate input into intervention processing)
   bl<- rbindlist(lapply(c(1:nrow(bl_filepaths)), get_site_output, map = bl_filepaths, output_filepath = 'J:/VIMC/VIMC_malaria/archive/process_country/'))

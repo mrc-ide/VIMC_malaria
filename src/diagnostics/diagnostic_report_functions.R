@@ -242,10 +242,10 @@ incidence_rate_over_age<- function(output, scenario, coverage_data){
   return(p)
 }
 plot_intvn_coverage<- function(site_data){
-  p<- plot_interventions_combined(
+  p<- plot_interventions(
     interventions = site_data$interventions,
     population = site_data$population$population_total,
-    group_var = c("country", "name_1"),
+    group_var = c("country"),
     include = c("itn_use", "itn_input_dist", "tx_cov", "smc_cov",'irs_cov', "pmc_cov", "rtss_cov"),
     labels = c("ITN usage", "ITN model input", "Treatment","SMC", "IRS", "PMC", "RTSS")
   )

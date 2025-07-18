@@ -17,8 +17,8 @@ iso3cs<- unique(coverage$country_code)
 dir<- getwd()
 
 # # generate parameter map for analysis ------------------------------------------
-map<- make_parameter_map(iso3cs= c('GHA', 'GNB'),
-                         scenarios = c('no-vaccination'),
+map<- make_parameter_map(iso3cs= c(iso3cs),
+                         scenarios = c('malaria-r3-r4-default', 'malaria-rts3-rts4-default'),
                           description = 'gavi_reruns_2025',
                           parameter_draws = c(0),
                           quick_run= FALSE)
@@ -35,6 +35,7 @@ map<- check_reports_completed('process_country', map, date_time = 0)
 # # if needed, test a report locally before full launch
 run_local_reports(map, 'process_country')
 
+completed<- completed_reports('process_country')
 # # cluster setup ------
 hipercow::hipercow_init(driver = 'windows')
 hipercow::hipercow_provision()
@@ -63,20 +64,20 @@ for(iso in iso3cs){
 
 message(iso)
 
-task<- hipercow::task_create_expr(
+#task<- hipercow::task_create_expr(
 orderly2::orderly_run(
     "postprocessing",
     parameters = list(
-      iso3c = iso,
+      iso3c = 'MDG',
       description = 'gavi_reruns_2025',
       quick_run = FALSE
     ))
-)
+#)
 }
 
 
 # # STEP 4: run diagnostic reports for outputs  ----------------------------------
-for(iso in iso3cs[7:31]){
+for(iso in iso3cs[8:31]){
 
   message(iso)
 #task<- hipercow::task_create_expr(
@@ -106,6 +107,7 @@ for(scen in unique(final_output$scenario)){
     filter(scenario == scen) |>
     select(-scenario)
 
+  final<- unique(final)
   write.csv(final, paste0('montagu/central-burden-est-', scen, '.csv'), row.names= F)
 
 }
@@ -129,28 +131,74 @@ test<- output |>
   group_by(year, scenario)|>
   summarise(cases= sum(cases),
             deaths= sum(deaths),
-          .groups = 'keep')
+            dalys= sum(dalys),
+          .groups = 'keep')  
+  #filter(site_name == 'Gambela Peoples')
+
+ggplot()+
+  geom_line(data = test, mapping = aes(x= year, y= cases, color= scenario))  +
+  #facet_wrap(~site_name, scales= 'free')+
+  #geom_line(data= site_data$cases_deaths, mapping = aes(x= year, y= wmr_deaths), color= 'darkgreen')+
+  labs(x= 'Time (in years)', y= 'Cases',
+       title= paste0('Cases over time, baseline scenario'),
+       color= 'Scenario', fill= 'Scenario') +
+        geom_vline(xintercept = 2021, linetype = "dotted") +
+          geom_vline(xintercept = 2023, linetype = "dotted") +      
+  scale_color_manual(values= wes_palette('Darjeeling1', n= 3)) +
+  scale_fill_manual(values= wes_palette('Darjeeling1', n= 3)) 
 
 
 ggplot()+
   geom_line(data = test, mapping = aes(x= year, y= deaths, color= scenario))  +
-  geom_line(data= site_data$cases_deaths, mapping = aes(x= year, y= wmr_deaths), color= 'darkgreen')+
-  labs(x= 'Time (in years)', y= 'Deaths',
-       title= paste0('Deaths over time'),
+  #geom_line(data= site_data$cases_deaths, mapping = aes(x= year, y= wmr_cases), color= 'darkgreen')+
+  labs(x= 'Time (in years)', y= 'deaths',
+       title= paste0('deaths over time'),
        color= 'Scenario', fill= 'Scenario') +
         geom_vline(xintercept = 2021, linetype = "dotted") +
           geom_vline(xintercept = 2023, linetype = "dotted") +      
   scale_color_manual(values= wes_palette('Darjeeling1', n= 3)) +
   scale_fill_manual(values= wes_palette('Darjeeling1', n= 3)) 
-
-
+  
 ggplot()+
-  geom_line(data = test, mapping = aes(x= year, y= cases, color= scenario))  +
-  geom_line(data= site_data$cases_deaths, mapping = aes(x= year, y= wmr_cases), color= 'darkgreen')+
-  labs(x= 'Time (in years)', y= 'Cases',
-       title= paste0('Cases over time'),
+  geom_line(data = test, mapping = aes(x= year, y= dalys, color= scenario))  +
+  #geom_line(data= site_data$cases_deaths, mapping = aes(x= year, y= wmr_cases), color= 'darkgreen')+
+  labs(x= 'Time (in years)', y= 'DALYs',
+       title= paste0('DALYs over time'),
        color= 'Scenario', fill= 'Scenario') +
         geom_vline(xintercept = 2021, linetype = "dotted") +
           geom_vline(xintercept = 2023, linetype = "dotted") +      
   scale_color_manual(values= wes_palette('Darjeeling1', n= 3)) +
   scale_fill_manual(values= wes_palette('Darjeeling1', n= 3)) 
+
+  
+  
+  bl_input<- test |> 
+    filter(scenario == 'no-vaccination') |> 
+    rename(cases_bl = cases,
+           deaths_bl = deaths, 
+           dalys_bl = dalys) |>
+    select(-scenario)
+
+  
+  intvn_input<- test |> filter(scenario!= 'no-vaccination')
+
+
+  merged<- merge(intvn_input, bl_input, by = c('year')) |>
+    mutate(cases_averted = cases_bl - cases,
+            deaths_averted = deaths_bl - deaths,
+            dalys_averted = dalys_bl - dalys)
+  
+  
+  
+    
+ggplot()+
+  geom_line(data = merged, mapping = aes(x= year, y= cases_averted))  +
+  #geom_line(data= site_data$cases_deaths, mapping = aes(x= year, y= wmr_cases), color= 'darkgreen')+
+  labs(x= 'Time (in years)', y= 'DALYs',
+       title= paste0('DALYs over time'),
+       color= 'Scenario', fill= 'Scenario') +
+        geom_vline(xintercept = 2021, linetype = "dotted") +
+          geom_vline(xintercept = 2023, linetype = "dotted") +      
+  scale_color_manual(values= wes_palette('Darjeeling1', n= 3)) +
+  scale_fill_manual(values= wes_palette('Darjeeling1', n= 3)) 
+  
