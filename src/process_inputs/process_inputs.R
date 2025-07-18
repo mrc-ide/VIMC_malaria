@@ -14,14 +14,6 @@ orderly2::orderly_artefact('VIMC input', 'vimc_input.rds')
 proxy<- readRDS('proxy_scenario.rds') 
 
 # specify vaccine type based on what is currently being implemented
-proxy<- proxy |>
-   mutate(vaccine = ifelse(iso3c %in% c('BDI', 'BEN', 'BFA', 'CMR', 
-                                        'COD', 'GHA', 'KEN', 'LBR', 
-                                        'MWI', 'NER', 'SLE'),
-                                      'RTS,S', 'R21')) |>
-  rename(country_code = iso3c) 
-  
-
 primary<- copy(proxy) |>
   select(-booster) |>
   mutate(vaccine = ifelse(vaccine == 'R21', 'R3', 'RTS3'))
@@ -32,7 +24,6 @@ secondary<- copy(proxy) |>
   mutate(vaccine = ifelse(vaccine == 'R21', 'R4', 'RTS4'))
 
 full<- rbind(primary, secondary, fill = TRUE)
-
 
 # VIMC input data
 coverage_files<- list.files('vimc_inputs/vaccine_coverage/', full.names = T)
