@@ -1,14 +1,15 @@
 ## Impact of Vaccine Introduction on Malaria Cases and Deaths in Sub-Saharan Africa: A Modelling Study
 This repository contains code used to generate estimates reported in the manuscript draft, "Impact of Vaccine Introduction on Malaria Cases and Deaths in Sub-Saharan Africa: A Modelling Study". This workflow is written in [orderly2](https://mrc-ide.github.io/orderly2/), a package designed at ICL to facilitate reproducible analysis. Source code is found in the [/src](https://github.com/mrc-ide/VIMC_malaria/tree/paper/src) folder, with the name of each folder corresponding to the name of each report and the corresponding script containing code for execution. The following reports + actions are run chronologically to produce final estimates, with more detail below. 
 
-The helper functions developed for this workflow can be found in the [vimcmalaria](https://github.com/mrc-ide/vimcmalaria) package. This package is a holding place for helper functions used in this workflow, and therefore may not be useful when applied to other contexts. More documentation + testing for this package is forthcoming.
+The helper functions developed for this workflow can be found in the [vimcmalaria](https://github.com/mrc-ide/vimcmalaria) package. This package is a holding place for helper functions used in this workflow, and therefore may not be useful when applied to other contexts. 
+
 
 ## Directory
 ```
 .
 ├── analyses                             # Analyses to supplement main workflow
 |   ├── vaccine_scenario                 # Generate proxy vaccine coverage scenario for manuscript based on DTP3 coverage, vaccine type, and year of introduction
-├── src                                  # Source code for VIMC malaria main workflow
+|   ├── paper                            # Source code for tables and figures provided in paper
 |   ├── process_inputs                   # Format input demography, vaccine coverage, and malariasimulation site file inputs for analysis
 |   |   ├── process_inputs.R                   
 |   ├── process_country                  # Paramaterize, run models, and do initial postprocessing
