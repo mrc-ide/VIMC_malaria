@@ -1,6 +1,6 @@
 # postprocess in bulk
 orderly2::orderly_parameters(iso3c = 'ETH',
-                             description = 'gavi_reruns_2025', 
+                             description = 'number_plug_paper', 
                              quick_run = FALSE)
 
 # packages  --------------------------------------------------------------------

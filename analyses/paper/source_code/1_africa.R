@@ -54,7 +54,7 @@ extract_site_data <- function(directory) {
 # metrics of interest:
 completed <- completed_reports("process_country") |>
   dplyr::filter(
-    description == "new_site_files",
+    description == "number_plug_paper",
     quick_run == FALSE
   ) |>
   dplyr::arrange(dplyr::desc(date_time)) |>

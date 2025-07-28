@@ -1,13 +1,13 @@
 # process country  -------------------------------------------------------------
 # orderly metadata  ----
-orderly2::orderly_parameters(iso3c = 'GNB',
+parms<- orderly2::orderly_parameters(iso3c = 'NGA',
                              scenario = 'no-vaccination',
-                             quick_run = TRUE,
+                             quick_run = FALSE,
                              parameter_draw = 0,
-                             description = 'testing')
+                             description = 'test')
 
 orderly2::orderly_description('Analyze vaccine impact at the country level')
-orderly2::orderly_artefact('Processed output', 'outputs.rds')
+desc<- orderly2::orderly_artefact('Processed output', 'outputs.rds')
 
 # packages and functions ----
 library(site)
@@ -22,6 +22,13 @@ library(countrycode)
 library(vimcmalaria)
 
 # read in dependencies  ----
+# load in params
+iso3c<- parms$iso3c
+scenario<- parms$scenario
+quick_run<- parms$quick_run
+parameter_draw<- parms$parameter_draw
+description<- parms$description
+
 orderly2::orderly_dependency("process_inputs", "latest(parameter:iso3c == this:iso3c)", c(vimc_input.rds = "vimc_input.rds"))
 orderly2::orderly_dependency("process_inputs", "latest(parameter:iso3c == this:iso3c)", c(site_file.rds = "site_file.rds"))
 
@@ -30,6 +37,9 @@ site_data <- readRDS('site_file.rds')
 
 # vimc inputs ----
 coverage_data<- vimc_input$coverage_input
+vimc_input$coverage_input<- coverage_data |>
+  select(-iso3c)
+
 le <- vimc_input$le
 vimc_pop<- vimc_input$population_input_all_age
 pop_single_yr<- vimc_input$population_input_single_yr

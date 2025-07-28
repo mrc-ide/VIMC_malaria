@@ -5,8 +5,8 @@ local::./postie_0.1.2.tar.gz
 mrc-ide/malariasimulation
 mrc-ide/scene
 mrc-ide/orderly2
-mrc-ide/vimcmalaria@refactor
-mrc-ide/site@varied_booster
+mrc-ide/vimcmalaria@paper
+mrc-ide/site@paper
 
 data.table
 dplyr

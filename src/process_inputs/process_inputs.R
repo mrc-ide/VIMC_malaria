@@ -1,5 +1,5 @@
 # process inputs for all sites -------------------------------------------------
-orderly2::orderly_parameters(iso3c = NULL)
+parms<- orderly2::orderly_parameters(iso3c = NULL)
 
 pkgs <- c( 'data.table', 'countrycode',  'dplyr')
 invisible(lapply(pkgs, library, character.only = TRUE))
@@ -12,11 +12,15 @@ orderly2::orderly_artefact('VIMC input', 'vimc_input.rds')
 # pull coverage data -----------------------------------------------------------
 # first pull in proxy data 
 proxy<- readRDS('proxy_scenario.rds') 
+input_params<- read.csv('vaccine_scenario_inputs.csv') 
 
+input_params<- input_params |> dplyr::mutate(iso3c = country_code)
+
+proxy<- merge(proxy, input_params, by= c('iso3c'))
 # specify vaccine type based on what is currently being implemented
 primary<- copy(proxy) |>
-  select(-booster) |>
-  mutate(vaccine = ifelse(vaccine == 'R21', 'R3', 'RTS3'))
+  dplyr::select(-booster) |>
+  dplyr::mutate(vaccine = ifelse(vaccine == 'R21', 'R3', 'RTS3'))
 
 secondary<- copy(proxy) |>
   select(-coverage) |>
@@ -24,6 +28,14 @@ secondary<- copy(proxy) |>
   mutate(vaccine = ifelse(vaccine == 'R21', 'R4', 'RTS4'))
 
 full<- rbind(primary, secondary, fill = TRUE)
+
+# fill in default values for dose timing
+full<- full |>
+  mutate(dose1= ifelse(is.na(dose1), 6, dose1), #most countries seem to be administering initial dose at 6 months of age
+        dose4= ifelse(is.na(dose4), 18, dose4)) # most countries seem to be administering the booster at 18 months of age
+
+full<- full |>
+  filter(iso3c == parms$iso3c)
 
 # VIMC input data
 coverage_files<- list.files('vimc_inputs/vaccine_coverage/', full.names = T)
@@ -73,7 +85,7 @@ vimc_input<- list('coverage_input' = coverage_dt,
 saveRDS(vimc_input, 'vimc_input.rds')
 
 # pull site data  --------------------------------------------------------------
-site_data<- site::fetch_site(iso3c = {iso3c})
+site_data<- site::fetch_site(iso3c = {iso3c}, urban_rural = TRUE)
 saveRDS(site_data, 'site_file.rds')
 
 

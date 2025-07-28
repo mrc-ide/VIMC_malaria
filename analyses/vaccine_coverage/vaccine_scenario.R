@@ -22,12 +22,6 @@ vimc<- read.csv('src/process_inputs/vimc_inputs/vaccine_coverage/coverage_202409
 inputs<- data.table('iso3c' = c('AGO', 'BDI', 'BEN', 'BFA', 'CAF', 'CIV', 'CMR', 'COD', 'COG', 'ETH', 'GHA', 'GIN', 'GNB', 'KEN', 'LBR', 'MDG', 'MLI', 'MOZ', 'MRT', 'MWI', 'NER', 'NGA', 'SDN', 'SLE', 'SOM', 'SSD', 'TCD', 'TGO', 'TZA', 'UGA', 'ZMB'),
                     'intro_yr'= c(2026,  2025,   2024,  2024, 2024,  2024,   2024,  2024,  2026,   2025, 2019, 2025,   2026,  2019,  2024,  2026,  2025, 2024,  2026,   2019, 2024,   2024,  2024,  2024,   2026, 2024, 2024, 2026,   2026,  2025,  2026))
 
-
-#pull out the number of children from 0-1 yrs old from 2023-2030--------------------------------------------------
-# pop_age<- pop_age |>
-  #filter(year %in% c(2026:2030)) |>
-  #filter(age_from < 2)
-
 # sum the total population of children under 2 from 2026-2030 (the comparator period for gavi estimate)
 total_par<- pop_age |>
   group_by(age_from) |>
@@ -275,7 +269,7 @@ compare_coverage<- function(iso){
 
 }
 
-pdf('comparison_scenario_final2.pdf')
+pdf('comparison_scenario.pdf')
 
 lapply(unique(cov$iso3c), compare_coverage)
 

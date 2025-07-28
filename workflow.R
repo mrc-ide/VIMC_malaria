@@ -6,23 +6,29 @@
 
 
 # setup ------------------------------------------------------------------------
+remotes::install_github('mrc-ide/vimcmalaria@paper')
+remotes::install_github('mrc-ide/site@paper')
+
 #orderly2::orderly_init()
 library(data.table)
 library(dplyr)
 library(hipercow)
 library(vimcmalaria)
 
+
+
 coverage<- read.csv('src/process_inputs/vimc_inputs/vaccine_coverage/coverage_202409malaria-1_malaria-r3-r4-default.csv')
 iso3cs<- unique(coverage$country_code)
 dir<- getwd()
 
 # # generate parameter map for analysis ------------------------------------------
-map<- make_parameter_map(iso3cs= c(iso3cs),
-                         scenarios = c('malaria-r3-r4-default', 'malaria-rts3-rts4-default'),
-                          description = 'gavi_reruns_2025',
-                          parameter_draws = c(0),
+map<- make_parameter_map(iso3cs= c('KEN'),
+                         scenarios = c('no-vaccination'),
+                          description = 'number_plug_paper',
+                          parameter_draws = c(0:5),
                           quick_run= FALSE)
 
+#map$scenario<- 'proxy'
 # check function
 test<- check_not_a_rerun(report_name = 'process_country', map = map, date = 0)
 map<- check_reports_completed('process_country', map, date_time = 0)
@@ -60,7 +66,7 @@ task<- hipercow::task_create_expr(
   )
 # # launch ethiopia calibrations and save somewhere central ----------------------
 # STEP 3: run postprocessing on outputs   --------------------------------------
-for(iso in iso3cs){
+for(iso in iso3cs[31]){
 
 message(iso)
 
@@ -68,8 +74,8 @@ message(iso)
 orderly2::orderly_run(
     "postprocessing",
     parameters = list(
-      iso3c = 'MDG',
-      description = 'gavi_reruns_2025',
+      iso3c = iso,
+      description = 'number_plug_paper',
       quick_run = FALSE
     ))
 #)
