@@ -8,7 +8,7 @@ plotting_theme<- theme_bw(base_size = 14) +
   theme( legend.position = 'bottom',
          strip.text.x = element_text(size = rel(0.8)),
          axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1.1),
-         #text = element_text(family= 'Calibri'),
+        # text = element_text(family= 'Calibri'),
          axis.ticks.y= element_blank(),
          panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
@@ -557,14 +557,14 @@ dalys_averted_over_age<- function(output, scenario, country_name){
 }
 
 
-prepare_dose_output<- function(dose_output, site_data, coverage_data){
+prepare_dose_output<- function(dose_output, site_data, coverage_data, interval){
   intro_yr<- min(coverage_data[scenario == 'malaria-rts3-rts4-default' & coverage> 0, year])
   
   # first aggregate cases + deaths averted by site_ur over entire simulation period
   site_doses<- dose_output |>
     group_by(site_ur, scenario) |>
     #filter(parameter_draw == 0)|>
-    filter(year %in% c(intro_yr:(intro_yr+15))) |>
+    filter(year %in% c(intro_yr:(intro_yr+interval))) |>
     summarise(cases_averted = sum(cases_averted),
               deaths_averted = sum(deaths_averted), 
               doses_total = sum(doses_total),
@@ -573,7 +573,7 @@ prepare_dose_output<- function(dose_output, site_data, coverage_data){
   
   # then merge on site data based on site name and ur
   sites<- site_data$prevalence |> 
-    filter(year == 2019) |>
+    filter(year == 2024) |>
     mutate(site_ur = paste0(name_1, '_', urban_rural)) |>
     select(site_ur, pfpr)
   site_doses<- merge(site_doses, sites, by = 'site_ur')
@@ -616,7 +616,7 @@ plot_death_site_comparison<-  function(site_doses){
     plotting_theme +
     theme(legend.position = 'none')+
     labs(title = 'Unscaled deaths averted per 100,000 FVP, 2000-2100',
-         x= 'PFPR(2-10) in 2019',
+         x= 'Malaria Atlas Project PFPR(2-10) in 2019',
          y = 'Deaths averted per 100k FVPs')
   
   

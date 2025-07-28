@@ -1,5 +1,5 @@
 # run diagnostic report by country
-orderly2::orderly_parameters(iso3c = 'CAF',
+parms<- orderly2::orderly_parameters(iso3c = 'NGA',
                              description = 'gavi_reruns_2025',
                              quick_run= FALSE)
 
@@ -83,16 +83,38 @@ message('rendering')
 
 
 
+doses_short<- prepare_dose_output(dose_output, site_data, coverage_data, interval= 15)
+doses_short<- doses_short$site_doses |> filter(scenario== 'malaria-r3-r4-default')
 
-test<- averted_output$by_age
+doses_long<- prepare_dose_output(dose_output, site_data, coverage_data, interval= 80)
+doses_long<- doses_long$site_doses|> filter(scenario== 'malaria-r3-r4-default')
 
 
-ggplot(test, mapping = aes(x= age, y= deaths_averted, color= scenario))+
-  geom_line()+
-  labs(title = 'Deaths averted by age and scenario',
-       subtitle = 'Burkina Faso',
-       x= 'Age',
-      y= 'Deaths averted') +
-  scale_color_manual(values= wes_palette('Darjeeling1', n= 2)) +
-  plotting_theme
 
+  p<- ggplot(data = doses_short, mapping = aes(x= pfpr, y = deaths_averted/fvp *100000, color = scenario)) +
+    geom_point()+
+    plotting_theme +
+    theme(legend.position = 'none')+
+    labs(title = 'Unscaled deaths averted per 100,000 FVP, 15-years following\nvaccine introduction, NGA',
+         subtitle= 'by admin-1 unit and urbanicity, R21 routine scenario',
+         x= 'Malaria Atlas Project PFPR(2-10) in 2024',
+         y = 'Deaths averted per 100k FVPs')
+  
+  
+  ggplotly(p)
+
+
+    p2<- ggplot(data = doses_long, mapping = aes(x= pfpr, y = deaths_averted/fvp *100000, color = scenario)) +
+    geom_point()+
+    plotting_theme +
+    theme(legend.position = 'none')+
+    labs(title = 'Unscaled deaths averted per 100,000 FVP, 2000-2100, NGA',
+           subtitle= 'by admin-1 unit and urbanicity, R21 routine scenario',
+         x= 'Malaria Atlas Project PFPR(2-10) in 2024',
+         y = 'Deaths averted per 100k FVPs')
+  
+
+  plots<- ggarrange(p, p2, ncol= 2)
+pdf('NGA_plots.pdf')
+print(plots)
+dev.off()
