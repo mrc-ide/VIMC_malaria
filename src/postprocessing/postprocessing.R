@@ -45,8 +45,8 @@ completed<- completed_reports('process_country') |>
   dplyr::distinct(iso3c, scenario, quick_run, parameter_draw, description, .keep_all = TRUE) |>
   dplyr::arrange(iso3c, scenario, parameter_draw)
 
-#max_draw<- max(completed[scenario == 'no-vaccination', parameter_draw])
-max_draw<- 0
+max_draw<- max(completed[scenario == 'no-vaccination', parameter_draw])
+max_draw<- 10 # do this for a small number so I can finish plugging the paper 
 
 # vimc inputs
 inputs<- completed_reports('process_inputs') |>

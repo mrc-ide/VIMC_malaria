@@ -1,10 +1,12 @@
 # process country  -------------------------------------------------------------
 # orderly metadata  ----
-parms<- orderly2::orderly_parameters(iso3c = 'NGA',
-                             scenario = 'no-vaccination',
-                             quick_run = FALSE,
-                             parameter_draw = 0,
-                             description = 'test')
+parms <- orderly2::orderly_parameters(
+  iso3c = 'CIV',
+  scenario = 'proxy',
+  quick_run = FALSE,
+  parameter_draw = 0,
+  description = 'number_plug_paper'
+)
 
 orderly2::orderly_description('Analyze vaccine impact at the country level')
 desc<- orderly2::orderly_artefact('Processed output', 'outputs.rds')
