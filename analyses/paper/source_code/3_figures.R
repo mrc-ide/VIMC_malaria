@@ -6,8 +6,33 @@
 
 
 # figure 1: line plot of cases + deaths averted over time---------------------------------------------------------
+
+#check this against previous model runs to make sure all is well
+vax<- read.csv('montagu/central-burden-est-malaria-r3-r4-default.csv')
+novax<- read.csv('montagu/central-burden-est-no-vaccination.csv') |>
+    rename(cases_novax = cases,
+           deaths_novax = deaths,
+           dalys_novax = dalys) |>
+    select(year, age, country, cases_novax, deaths_novax, dalys_novax)
+
+
+  vax<- merge(vax, novax, by = c('country', 'age', 'year'))
+
+  vax<- vax |>
+   # filter(run_id < 51) |>
+    mutate(cases_averted = cases_novax- cases,
+           deaths_averted = deaths_novax- deaths,
+           dalys_averted = dalys_novax - dalys) |>
+  group_by(year) |>
+  summarise(cases_averted = sum(cases_averted, na.rm= TRUE),
+            deaths_averted = sum(deaths_averted, na.rm = TRUE),
+            .groups = 'keep')
+
+# values from previous submission are in the same ballpark so it was a duplicates bug
+
+
 fig_1<- vax |>
-  filter(run_id == 0) |>
+#  filter(run_id == 0) |>
   group_by(scenario,year, run_id) |>
   summarise(cases_averted = sum(cases_averted, na.rm= TRUE),
             deaths_averted = sum(deaths_averted, na.rm = TRUE),
@@ -54,7 +79,6 @@ p2<- ggplot(fig_1) +
   scale_fill_manual(values = '#1B4F72') +
   plotting_theme +
     theme(legend.position = 'none') +
-  +
   scale_y_continuous(labels = scales::comma) +
   labs(
     y = "Deaths averted (thousands)",
@@ -74,7 +98,7 @@ p3<- ggplot(fig_1) +
   scale_y_continuous(labels = scales::comma) +
   labs(
     title = "",
-    y = "Cumulative cases averted (millions)",
+    y = "Cumulative cases averted \n(millions)",
     x = ""
   )
 
@@ -87,7 +111,7 @@ p4<- ggplot(fig_1) +
   theme(legend.position = 'none') +
   scale_y_continuous(labels = scales::comma) +
   labs(
-    y = "Cumulative deaths averted (thousands)",
+    y = "Cumulative deaths averted \n(thousands)",
     x = "Year")
 
 
@@ -104,8 +128,9 @@ p1 <- ggplot(data = by_country, aes(x = reorder(country, -cases_mean), group = s
   theme(legend.position = "none") +
   scale_fill_manual(values = cols) +
   scale_y_continuous(labels = scales::comma) +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1, size = 8)) +
   labs(
-    title = "Cases averted",
+    title = "",
     x = "Country",
     y = "Cases averted"
   )
@@ -118,8 +143,9 @@ p2 <- ggplot(data = by_country, aes(x = reorder(country, -deaths_mean), group = 
   theme(legend.position = "none") +
   scale_fill_manual(values = cols) +
   scale_y_continuous(labels = scales::comma) +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1, size = 8)) +
   labs(
-    title = "Deaths averted",
+    title = "",
     x = "Country",
     y = "Deaths averted"
   )
@@ -136,9 +162,10 @@ p3<- ggplot(data = total_doses, aes(x = reorder(country, -cases_mean), group = s
   scale_fill_manual(values = cols)+
   scale_y_continuous(labels = scales::comma) +
   theme(legend.position = 'none') +
-  labs(title = 'Cases averted per 100,000 fully vaccinated people',
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1, size = 8))+
+  labs(title = '',
        x= 'Country',
-       y= 'Cases averted per 100,000 fully vaccinated people')
+       y= 'Cases averted per 100,000 \n fully vaccinated people')
 
 
 p4<- ggplot(data = total_doses, aes(x = reorder(country, -deaths_mean), group = scenario)) +
@@ -148,9 +175,10 @@ p4<- ggplot(data = total_doses, aes(x = reorder(country, -deaths_mean), group = 
   scale_fill_manual(values = cols)+
     theme(legend.position = 'none') +
   scale_y_continuous(labels = scales::comma) +
-  labs(title = 'Deaths averted per 100,000 fully vaccinated people',
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1, size = 8)) +
+  labs(title = '',
        x= 'Country',
-       y= 'Deaths averted per 100,000 fully vaccinated people')
+       y= 'Deaths averted per 100,000 \n fully vaccinated people')
 
 ggarrange(p1, p2, p3, p4, ncol =2, nrow= 2)
 
@@ -186,15 +214,16 @@ mapdat_admin <- mapdat_admin |>
   mutate(run_model= ifelse(id %like% 'TZA' & is.na(run_model), 'Not introduced', run_model)) |>
   mutate(run_model= ifelse(id %like% 'ZMB' & is.na(run_model), 'Not introduced', run_model)) |>
   mutate(run_model= ifelse(id %like% 'SDN' & is.na(run_model), 'Not introduced', run_model)) |>
-  mutate(run_model= ifelse(id %like% 'SLE' & is.na(run_model), 'Not introduced', run_model))
+  mutate(run_model= ifelse(id %like% 'SLE' & is.na(run_model), 'Not introduced', run_model)) |>
+  mutate(run_model= ifelse(is.na(run_model), 'Not introduced', run_model))
 
 
 #  make a plot of all of the admin-1 units modelled for study (methods) -----
 p <- ggplot() +
   geom_sf(data = countries_africa) +
-  geom_sf(data = countries) +
+  geom_sf(data = countries, color = 'black', size= 1) +
   geom_sf(data = border_admins) +
-  geom_sf(data = borders_inner, color = "black", size = 1) +
+  geom_sf(data = borders_inner, color = "black", size = 1, lwd= 1) +
   geom_sf(data= mapdat_admin, aes(fill = run_model), alpha = 0.8, show.legend = TRUE, linewidth = 0.005) +
   scale_fill_manual(values = cols) +
   labs(fill = "Vaccine introduced") +
@@ -243,6 +272,7 @@ panel.border = element_blank(),
 plot.background = element_blank(),
 panel.background = element_blank())
 
+ggarrange(p1, p2, nrow=2)
 # Figure 3: by age--------------------------
 p3<- ggplot(table_2) +
   geom_line(mapping = aes(x= year, y= cases_mean, color = age)) +
@@ -275,49 +305,49 @@ ggarrange(p3, p4, nrow = 2, heights= c(1, 1.25))
 
 # try same plot but as a stacked bar chart
 # should calculate mean + cis after all calculations but update this later
-stacked<- table_2 |>
-  mutate(year_cut = cut(year,
-                        breaks = c(1999, 2005, 2010, 2015, 2020, 2025, 2030, 2035, 2040, 2045, 2050, 2055, 2060, 2065, 2070, 2075, 2080, 2085, 2090, 2095, 2101), ordered_result = TRUE))
-stacked<- stacked |>
-  mutate(year_cut = as.character(year_cut)) |>
-  mutate(year_cut = str_replace(year_cut, ',', '-')) |>
- # mutate(year_cut = str_replace(year_cut, "(", ""))
-  #mutate(year_cut = str_replace(year_cut, ']', ''))
-group_by(year_cut,age, scenario) |>
-  summarise(cases_mean = sum(cases_mean),
-            cases_lower = sum(cases_lower),
-            cases_upper = sum(cases_upper),
-            deaths_mean = sum(deaths_mean),
-            deaths_lower = sum(deaths_lower),
-            deaths_upper = sum(deaths_upper),
-            .groups = 'keep')
+# stacked<- table_2 |>
+#   mutate(year_cut = cut(year,
+#                         breaks = c(1999, 2005, 2010, 2015, 2020, 2025, 2030, 2035, 2040, 2045, 2050, 2055, 2060, 2065, 2070, 2075, 2080, 2085, 2090, 2095, 2101), ordered_result = TRUE))
+# stacked<- stacked |>
+#   mutate(year_cut = as.character(year_cut)) |>
+#   mutate(year_cut = str_replace(year_cut, ',', '-')) |>
+#  # mutate(year_cut = str_replace(year_cut, "(", ""))
+#   #mutate(year_cut = str_replace(year_cut, ']', ''))
+# group_by(year_cut,age, scenario) |>
+#   summarise(cases_mean = sum(cases_mean),
+#             cases_lower = sum(cases_lower),
+#             cases_upper = sum(cases_upper),
+#             deaths_mean = sum(deaths_mean),
+#             deaths_lower = sum(deaths_lower),
+#             deaths_upper = sum(deaths_upper),
+#             .groups = 'keep')
 
-p3<- ggplot() +
-  geom_col(stacked, position = 'stack', mapping = aes(x= year_cut, y= cases_mean, fill = age)) +
-  geom_hline(yintercept = 0, linetype = 'dotted') +
-  scale_color_manual(values = cols) +
-  scale_fill_manual(values = cols) +
-  scale_y_continuous(labels = scales::comma) +
-  #xlim((1999,2005], (2095,2101]) +
-  plotting_theme+
-  theme(legend.position = 'none') +
-  labs(title = '',
-       x= '',
-       y= 'Cases averted')
+# p3<- ggplot() +
+#   geom_col(stacked, position = 'stack', mapping = aes(x= year_cut, y= cases_mean, fill = age)) +
+#   geom_hline(yintercept = 0, linetype = 'dotted') +
+#   scale_color_manual(values = cols) +
+#   scale_fill_manual(values = cols) +
+#   scale_y_continuous(labels = scales::comma) +
+#   #xlim((1999,2005], (2095,2101]) +
+#   plotting_theme+
+#   theme(legend.position = 'none') +
+#   labs(title = '',
+#        x= '',
+#        y= 'Cases averted')
 
-p4<- ggplot() +
-  geom_col(stacked, position = 'stack', mapping = aes(x= year_cut, y= deaths_mean, fill = age)) +
-  geom_hline(yintercept = 0, linetype = 'dotted') +
-  scale_color_manual(values = cols) +
-  scale_fill_manual(values = cols) +
-  scale_y_continuous(labels = scales::comma) +
-  plotting_theme+
-  theme(legend.position = 'none') +
-  labs(title = '',
-       x= '',
-       y= 'Deaths averted')
+# p4<- ggplot() +
+#   geom_col(stacked, position = 'stack', mapping = aes(x= year_cut, y= deaths_mean, fill = age)) +
+#   geom_hline(yintercept = 0, linetype = 'dotted') +
+#   scale_color_manual(values = cols) +
+#   scale_fill_manual(values = cols) +
+#   scale_y_continuous(labels = scales::comma) +
+#   plotting_theme+
+#   theme(legend.position = 'none') +
+#   labs(title = '',
+#        x= '',
+#        y= 'Deaths averted')
 
-ggarrange(p3, p4, ncol = 2)
+# ggarrange(p3, p4, ncol = 2)
 
 
 # supplemental figure- population size over time 
@@ -363,24 +393,86 @@ age_pattern <- total |>
   group_by(scenario, age, run_id) |>
   summarise(
     cases = sum(cases, na.rm= TRUE),
-    cases_min= quantile()
     deaths = sum(deaths, na.rm= TRUE),
     .groups = "keep"
-  )
+  ) |>
+  ungroup() |>
+  group_by(scenario, age) |>
+  summarise(cases_mean = mean(cases),
+           cases_min = quantile(cases, 0.025, na.rm= TRUE),
+           cases_max= quantile(cases, 0.975, na.rm= TRUE),
+           deaths_mean = mean(deaths),
+           deaths_min = quantile(deaths, 0.025, na.rm = TRUE),
+           deaths_max= quantile(deaths, 0.975, na.rm= TRUE),
+          .groups= 'keep' ) |>
+  mutate(scenario = ifelse(scenario== 'no-vaccination', 'No vaccination', scenario))
 
 
-p1<- ggplot(data = age_pattern, aes(x = age, y = cases, color = scenario)) +
-  geom_line()+
+p1<- ggplot(data = age_pattern ) +
+    geom_line(aes(x = age, y = cases_mean, color = scenario))+
+  geom_ribbon(aes(x= age, ymin = cases_min, ymax = cases_max, fill= scenario), alpha = 0.1) +
     scale_y_continuous(labels = scales::comma) +
       scale_color_manual(values = cols)+
-#labs(title = 'Incident cases by age and vaccine scenario') +
+labs(y = 'Cases', x= 'Age') +
 plotting_theme
 
-p2<- ggplot(data = age_pattern, aes(x = age, y = deaths, color = scenario)) +
-  geom_line()+
+p2<- ggplot(data = age_pattern) +
+    geom_line(aes(x = age, y = deaths_mean, color = scenario))+
+  geom_ribbon(aes(x= age, ymin = deaths_min, ymax = deaths_max, fill= scenario), alpha = 0.1) +
+    scale_y_continuous(labels = scales::comma) +
     scale_y_continuous(labels = scales::comma) +
       scale_color_manual(values = cols)+
-#labs(title = 'Deaths by age and vaccine scenario') +
+labs(y = 'Deaths', x= 'Age') +
+plotting_theme +
+  theme( legend.position = 'none')
+
+
+
+ggarrange(p1, p2, ncol = 2)
+
+# age pattern for ago and sdn
+country_examples <- vax |>
+  group_by(scenario, country, country_name, age, run_id) |>
+  summarise(
+    cases_averted = sum(cases_averted),
+    deaths_averted = sum(deaths_averted),
+    dalys_averted = sum(dalys_averted),
+    .groups = "keep"
+  ) |>
+  data.table() |>
+  ungroup() |>
+  group_by(scenario, country, age) |>
+  mutate(
+    cases_mean = mean(cases_averted, na.rm = TRUE),
+    cases_lower = quantile(cases_averted, 0.025, na.rm = TRUE),
+    cases_upper = quantile(cases_averted, 0.975, na.rm = TRUE),
+    deaths_mean = mean(deaths_averted, na.rm = TRUE),
+    deaths_lower = quantile(deaths_averted, 0.025, na.rm = TRUE),
+    deaths_upper = quantile(deaths_averted, 0.975, na.rm = TRUE)
+  ) |>
+  arrange(-cases_averted) |>
+  filter(!scenario == "Control") |>
+  data.table()
+
+
+
+p1<- ggplot(data = country_examples[country_name == 'Nigeria'] ) +
+    geom_line(aes(x = age, y = cases_mean, color = scenario))+
+  geom_ribbon(aes(x= age, ymin = cases_lower, ymax = cases_upper, fill= scenario), alpha = 0.1) +
+    scale_y_continuous(labels = scales::comma) +
+  geom_hline(yintercept = 0, linetype = 'dashed') +
+      scale_color_manual(values = cols)+
+labs(y = 'Cases', x= 'Age', color = 'Scenario', fill= 'Scenario') +
+plotting_theme
+
+p2<- ggplot(data = country_examples[country_name == 'Ethiopia']) +
+    geom_line(aes(x = age, y = cases_mean, color = scenario))+
+  geom_hline(yintercept= 0, linetype= 'dashed') +
+  geom_ribbon(aes(x= age, ymin = cases_lower, ymax = cases_upper, fill= scenario), alpha = 0.1) +
+    scale_y_continuous(labels = scales::comma) +
+    scale_y_continuous(labels = scales::comma) +
+      scale_color_manual(values = cols)+
+labs(y = 'Cases', x= 'Age', color = 'Scenario', fill= 'Scenario') +
 plotting_theme +
   theme( legend.position = 'none')
 
@@ -389,10 +481,9 @@ plotting_theme +
 ggarrange(p1, p2, ncol = 2)
 
 
-
 #by admin unit---------------------------------------
 # incidence pre- and post -vaccinatiopn
-ggplot(data = inc, mapping = aes(x= cases_2022/cohort_22, y= cases_2037/cohort_37, color= scenario)) +
+ggplot(data = inc[scenario== 'Routine'], mapping = aes(x= cases_2022/cohort_22, y= cases_2037/cohort_37, color= scenario)) +
   geom_point()+
   #facet_wrap(~scenario) +
   geom_abline(slope = 1, intercept = 0) +
@@ -435,7 +526,7 @@ inc<- inc |>
 
             .groups = 'keep')
 
-#inc<- inc |> filter(scenario != 'Control')
+inc<- inc |> filter(scenario != 'Control')
 ggplot(data = inc, mapping = aes(x= cases_2022/cohort_22, y= cases_2037/cohort_37, color= scenario)) +
   geom_point()+
   #facet_wrap(~scenario) +

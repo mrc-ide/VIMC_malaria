@@ -25,7 +25,7 @@ dir<- getwd()
 map<- make_parameter_map(iso3cs= c(iso3cs),
                          scenarios = c('no-vaccination', 'proxy'),
                           description = 'number_plug_paper',
-                          parameter_draws = c(26:50),
+                          parameter_draws = c(1:50),
                           quick_run= FALSE)
 
 # check function
@@ -47,7 +47,7 @@ hipercow::hipercow_environment_create()
 hipercow::hipercow_configuration()
 
 # # submit groups of jobs by number of cores to submit  ------------------------
-lapply(unique(map$site_number), submit_by_core, dt = map, test = FALSE)
+#lapply(unique(map$site_number), submit_by_core, dt = map, test = FALSE)
 
 # STEP 3: run postprocessing on outputs   --------------------------------------
 for(iso in iso3cs){
@@ -74,7 +74,7 @@ task<- hipercow::task_create_expr(
   orderly2::orderly_run(
     "diagnostics",
     parameters = list(
-      iso3c = iso,
+      iso3c = 'GNB',
       description = 'number_plug_paper',
       quick_run = FALSE
     ))

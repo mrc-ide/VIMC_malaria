@@ -15,13 +15,14 @@ coverage <- read.csv("src/process_inputs/vimc_inputs/vaccine_coverage/coverage_2
 iso3cs <- unique(coverage$country_code)
 source("src/diagnostics/diagnostic_report_functions.R")
 
-descrip<- 'gavi_reruns_2025' #set of runs to run diagnostics for
+descrip<- 'number_plug_paper' #set of runs to run diagnostics for
 filepath<- paste0('diagnostics/summary_diagnostics/', descrip, '/') # filepath to save diagnostics to
 dir.create(filepath)
 
 # pull outputs to plot
-final <-compile_final_outputs('gavi_reruns_2025')
-saveRDS(final, paste0(filepath, 'final_outputs_gavi_runs.rds'))
+final <-compile_final_outputs('number_plug_paper')
+final<- unique(final)
+saveRDS(final, paste0(filepath, 'final_outputs.rds'))
 
 pull_wmr <- function(iso3c) {
   site <- site::fetch_site(iso3c)
@@ -52,8 +53,8 @@ plot_incidence <- function(country_nm) {
 
   p1 <- ggplot() +
     geom_line(data = test[run_id == 0], mapping = aes(x = year, y = cases / cohort_size, color = scenario)) +
-    # geom_line(data = test[run_id!= 0], mapping = aes(x= year, y= cases/cohort_size, color = scenario, group = run_id), alpha = 0.02)  +
-    # stat_summary(data = test[run_id!= 0], mapping = aes(x= year, y= cases/cohort_size, color = scenario), fun.y = median, geom = "line") +
+    geom_line(data = test[run_id!= 0], mapping = aes(x= year, y= cases/cohort_size, color = scenario, group = run_id), alpha = 0.1)  +
+    #stat_summary(data = test[run_id!= 0], mapping = aes(x= year, y= cases/cohort_size, color = scenario), fun.y = median, geom = "line") +
     plotting_theme +
     labs(
       title = "Incidence over time",
@@ -75,8 +76,8 @@ plot_incidence <- function(country_nm) {
 
   p2 <- ggplot() +
     geom_line(data = test[run_id == 0], mapping = aes(x = age, y = cases / cohort_size, color = scenario)) +
-    # geom_line(data = test[run_id!= 0], mapping = aes(x= age, y= cases/cohort_size, color = scenario, group = run_id), alpha = 0.02)  +
-    # stat_summary(data = test[run_id!= 0], mapping = aes(x= age, y= cases/cohort_size, color = scenario), fun.y = median, geom = "line") +
+    geom_line(data = test[run_id!= 0], mapping = aes(x= age, y= cases/cohort_size, color = scenario, group = run_id), alpha = 0.1)  +
+    #stat_summary(data = test[run_id!= 0], mapping = aes(x= age, y= cases/cohort_size, color = scenario), fun.y = median, geom = "line") +
     plotting_theme +
     labs(
       title = "Incidence over age",
@@ -107,9 +108,9 @@ plot_deaths <- function(country_nm) {
 
   p1 <- ggplot() +
     geom_line(data = test[run_id == 0], mapping = aes(x = year, y = deaths / cohort_size, color = scenario)) +
-    # geom_line(data = test[run_id!= 0], mapping = aes(x= year, y= deaths/cohort_size, color = scenario, group = run_id), alpha = 0.02)  +
-    # stat_summary(data = test[run_id!= 0], mapping = aes(x= year, y= deaths/cohort_size, color = scenario), fun.y = median, geom = "line") +
-    # facet_wrap(~scenario) +
+    geom_line(data = test[run_id!= 0], mapping = aes(x= year, y= deaths/cohort_size, color = scenario, group = run_id), alpha = 0.1)  +
+    #stat_summary(data = test[run_id!= 0], mapping = aes(x= year, y= deaths/cohort_size, color = scenario), fun.y = median, geom = "line") +
+    facet_wrap(~scenario) +
     plotting_theme +
     labs(
       title = "Mortality over time",
@@ -131,8 +132,8 @@ plot_deaths <- function(country_nm) {
 
   p2 <- ggplot() +
     geom_line(data = test[run_id == 0], mapping = aes(x = age, y = deaths / cohort_size, color = scenario)) +
-    # geom_line(data = test[run_id!= 0], mapping = aes(x= age, y= deaths/cohort_size, color = scenario, group = run_id), alpha = 0.02)  +
-    # stat_summary(data = test[run_id!= 0], mapping = aes(x= age, y= deaths/cohort_size, color = scenario), fun.y = median, geom = "line") +
+    geom_line(data = test[run_id!= 0], mapping = aes(x= age, y= deaths/cohort_size, color = scenario, group = run_id), alpha = 0.1)  +
+    #stat_summary(data = test[run_id!= 0], mapping = aes(x= age, y= deaths/cohort_size, color = scenario), fun.y = median, geom = "line") +
     plotting_theme +
     labs(
       title = "Mortality over age",
@@ -160,6 +161,7 @@ wmr_diagnostic <- function(country_nm) {
 
   p1 <- ggplot() +
     geom_line(data = outputs[run_id == 0], mapping = aes(x = year, y = cases)) +
+    geom_line(data= outputs[run_id != 0], mapping = aes(x= year, y = cases), color = 'blue', alpha= 0.1) +
     geom_line(data = wmr[country == country_nm], mapping = aes(x = year, y = wmr_cases, color = "red")) +
     geom_vline(xintercept = 2021, linetype = "dotted") +
     geom_vline(xintercept = 2023, linetype = "dotted") +
@@ -172,7 +174,8 @@ wmr_diagnostic <- function(country_nm) {
     )
 
   p2 <- ggplot() +
-    geom_line(data = outputs, mapping = aes(x = year, y = deaths)) +
+    geom_line(data = outputs[run_id == 0], mapping = aes(x = year, y = deaths)) +
+    geom_line(data= outputs[run_id != 0], mapping = aes(x= year, y = deaths), color = 'blue', alpha= 0.1) +
     geom_line(data = wmr[country == country_nm], mapping = aes(x = year, y = wmr_deaths, color = "red")) +
     geom_vline(xintercept = 2021, linetype = "dotted") +
     geom_vline(xintercept = 2023, linetype = "dotted") +
@@ -202,3 +205,30 @@ dev.off()
 pdf(paste0(filepath, "mortality_diagnostic.pdf"), width = 12, height = 12)
 lapply(unique(final$country_name), plot_deaths)
 dev.off()
+
+
+# this function is returning duplicates?
+descrip<- 'number_plug_paper'
+#' Pull final outputs from workflow
+#' @param descrip         description of runs to pull
+#' @export
+compile_final_outputs<- function(descrip){
+
+  completed<- completed_reports('postprocessing')
+  completed<- completed[description == {{descrip}}] |>
+    dplyr::arrange(desc(date_time)) |>
+    dplyr::distinct(iso3c, description, quick_run, .keep_all = TRUE) |>
+    dplyr::arrange(iso3c, description, quick_run)
+
+  pull_output<- function(index, map){
+
+    message(index)
+    map<- map[ index,]
+    directory_name<- map$directory_name
+    iso3c<- map$iso3c
+    output<- data.table::rbindlist(readRDS(paste0('archive/postprocessing/', directory_name, '/final_output.rds')))
+    return(output)
+  }
+
+  outputs<- data.table::rbindlist(lapply(c(1:nrow(completed)), pull_output, map = completed))
+}

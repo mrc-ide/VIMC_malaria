@@ -1,7 +1,7 @@
 # postprocess in bulk
-orderly2::orderly_parameters(iso3c = 'ETH',
-                             description = 'number_plug_paper', 
-                             quick_run = FALSE)
+orderly2::orderly_parameters(iso3c = NULL,
+                             description = NULL, 
+                             quick_run = NULL)
 
 # packages  --------------------------------------------------------------------
 library(site)
@@ -33,7 +33,7 @@ pop_data<- vimc_input$population_input_all_age
 
 # if this is ivory coast, pull WMR cases and deaths from a flat file for scaling portion
 # this will be fixed in upcoming versions of the site file
-wmr<- read.xlsx('CIV_cases_deaths.xlsx')|> select(year, cases_mean) |> rename(wmr_cases = cases_mean)
+wmr<- read.xlsx('CIV_cases_deaths.xlsx')|> select(year, cases_mean, deaths_mean) |> rename(wmr_cases = cases_mean, wmr_deaths = deaths_mean)
 wmr<- list('cases_deaths' = wmr )
 
 # pull metadata for completed outputs for this country
@@ -46,7 +46,7 @@ completed<- completed_reports('process_country') |>
   dplyr::arrange(iso3c, scenario, parameter_draw)
 
 max_draw<- max(completed[scenario == 'no-vaccination', parameter_draw])
-max_draw<- 10 # do this for a small number so I can finish plugging the paper 
+#max_draw<- 10 # do this for a small number so I can finish plugging the paper 
 
 # vimc inputs
 inputs<- completed_reports('process_inputs') |>
@@ -73,7 +73,7 @@ final_postprocessing<- function(draw){
   # pull model outputs for all scenarios
   intvn<- rbindlist(lapply(c(1:nrow(intvn_filepaths)), get_site_output, map = intvn_filepaths, output_filepath = 'J:/VIMC/VIMC_malaria/archive/process_country/' ))
   
-  sites_modelled<- intvn |> filter(scenario == 'malaria-r3-r4-default') |> pull(site_name)
+  sites_modelled<- intvn |> filter(scenario == 'proxy') |> pull(site_name) |> unique()
   print(paste0('sites vaccinated: ', sites_modelled))
   
   # pull model outputs for all baseline scenarios (as a separate input into intervention processing)
@@ -97,6 +97,7 @@ final_postprocessing<- function(draw){
   input<- scale_par(test, iso3c= {{iso3c}})
 
   message('scaling cases')
+  if(iso3c == 'CIV'){site_data<- wmr}
   output<- scale_cases_deaths(input, scaling_data= scaling,  site_data = site_data, iso3c = {{iso3c}})
 
 

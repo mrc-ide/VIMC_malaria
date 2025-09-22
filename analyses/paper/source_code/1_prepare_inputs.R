@@ -5,7 +5,7 @@
 ##         for number plugging, tables, and figures
 ###########################################################################
 
-source('J:/VIMC/VIMC_malaria/analyses/paper/source_code/paper_functions.R')
+  source('J:/VIMC/VIMC_malaria/analyses/paper/source_code/paper_functions.R')
 
 iso3cs<-read.csv('src/process_inputs/vimc_inputs/vaccine_coverage/coverage_202409malaria-1_malaria-r3-r4-default.csv') |> pull(country_code) |> unique()
 
@@ -25,6 +25,7 @@ default<- compile_final_outputs('number_plug_paper') |>
   mutate(scenario = ifelse(scenario == 'proxy', 'Routine', scenario))
 
 total<- copy(default) # VIMC output unsummarised
+total<- unique(total)
 
 # calculate cases averted (all ages)-------------------------------------------------------------------------------------
   novax<- total |> filter(scenario == 'no-vaccination') |>
@@ -42,6 +43,7 @@ total<- copy(default) # VIMC output unsummarised
            deaths_averted = deaths_novax- deaths,
            dalys_averted = dalys_novax - dalys)
 
+vax<- unique(vax)
 saveRDS(vax, 'analyses/paper/inputs/vax.rds')
 
 # check squareness of dataset 
@@ -64,9 +66,9 @@ ggplot(data= check_squareness, mapping = aes(x= year, y= cases_averted, group= r
 
 # summary across africa ------------------------------------------------------------------------------------------------------------------
   africa<- vax |>
-    filter(run_id == 0) |>
+   # filter(run_id == 0) |>
     group_by(scenario, run_id) |>
-    filter(year <= 2050) |>
+    #filter(year <= 2050) |>
     summarise(cases_averted = sum(cases_averted, na.rm = TRUE),
               deaths_averted = sum(deaths_averted, na.rm = TRUE),
               dalys_averted = sum(dalys_averted, na.rm = TRUE),
@@ -114,9 +116,9 @@ saveRDS(by_country, 'analyses/paper/inputs/by_country.rds')
 # results per fully vaccinated person ---------------------------------------------------------------------------------------------------
 total_doses<- compile_dose_outputs('number_plug_paper', iso = 'all') |> data.table() |> filter(scenario %in% c('proxy', 'no-vaccination'))
 total_doses[scenario %like% 'no-vaccination', scenario := 'Control']
-
+total_doses<- unique(total_doses)
 total_doses<- total_doses |>
-  filter(year <= 2037)|>
+  #filter(year <= 2038)|>
   group_by(iso3c, scenario, run_id) |>
   summarise(cases_averted = sum(cases_averted),
             deaths_averted = sum(deaths_averted),
@@ -158,6 +160,7 @@ pop_format<- pop_reduced |>
   rename(admin_unit = name_1,
          vaccine_introduced= run_model)
 
+saveRDS(pop_reduced, 'analyses/paper/inputs/pop_reduced.rds')
 saveRDS(pop_format, 'analyses/paper/inputs/pop_format.rds')
 
 # results grouped by age ---------------------------------------------------------------------------------------------------
@@ -198,38 +201,40 @@ central<- completed |> filter(parameter_draw == 0)
 
 # results by admin1 unit---------------------------------------------------------------------------------------------------------------
 lapply(c(1:nrow(central)), get_site_outputs, map= central, output_filepath= 'J:/VIMC/VIMC_malaria/archive/process_country/')
-# files<- list.files('analyses/paper/inputs/site_output/', full.names = TRUE)
-# outputs<- rbindlist(lapply(files, readRDS))
-# outputs<- outputs |>
-#   mutate(id = paste0(site_name, '_', urban_rural))
+files<- list.files('analyses/paper/inputs/site_output/', full.names = TRUE)
+outputs<- rbindlist(lapply(files, readRDS))
+outputs<- outputs |>
+  mutate(id = paste0(site_name, '_', urban_rural))
 
-# # incidence rate before vaccine is introduced versus 15 years after
-# inc_22<- outputs |>
-#   group_by(scenario, year, id) |>
-#   filter(year == 2022) |>
-#   mutate(cases_2022 = cases,
-#          cohort_22 = cohort_size)
+test<- unique(outputs)
+# incidence rate before vaccine is introduced versus 15 years after
+inc_22<- outputs |>
+  group_by(scenario, year, id) |>
+  filter(year == 2022) |>
+  mutate(cases_2022 = cases,
+         cohort_22 = cohort_size)
 
-# inc_37<- outputs |>
-#   group_by(scenario, year, id) |>
-#   filter(year == 2037) |>
-#   rename(cases_2037 = cases,
-#          cohort_37 = cohort_size) |>
-#   ungroup() |>
-#   select(cases_2037, cohort_37, scenario, id)
+inc_37<- outputs |>
+  group_by(scenario, year, id) |>
+  filter(year == 2038) |>
+  rename(cases_2037 = cases,
+         cohort_37 = cohort_size) |>
+  ungroup() |>
+  select(cases_2037, cohort_37, scenario, id)
 
-# inc<- merge(inc_22, inc_37, by = c('id', 'scenario'))
+inc<- merge(inc_22, inc_37, by = c('id', 'scenario'))
 
-# inc<- inc |>
-#   group_by(scenario, id) |>
-#   summarise(cases_2022 = sum(cases_2022),
-#             cases_2037 = sum(cases_2037),
-#             cohort_22 = sum(cohort_22),
-#             cohort_37 = sum(cohort_37),
-#             .groups = 'keep')
+inc<- inc |>
+  group_by(scenario, id) |>
+  summarise(cases_2022 = sum(cases_2022),
+            cases_2037 = sum(cases_2037),
+            cohort_22 = sum(cohort_22),
+            cohort_37 = sum(cohort_37),
+            .groups = 'keep')
 
-# inc<- data.table(inc)
-# inc<- inc[ scenario == 'proxy', scenario:= 'Routine']
-# inc<- inc[scenario == 'no-vaccination', scenario:= 'Control']
+inc<- data.table(inc)
+inc<- inc[ scenario == 'proxy', scenario:= 'Routine']
+inc<- inc[scenario == 'no-vaccination', scenario:= 'Control']
 
-# saveRDS(inc, 'inc.rds')
+saveRDS(inc, 'inc.rds')
+

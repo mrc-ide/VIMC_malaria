@@ -23,7 +23,7 @@ plotting_theme<- theme_bw(base_size = 14) +
     theme( legend.position = 'bottom',
            strip.text.x = element_text(size = rel(0.8)),
            axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1.1),
-           text = element_text(family= 'TT Arial'),
+           #text = element_text(family= 'TT Arial'),
            axis.ticks.y= element_blank(),
            panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
@@ -35,6 +35,11 @@ get_values <- function(col) {
   lower <- quantile(col, 0.025, na.rm = TRUE)
   upper <- quantile(col, 0.975, na.rm = TRUE)
 
+  if (mean > 1){
+    mean<- scales::comma(mean)
+    lower<- scales::comma(lower)
+    upper<- scales::comma(upper)
+  }
   return(paste0(mean, "  (", lower, " - ", upper, ")"))
 }
 

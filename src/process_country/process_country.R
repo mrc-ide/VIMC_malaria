@@ -1,11 +1,11 @@
 # process country  -------------------------------------------------------------
 # orderly metadata  ----
 parms <- orderly2::orderly_parameters(
-  iso3c = 'CIV',
+  iso3c = 'GNB',
   scenario = 'proxy',
   quick_run = FALSE,
   parameter_draw = 0,
-  description = 'number_plug_paper'
+  description = NULL
 )
 
 orderly2::orderly_description('Analyze vaccine impact at the country level')

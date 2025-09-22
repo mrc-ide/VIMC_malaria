@@ -12,13 +12,45 @@ table_2<- readRDS('analyses/paper/inputs/table_2.rds')
 total_doses<- readRDS('analyses/paper/inputs/total_doses.rds')
 pop_format<- readRDS('analyses/paper/inputs/pop_format.rds')
 vax<- readRDS('analyses/paper/inputs/vax.rds')
-
+inc<- readRDS('analyses/paper/inputs/')
 # abstract
 print(africa)
 
-get_values(africa$cases_averted)
-get_values(africa$deaths_averted)
-# results section 1
+# cases and deaths averted 
+get_values(africa |> filter(scenario == 'Routine') |> pull(cases_averted))
+get_values(africa |> filter(scenario == 'Routine') |> pull(deaths_averted))
+
+# these numbers present X% of cases and deaths
+get_values(africa |> filter(scenario == 'Routine') |> pull(percent_cases_averted))
+get_values(africa |> filter(scenario == 'Routine') |> pull(percent_deaths_averted))
+
+# there were still X deaths on average
+# duplication in rows
+vax<- unique(vax)
+
+total_deaths<- vax |>
+  group_by(run_id, year, scenario) |>
+  summarise(deaths = sum(deaths), .groups= 'keep')
+
+get_values(total_deaths |> filter(scenario == 'Routine', year == 2100) |> pull(deaths))
+
+total_deaths<- vax |>
+  group_by(run_id, year, scenario) |>
+  summarise(deaths = sum(deaths_novax), .groups= 'keep')
+
+
+# results: overall impact
+  bl<- vax |>
+    filter(year <= 2050) |>
+    group_by(scenario,run_id) |>
+    summarise(cases_baseline = sum(cases_novax, na.rm = TRUE), # pull ivory coast site file
+              deaths_baseline = sum(deaths_novax, na.rm= TRUE),
+              .groups = 'keep')
+
+
+get_values(bl |> filter(scenario == 'Routine') |> pull(cases_baseline))
+get_values(bl |> filter(scenario == 'Routine') |> pull(deaths_baseline))
+
 
 #results section 2
 
