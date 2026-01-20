@@ -1,12 +1,11 @@
-#########################################################
+###########################################################################
 ## title   1_prepare_inputs
 ## author  Lydia Haile
 ## purpose pull final outputs in different formats and save to folder 
 ##         for number plugging, tables, and figures
 ###########################################################################
 
-  source('J:/VIMC/VIMC_malaria/analyses/paper/source_code/paper_functions.R')
-
+source('J:/VIMC/VIMC_malaria/analyses/paper/source_code/paper_functions.R')
 iso3cs<-read.csv('src/process_inputs/vimc_inputs/vaccine_coverage/coverage_202409malaria-1_malaria-r3-r4-default.csv') |> pull(country_code) |> unique()
 
 # pull country level output -------------- --------------------------------------
@@ -21,6 +20,7 @@ completed <- completed_reports("process_country") |>
 
 
 default<- compile_final_outputs('number_plug_paper') |>
+  #filter(country == 'COD') |>
   data.table() |>
   mutate(scenario = ifelse(scenario == 'proxy', 'Routine', scenario))
 
@@ -39,6 +39,8 @@ total<- unique(total)
 
   vax<- vax |>
     filter(run_id < 51) |>
+    #filter(year %in% c(2023:2050)) |>
+    #filter(year<= 2050) |>
     mutate(cases_averted = cases_novax- cases,
            deaths_averted = deaths_novax- deaths,
            dalys_averted = dalys_novax - dalys)
@@ -47,7 +49,6 @@ vax<- unique(vax)
 saveRDS(vax, 'analyses/paper/inputs/vax.rds')
 
 # check squareness of dataset 
-
 check_squareness<- vax |>
   group_by(country_name, run_id, year, scenario) |>
     summarise(cases_averted = sum(cases_averted, na.rm = TRUE),
@@ -61,14 +62,15 @@ check_squareness<- vax |>
 # visualise this so I can be sure there are 50 outputs for each country
 ggplot(data= check_squareness, mapping = aes(x= year, y= cases_averted, group= run_id)) +
   geom_line() +
-  facet_wrap_paginate(~country_name, scales= 'free', nrow= 4, ncol= 4, page= 2)
+  facet_wrap_paginate(~country_name, scales= 'free', nrow= 4, ncol= 4, page= 1)
 
 
 # summary across africa ------------------------------------------------------------------------------------------------------------------
   africa<- vax |>
-   # filter(run_id == 0) |>
+   #filter(run_id == 0) |>
+  filter(age<= 5) |>
     group_by(scenario, run_id) |>
-    #filter(year <= 2050) |>
+    filter(year <= 2050) |>
     summarise(cases_averted = sum(cases_averted, na.rm = TRUE),
               deaths_averted = sum(deaths_averted, na.rm = TRUE),
               dalys_averted = sum(dalys_averted, na.rm = TRUE),
@@ -89,6 +91,8 @@ saveRDS(africa, 'analyses/paper/inputs/africa.rds')
 
 # results by country -------------------------------------------------------------------------------
 by_country <- vax |>
+  #filter(year <= 5) |>
+  #filter(year <= 2038) |>
   group_by(scenario, country, country_name, run_id) |>
   summarise(
     cases_averted = sum(cases_averted),
@@ -118,14 +122,14 @@ total_doses<- compile_dose_outputs('number_plug_paper', iso = 'all') |> data.tab
 total_doses[scenario %like% 'no-vaccination', scenario := 'Control']
 total_doses<- unique(total_doses)
 total_doses<- total_doses |>
-  #filter(year <= 2038)|>
+ #filter(year <= 2038)|>
   group_by(iso3c, scenario, run_id) |>
   summarise(cases_averted = sum(cases_averted),
             deaths_averted = sum(deaths_averted),
             fvp = sum(fvp),
             .groups = 'keep') |>
   mutate(cases_averted_per_fvp= cases_averted*100000/ fvp,
-         deaths_averted_per_fvp = deaths_averted*100000/ fvp) |>
+         deaths_averted_per_fvp = deaths_averted*1000/ fvp) |>
   select(iso3c, scenario, run_id, cases_averted_per_fvp, deaths_averted_per_fvp) |>
   rename(country = iso3c) |>
   ungroup() |>
@@ -199,42 +203,43 @@ saveRDS(table_2, 'analyses/paper/inputs/table_2.rds')
 
 central<- completed |> filter(parameter_draw == 0)
 
-# results by admin1 unit---------------------------------------------------------------------------------------------------------------
-lapply(c(1:nrow(central)), get_site_outputs, map= central, output_filepath= 'J:/VIMC/VIMC_malaria/archive/process_country/')
+# # results by admin1 unit---------------------------------------------------------------------------------------------------------------
+# lapply(c(1:nrow(central)), get_site_outputs, map= central, output_filepath= 'J:/VIMC/VIMC_malaria/archive/process_country/')
 files<- list.files('analyses/paper/inputs/site_output/', full.names = TRUE)
 outputs<- rbindlist(lapply(files, readRDS))
-outputs<- outputs |>
-  mutate(id = paste0(site_name, '_', urban_rural))
 
-test<- unique(outputs)
-# incidence rate before vaccine is introduced versus 15 years after
-inc_22<- outputs |>
-  group_by(scenario, year, id) |>
-  filter(year == 2022) |>
-  mutate(cases_2022 = cases,
-         cohort_22 = cohort_size)
+# outputs<- outputs |>
+#   mutate(id = paste0(site_name, '_', urban_rural))
 
-inc_37<- outputs |>
-  group_by(scenario, year, id) |>
-  filter(year == 2038) |>
-  rename(cases_2037 = cases,
-         cohort_37 = cohort_size) |>
-  ungroup() |>
-  select(cases_2037, cohort_37, scenario, id)
+# test<- unique(outputs)
+# # incidence rate before vaccine is introduced versus 15 years after
+# inc_22<- outputs |>
+#   group_by(scenario, year, id) |>
+#   filter(year == 2022) |>
+#   mutate(cases_2022 = cases,
+#          cohort_22 = cohort_size)
 
-inc<- merge(inc_22, inc_37, by = c('id', 'scenario'))
+# inc_37<- outputs |>
+#   group_by(scenario, year, id) |>
+#   filter(year == 2038) |>
+#   rename(cases_2037 = cases,
+#          cohort_37 = cohort_size) |>
+#   ungroup() |>
+#   select(cases_2037, cohort_37, scenario, id)
 
-inc<- inc |>
-  group_by(scenario, id) |>
-  summarise(cases_2022 = sum(cases_2022),
-            cases_2037 = sum(cases_2037),
-            cohort_22 = sum(cohort_22),
-            cohort_37 = sum(cohort_37),
-            .groups = 'keep')
+# inc<- merge(inc_22, inc_37, by = c('id', 'scenario'))
 
-inc<- data.table(inc)
-inc<- inc[ scenario == 'proxy', scenario:= 'Routine']
-inc<- inc[scenario == 'no-vaccination', scenario:= 'Control']
+# inc<- inc |>
+#   group_by(scenario, id) |>
+#   summarise(cases_2022 = sum(cases_2022),
+#             cases_2037 = sum(cases_2037),
+#             cohort_22 = sum(cohort_22),
+#             cohort_37 = sum(cohort_37),
+#             .groups = 'keep')
 
-saveRDS(inc, 'inc.rds')
+# inc<- data.table(inc)
+# inc<- inc[ scenario == 'proxy', scenario:= 'Routine']
+# inc<- inc[scenario == 'no-vaccination', scenario:= 'Control']
+
+# saveRDS(inc, 'inc.rds')
 

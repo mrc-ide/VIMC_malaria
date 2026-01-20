@@ -1,7 +1,7 @@
 # postprocess in bulk
-orderly2::orderly_parameters(iso3c = NULL,
-                             description = NULL, 
-                             quick_run = NULL)
+orderly2::orderly_parameters(iso3c = 'SDN',
+                             description = 'fixed_demography', 
+                             quick_run = FALSE)
 
 # packages  --------------------------------------------------------------------
 library(site)
@@ -46,7 +46,7 @@ completed<- completed_reports('process_country') |>
   dplyr::arrange(iso3c, scenario, parameter_draw)
 
 max_draw<- max(completed[scenario == 'no-vaccination', parameter_draw])
-#max_draw<- 10 # do this for a small number so I can finish plugging the paper 
+max_draw<- 5 # do this for a small number so I can finish plugging the paper 
 
 # vimc inputs
 inputs<- completed_reports('process_inputs') |>
@@ -88,53 +88,85 @@ final_postprocessing<- function(draw){
 
 
   message('aggregating')
-  dt<- aggregate_outputs(intvn, pop_single_yr)
-
-  test<- add_proportions(dt)
-  # scale cases based on difference between site file PAR and VIMC PAR
-  message('scaling PAR')
+# the aggregation function divides counts by the VIMC national population, which we want to remove from this sensitivity analysis
+# instead, aggregate outside of the function and keep population age structure fixed from 2000 through 2100
+# this will remove the effet of ageing and population growth from the impact outputs
+# because this is a sensitivity analysis, no need to then rescale these outputs to world malaria report cases + deaths output
+# DRC is a country where all admin1s are vaccinated, so sum of cohort sizes shoud represent the entire country
+    dt<- data.table::data.table(intvn) 
   
-  input<- scale_par(test, iso3c= {{iso3c}})
+#   # pul the population only from 2000
+#   early_demog<- dt |> 
+#     filter(year == 2000) |>
+#     select(age, site_name, urban_rural, scenario, parameter_draw, cohort_size)
 
-  message('scaling cases')
-  if(iso3c == 'CIV'){site_data<- wmr}
-  output<- scale_cases_deaths(input, scaling_data= scaling,  site_data = site_data, iso3c = {{iso3c}})
+#   dt <- dt |>
+#     select(-cohort_size, -cases, -severe, -dalys, -ylls, -deaths)
 
+# dt<- merge(dt, early_demog, by = c('age', 'site_name', 'urban_rural', 'scenario', 'parameter_draw'))
+# # multiply by 2000 population to get rates based on a fixed population
+#   dt<- dt |>
+#     mutate(cases = clinical * cohort_size, 
+#     deaths = mortality * cohort_size)|>
+#     as.data.table()
+  
+  # aggregate to country
+  dt[, `:=` (
+    cases = sum(cases),
+    deaths = sum(deaths),
+    cohort_size = sum(cohort_size)),
+    by = c('age', 'year', 'scenario')]
 
+  dt <- unique(dt, by = c('age', 'year', 'scenario', 'parameter_draw'))
+
+  # remove rates 
+  dt <- dt |>
+    select(-clinical, -mortality, -dalys_pp, -site_name, -urban_rural)
+
+  processed_output<- dt
+# don't scale or do further processing
+  # dt<- aggregate_outputs(intvn, pop_single_yr)
+
+  # test<- add_proportions(dt)
+  # # scale cases based on difference between site file PAR and VIMC PAR
+  # message('scaling PAR')
+  
+  # input<- scale_par(test, iso3c= {{iso3c}})
+
+  # message('scaling cases')
+  # if(iso3c == 'CIV'){site_data<- wmr}
+  # output<- scale_cases_deaths(input, scaling_data= scaling,  site_data = site_data, iso3c = {{iso3c}})
 
   message('formatting')
   # format and save (
-  processed_output<- output |>
-    mutate(cases = round(cases),
-           deaths = round(deaths),
-           yll= round(ylls),
-           dalys = round(dalys),
-           cohort_size = cohort_size) |>
-    rename(run_id = parameter_draw) |>
-    select(-model_proportion_risk,
-           -proportion_risk,
-           -scaling_ratio,
-           -prop_severe,
-           -prop_deaths,
-           -dalys_pp,
-           -ylls,
-           -life_expectancy) |>
-    select(run_id,
-           scenario,
-           disease,
-           year,
-           age,
-           country,
-           country_name,
-           cohort_size,
-           cases,
-           dalys,
-           deaths,
-           yll) |>
-    mutate(pfpr_threshold = .10)
-
-
-
+  # processed_output<- output |>
+  #   mutate(cases = round(cases),
+  #          deaths = round(deaths),
+  #          yll= round(ylls),
+  #          dalys = round(dalys),
+  #          cohort_size = cohort_size) |>
+  #   rename(run_id = parameter_draw) |>
+  #   select(-model_proportion_risk,
+  #          -proportion_risk,
+  #          -scaling_ratio,
+  #          -prop_severe,
+  #          -prop_deaths,
+  #          -dalys_pp,
+  #          -ylls,
+  #          -life_expectancy) |>
+  #   select(run_id,
+  #          scenario,
+  #          disease,
+  #          year,
+  #          age,
+  #          country,
+  #          country_name,
+  #          cohort_size,
+  #          cases,
+  #          dalys,
+  #          deaths,
+  #          yll) |>
+  #   mutate(pfpr_threshold = .10)
   return(processed_output)
 
 }
@@ -142,7 +174,11 @@ final_postprocessing<- function(draw){
 # save -------------------------------------------------------------------------
 #max_draw<- 50
 outputs<- lapply(c(0:max_draw), final_postprocessing)
-saveRDS(outputs, 'final_output.rds')
+
+# run this for both sets of model outputs and save to flat file
+saveRDS(outputs, 'SDN_fixed_demography.rds')
+#saveRDS(outputs, 'COD_dynamic_output_dynamic_demography.rds')
+#saveRDS(outputs, 'final_output.rds')
 
 
 

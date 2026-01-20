@@ -6,31 +6,6 @@
 
 
 # figure 1: line plot of cases + deaths averted over time---------------------------------------------------------
-
-#check this against previous model runs to make sure all is well
-vax<- read.csv('montagu/central-burden-est-malaria-r3-r4-default.csv')
-novax<- read.csv('montagu/central-burden-est-no-vaccination.csv') |>
-    rename(cases_novax = cases,
-           deaths_novax = deaths,
-           dalys_novax = dalys) |>
-    select(year, age, country, cases_novax, deaths_novax, dalys_novax)
-
-
-  vax<- merge(vax, novax, by = c('country', 'age', 'year'))
-
-  vax<- vax |>
-   # filter(run_id < 51) |>
-    mutate(cases_averted = cases_novax- cases,
-           deaths_averted = deaths_novax- deaths,
-           dalys_averted = dalys_novax - dalys) |>
-  group_by(year) |>
-  summarise(cases_averted = sum(cases_averted, na.rm= TRUE),
-            deaths_averted = sum(deaths_averted, na.rm = TRUE),
-            .groups = 'keep')
-
-# values from previous submission are in the same ballpark so it was a duplicates bug
-
-
 fig_1<- vax |>
 #  filter(run_id == 0) |>
   group_by(scenario,year, run_id) |>
@@ -58,9 +33,10 @@ fig_1<- vax |>
     deaths_cumulative_upper =  quantile(cumulative_deaths, 0.975, na.rm= TRUE))
 
 
+
 p1<- ggplot(fig_1) +
-  geom_line(aes(x = year, y = cases_mean/1000000, color = scenario)) +
-  geom_ribbon(aes(x= year, ymin= cases_lower/1000000, ymax= cases_upper/1000000, fill= scenario), alpha = 0.25) +
+  geom_smooth(aes(x= year, y= cases_mean/1000000, color= scenario), method= 'loess', span= 0.08, se= FALSE) +
+  geom_ribbon(mapping = aes(x= year, ymin= cases_lower/1000000, ymax= cases_upper/1000000, fill= scenario), alpha = 0.25) +
   scale_color_manual(values = '#CE5137') +
   scale_fill_manual(values = '#CE5137') +
   plotting_theme +
@@ -73,7 +49,7 @@ p1<- ggplot(fig_1) +
   )
 
 p2<- ggplot(fig_1) +
-  geom_line(aes(x = year, y = deaths_mean/1000, color = scenario)) +
+  geom_smooth(aes(x = year, y = deaths_mean/1000, color = scenario), method= 'loess', span= 0.08, se= FALSE) +
   geom_ribbon(aes(x= year, ymin= deaths_lower/1000, ymax= deaths_upper/1000, fill= scenario), alpha = 0.25)+
   scale_color_manual(values = '#1B4F72') +
   scale_fill_manual(values = '#1B4F72') +
@@ -116,7 +92,57 @@ p4<- ggplot(fig_1) +
 
 
 ggarrange(p3, p4, nrow= 2)
-ggarrange(p1, p3, p2, p4, nrow= 2, ncol= 2)
+
+pdf('Figure_1.pdf')
+p<- ggarrange(p1, p3, p2, p4, nrow= 2, ncol= 2)
+print(p)
+dev.off()
+
+# Figure 2: cases and deaths averted 
+mapdat <- total_doses |>
+  left_join(countries_africa |> dplyr::select(ID_0, geometry),
+            by = c("country" = "ID_0")) |>
+  st_as_sf()
+p1 <- ggplot() +
+geom_sf(data = countries, fill = "lightgrey", color = "lightgrey") +
+geom_sf(data= mapdat, aes(fill = cases_mean), color = "lightgrey", show.legend = TRUE, linewidth = 0.005) +
+scale_fill_distiller(palette = "Oranges", direction = 1, labels= scales::comma) + # "RdYlBu"
+#scale_fill_continuous(labels = scales::comma) +
+# scale_fill_gradient(low = "#ffcccc", high = "#990000") +
+labs(fill = "Cases averted per 100,000 FVP") +
+theme(panel.grid.major = element_blank(),
+panel.grid.minor = element_blank(),
+axis.ticks = element_blank(),
+axis.text.x = element_blank(),
+axis.text.y = element_blank(),
+panel.border = element_blank(),
+plot.background = element_blank(),
+panel.background = element_blank())
+
+
+p2 <- ggplot() +
+geom_sf(data = countries, fill = "lightgrey", color = "lightgrey") +
+geom_sf(data= mapdat, aes(fill = deaths_mean), color = "lightgrey", show.legend = TRUE, linewidth = 0.005) +
+scale_fill_distiller(palette = "Oranges", direction = 1, labels= scales::comma) + # "RdYlBu"
+#scale_fill_continuous(labels = scales::comma) +
+# scale_fill_gradient(low = "#ffcccc", high = "#990000") +
+labs(fill = "Deaths averted per 100,000 FVP") +
+theme(panel.grid.major = element_blank(),
+panel.grid.minor = element_blank(),
+axis.ticks = element_blank(),
+axis.text.x = element_blank(),
+axis.text.y = element_blank(),
+panel.border = element_blank(),
+plot.background = element_blank(),
+panel.background = element_blank())
+
+pdf('Figure_2.pdf')
+
+fig_2<- ggarrange(p1, p2, nrow=2)
+
+print(fig_2)
+
+dev.off()
 
 
 
@@ -153,6 +179,41 @@ p2 <- ggplot(data = by_country, aes(x = reorder(country, -deaths_mean), group = 
 
 ggarrange(p1, p2, ncol = 2)
 
+# Figure 3: by age--------------------------
+p3<- ggplot(table_2) +
+  geom_smooth(mapping = aes(x= year, y= cases_mean, color = age), method= 'loess', span = 0.1, se= FALSE) +
+  geom_ribbon(aes(x= year, ymin = cases_lower, ymax = cases_upper, fill= age) , alpha = 0.1) +
+  geom_hline(yintercept = 0, linetype = 'dotted') +
+    geom_vline(xintercept = 2030) +
+  scale_color_manual(values = cols) +
+  scale_fill_manual(values = cols) +
+  xlim(2020, 2100) +
+  scale_y_continuous(labels = scales::comma) +
+  plotting_theme+
+    theme(legend.position = 'none') +
+  labs(title = '',
+       x= '',
+       y= 'Cases averted')
+
+p4<- ggplot(table_2) +
+  geom_smooth(mapping = aes(x= year, y= deaths_mean, color = age), method= 'loess', span= 0.1, se= FALSE) +
+  geom_ribbon(aes(x= year, ymin = deaths_lower, ymax = deaths_upper, fill= age) , alpha = 0.1) +
+  geom_hline(yintercept = 0, linetype = 'dotted') +
+  geom_vline(xintercept = 2030) +
+  scale_color_manual(values = cols) +
+  scale_fill_manual(values = cols) +
+  xlim(2020, 2100)+
+  scale_y_continuous(labels = scales::comma) +
+  plotting_theme+
+  labs(title = '',
+       x= 'Year',
+       y= 'Deaths averted')
+
+fig_3<- ggarrange(p3, p4, nrow = 2, heights= c(1, 1.25))
+
+pdf('Figure_3.pdf')
+print(fig_3)
+dev.off()
 
 # plot cases averted by country per FVP
 p3<- ggplot(data = total_doses, aes(x = reorder(country, -cases_mean), group = scenario)) +
@@ -184,11 +245,6 @@ ggarrange(p1, p2, p3, p4, ncol =2, nrow= 2)
 
 
 # maps
-mapdat <- total_doses |>
-  left_join(countries_africa |> dplyr::select(ID_0, geometry),
-            by = c("country" = "ID_0")) |>
-  st_as_sf()
-
 pop_reduced[id %like% 'Southern Nations', id:= 'Southern Nations, Nationalities and Peoples_ETH']
 pop_reduced[id %like% 'Nasarawa_NGA', id:= 'Nassarawa_NGA']
 
@@ -200,12 +256,8 @@ mapdat_admin<- st_as_sf(mapdat_admin)
 #do some cleaning of trhe admin1 units
 map_dt<- mapdat_admin |> filter(id %like% 'NGA')
 model_dt<- pop_reduced |> filter(id %like% 'NGA') # not matching but introduced everywhere so can hardcode
-
-
 setdiff(map_dt$id, model_dt$id)
 setdiff(model_dt$id, map_dt$id)
-
-
 mapdat_admin <- mapdat_admin |>
   mutate(run_model = ifelse(id %like% 'GHA', 'Introduced', run_model)) |>
   mutate(run_model = ifelse(id %like% 'NGA', 'Introduced', run_model)) |>
@@ -238,70 +290,8 @@ p <- ggplot() +
 
 
 
-# Figure 2: cases and deaths averted 
-p1 <- ggplot() +
-geom_sf(data = countries, fill = "lightgrey", color = "lightgrey") +
-geom_sf(data= mapdat, aes(fill = cases_mean), color = "lightgrey", show.legend = TRUE, linewidth = 0.005) +
-scale_fill_distiller(palette = "Oranges", direction = 1, labels= scales::comma) + # "RdYlBu"
-#scale_fill_continuous(labels = scales::comma) +
-# scale_fill_gradient(low = "#ffcccc", high = "#990000") +
-labs(fill = "Cases averted per 100,000 FVP") +
-theme(panel.grid.major = element_blank(),
-panel.grid.minor = element_blank(),
-axis.ticks = element_blank(),
-axis.text.x = element_blank(),
-axis.text.y = element_blank(),
-panel.border = element_blank(),
-plot.background = element_blank(),
-panel.background = element_blank())
 
 
-p2 <- ggplot() +
-geom_sf(data = countries, fill = "lightgrey", color = "lightgrey") +
-geom_sf(data= mapdat, aes(fill = deaths_mean), color = "lightgrey", show.legend = TRUE, linewidth = 0.005) +
-scale_fill_distiller(palette = "Oranges", direction = 1, labels= scales::comma) + # "RdYlBu"
-#scale_fill_continuous(labels = scales::comma) +
-# scale_fill_gradient(low = "#ffcccc", high = "#990000") +
-labs(fill = "Deaths averted per 100,000 FVP") +
-theme(panel.grid.major = element_blank(),
-panel.grid.minor = element_blank(),
-axis.ticks = element_blank(),
-axis.text.x = element_blank(),
-axis.text.y = element_blank(),
-panel.border = element_blank(),
-plot.background = element_blank(),
-panel.background = element_blank())
-
-ggarrange(p1, p2, nrow=2)
-# Figure 3: by age--------------------------
-p3<- ggplot(table_2) +
-  geom_line(mapping = aes(x= year, y= cases_mean, color = age)) +
-  geom_ribbon(aes(x= year, ymin = cases_lower, ymax = cases_upper, fill= age) , alpha = 0.1) +
-  geom_hline(yintercept = 0, linetype = 'dotted') +
-  scale_color_manual(values = cols) +
-  scale_fill_manual(values = cols) +
-  xlim(2020, 2100) +
-  scale_y_continuous(labels = scales::comma) +
-  plotting_theme+
-    theme(legend.position = 'none') +
-  labs(title = '',
-       x= '',
-       y= 'Cases averted')
-
-p4<- ggplot(table_2) +
-  geom_line(mapping = aes(x= year, y= deaths_mean, color = age)) +
-  geom_ribbon(aes(x= year, ymin = deaths_lower, ymax = deaths_upper, fill= age) , alpha = 0.1) +
-  geom_hline(yintercept = 0, linetype = 'dotted') +
-  scale_color_manual(values = cols) +
-  scale_fill_manual(values = cols) +
-  xlim(2020, 2100)+
-  scale_y_continuous(labels = scales::comma) +
-  plotting_theme+
-  labs(title = '',
-       x= 'Year',
-       y= 'Deaths averted')
-
-ggarrange(p3, p4, nrow = 2, heights= c(1, 1.25))
 
 # try same plot but as a stacked bar chart
 # should calculate mean + cis after all calculations but update this later
@@ -413,7 +403,7 @@ p1<- ggplot(data = age_pattern ) +
   geom_ribbon(aes(x= age, ymin = cases_min, ymax = cases_max, fill= scenario), alpha = 0.1) +
     scale_y_continuous(labels = scales::comma) +
       scale_color_manual(values = cols)+
-labs(y = 'Cases', x= 'Age') +
+labs(y = 'Cases', x= 'Age', color= 'Scenaro', fill= 'Scenario') +
 plotting_theme
 
 p2<- ggplot(data = age_pattern) +
@@ -425,7 +415,6 @@ p2<- ggplot(data = age_pattern) +
 labs(y = 'Deaths', x= 'Age') +
 plotting_theme +
   theme( legend.position = 'none')
-
 
 
 ggarrange(p1, p2, ncol = 2)
@@ -513,10 +502,7 @@ inc_37<- vax |>
   ungroup() |>
   select(cases_2037, cohort_37, scenario, country)
 
-
-
 inc<- merge(inc_22, inc_37, by = c('country', 'scenario'))
-
 inc<- inc |>
   group_by(scenario, country) |>
   summarise(cases_2022 = sum(cases_2022),
@@ -538,3 +524,132 @@ ggplot(data = inc, mapping = aes(x= cases_2022/cohort_22, y= cases_2037/cohort_3
          x= 'Incidence rate before vaccine introduction',
          y= 'Incidence rate 15 years after vaccine introduction')
 
+
+# plot vaccine coverage across all countries
+country_names<- vax |>
+  rename(iso3c = country) |>
+  select(iso3c, country_name) |>
+  unique()
+
+
+proxy_scenario<- readRDS('src/process_inputs/proxy_scenario.rds')
+proxy_scenario<- proxy_scenario |>
+  mutate(scenario= 'proxy') |>
+  select(year, coverage, booster, iso3c, scenario) |>
+  inner_join(country_names)
+
+
+
+# merge on country name
+cov<- data.table(proxy_scenario)
+
+cov<- melt(cov, id.vars= c('year', 'country_name'), measure.vars = c('coverage', 'booster'), value.name = 'cov') |>
+  rename(series = variable) |>
+  mutate(series = ifelse(series == 'coverage', 'primary', 'booster')) |>
+  rename(coverage = cov) |>
+  filter(series == 'primary')
+
+  p1<- ggplot(cov, mapping = aes(x= year, y= coverage, color= series)) +
+    geom_line()+
+    facet_wrap_paginate(~country_name, nrow= 4, ncol= 4, page= 1)+
+   # geom_vline(mapping= aes(xintercept= 2022), linetype= 'dotted')+
+    geom_vline(mapping= aes(xintercept= 2030), linetype= 'dotted')+
+    scale_color_manual(values = cols) +
+    plotting_theme +
+   theme(legend.position = 'none') +
+       labs(y= 'Vaccine coverage (first three doses)', x= 'Year')
+
+
+  p2<- ggplot(cov, mapping = aes(x= year, y= coverage, color= series)) +
+    geom_line()+
+    facet_wrap_paginate(~country_name, nrow= 4, ncol= 4, page= 2)+
+   # geom_vline(mapping= aes(xintercept= 2022), linetype= 'dotted')+
+    geom_vline(mapping= aes(xintercept= 2030), linetype= 'dotted')+
+    scale_color_manual(values = cols) +
+    plotting_theme +
+   theme(legend.position = 'none') +
+   labs(y= 'Vaccine coverage (first three doses)',
+x= 'Year')
+
+  print(p1)
+print(p2)
+
+ggarrange(p1, p2, nrow=2)
+
+
+  p1<- ggplot(cov, mapping = aes(x= year, y= coverage, color= series)) +
+    geom_line()+
+    facet_wrap(~country_name)+
+   # geom_vline(mapping= aes(xintercept= 2022), linetype= 'dotted')+
+    geom_vline(mapping= aes(xintercept= 2030), linetype= 'dotted')+
+    scale_color_manual(values = cols) +
+    plotting_theme +
+   theme(legend.position = 'none') +
+       labs(y= 'Vaccine coverage (first three doses)', x= 'Year')
+
+
+
+
+
+# calculate cases averted per FVP at the admin-1 level + merge it upon PFPR in 2024
+#' Pull final outputs from workflow
+#' @param descrip         description of runs to pull
+#' @export
+compile_dose_outputs<- function(descrip, iso){
+
+  completed<- completed_reports('postprocessing')
+
+  completed<- completed[description == 'number_plug_paper'] |>
+    dplyr::arrange(desc(date_time)) |>
+    dplyr::distinct(iso3c, description, .keep_all = TRUE) |>
+    dplyr::arrange(iso3c, description)
+
+  pull_dose_output<- function(index, map){
+
+    message(index)
+    map<- map[ index,]
+    directory_name<- map$directory_name
+    iso3c<- map$iso3c
+    output<- rbindlist(readRDS(paste0('archive/postprocessing/', directory_name, '/dose_output.rds')))
+
+    return(output)
+  }
+  
+  outputs<- rbindlist(lapply(c(1:nrow(completed)), pull_dose_output, map = completed))
+}
+
+
+
+
+
+# outputs has fvp + cases averted + cases no vax for each site + year
+# sum cases averted and fvp from 2023 to 2038 
+
+
+
+output_modify<- copy(outputs)
+
+
+output_modify <- output_modify |>
+  filter(year %in% c(2023:2038)) |>
+group_by(scenario, site_ur) |>
+summarise(cases_averted= sum(cases_averted),
+  deaths_averted = sum(deaths_averted),
+fvp= sum(fvp),
+.groups = 'keep')
+
+
+#pull in prevalence data from 2024 and merge this on
+
+prev_data<- rbindlist(lapply(iso3cs, extract_site_data))
+prev_data<- prev_data |>
+  rename(site_ur= id)
+
+output_modify<- merge(output_modify, prev_data, by= c('site_ur'))
+output_modify <- output_modify |>
+mutate(cases_averted_per_fvp = cases_averted/ fvp,
+deaths_averted_per_fvp = deaths_averted/fvp)
+
+
+ggplot(output_modify, mapping = aes(x= pfpr_2024, y= cases_averted_per_fvp))+
+  geom_point()

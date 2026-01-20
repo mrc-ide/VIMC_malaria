@@ -1,15 +1,15 @@
 # process country  -------------------------------------------------------------
 # orderly metadata  ----
-parms <- orderly2::orderly_parameters(
-  iso3c = 'GNB',
+parms <- orderly::orderly_parameters(
+  iso3c = 'COD',
   scenario = 'proxy',
-  quick_run = FALSE,
+  quick_run = TRUE,
   parameter_draw = 0,
-  description = NULL
+  description = 'fixed_demography'
 )
 
-orderly2::orderly_description('Analyze vaccine impact at the country level')
-desc<- orderly2::orderly_artefact('Processed output', 'outputs.rds')
+orderly::orderly_description('Analyze vaccine impact at the country level')
+desc<- orderly::orderly_artefact('Processed output', 'outputs.rds')
 
 # packages and functions ----
 library(site)
@@ -31,8 +31,8 @@ quick_run<- parms$quick_run
 parameter_draw<- parms$parameter_draw
 description<- parms$description
 
-orderly2::orderly_dependency("process_inputs", "latest(parameter:iso3c == this:iso3c)", c(vimc_input.rds = "vimc_input.rds"))
-orderly2::orderly_dependency("process_inputs", "latest(parameter:iso3c == this:iso3c)", c(site_file.rds = "site_file.rds"))
+orderly::orderly_dependency("process_inputs", "latest(parameter:iso3c == this:iso3c)", c(vimc_input.rds = "vimc_input.rds"))
+orderly::orderly_dependency("process_inputs", "latest(parameter:iso3c == this:iso3c)", c(site_file.rds = "site_file.rds"))
 
 vimc_input<- readRDS('vimc_input.rds')
 site_data <- readRDS('site_file.rds')

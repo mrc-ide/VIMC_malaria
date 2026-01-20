@@ -227,6 +227,9 @@ summarise(children_protected = sum(children_fully_protected))
   return(doses$children_protected)
 }
 
+
+
+
 #pull in VIMC scenario for comparison
 vimc_cov <- vimc |>
   #filter(age_first== 0) |>
@@ -246,17 +249,25 @@ vimc_scenario<- calculate_children_protected(vimc_cov)
 cov_scenario<- calculate_children_protected_summary(proxy_scenario)
 vimc_scenario<- calculate_children_protected_summary(vimc_cov)
 
+
+
+proxy_scenario<- readRDS('src/process_inputs/proxy_scenario.rds')
 proxy_scenario<- proxy_scenario |>
   mutate(scenario= 'proxy') |>
   select(year, coverage, booster, iso3c, scenario)
 
-cov<- data.table(rbind(vimc_cov, proxy_scenario))
+cov<- data.table(proxy_scenario)
 
+cov<- melt(cov, id.vars= c('year', 'iso3c'), measure.vars = c('coverage', 'booster'), value.name = 'cov') |>
+  rename(series = variable) |>
+  mutate(series = ifelse(series == 'coverage', 'primary', 'booster')) |>
+  rename(coverage = cov) |>
+  filter(series == 'primary')
 
 compare_coverage<- function(iso){
 
   message(iso)
-  p<- ggplot(cov[iso3c == iso], mapping = aes(x= year, y= coverage, color= scenario)) +
+  p<- ggplot(cov[iso3c == iso], mapping = aes(x= year, y= coverage, color= series)) +
     geom_line()+
     geom_vline(mapping= aes(xintercept= 2022), linetype= 'dotted')+
       geom_vline(mapping= aes(xintercept= 2030), linetype= 'dotted')+

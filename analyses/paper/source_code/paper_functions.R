@@ -61,37 +61,28 @@ read_pop<- function(iso3c){
   return(pop)
 }
 
-extract_site_data <- function(directory) {
-  site_file <- readRDS(paste0("archive/process_inputs/", directory, "/site_file.rds"))
+
+extract_site_data <- function(iso) {
+  site_file <- site::fetch_site(iso3c= iso, urban_rural = TRUE)
 
   # extract prevalence data
   prev <- site_file$prevalence |>
-    filter(year %in% c(2000, 2019)) |>
+    filter(year %in% c(2000, 2024)) |>
     mutate(id = paste0(name_1, "_", urban_rural)) |>
     data.table()
 
   prevs <- dcast(prev, id ~ year, value.var = "pfpr") |>
     rename(
       pfpr_2000 = `2000`,
-      pfpr_2019 = `2019`
+      pfpr_2024 = `2024`
     )
 
 
-  # extract intervention coverage data for last available year
-  intvns <- site_file$interventions |>
-    filter(year == 2022) |>
-    mutate(id = paste0(name_1, "_", urban_rural)) |>
-    select(id, itn_use, tx_cov, smc_cov, pmc_cov, irs_cov)
-
-  site_info <- merge(prevs, intvns, by = "id")
-
-  return(site_info)
+  return(prevs)
 }
 
 
 
-
-# generate maps
 Africa <- c("DZA","AGO","BEN","BWA","BFA","BDI","CMR","CPV","CAF","TCD","COM",
             "COD","DJI","EGY","GNQ","ERI","ETH","GAB","GMB","GHA","GIN","GNB",
             "CIV","KEN","LSO","LBR","LBY","MDG","MWI","MLI","MRT","MUS","MYT",
@@ -137,11 +128,8 @@ countries_africa <- map_dfr(countries_africa, unpack_gadm) # loop over each coun
 admin1s_africa <- map_dfr(admin1s_africa, unpack_gadm) # loop over each admin1
 st_crs(countries_africa); st_crs(countries_africa) # view CRS
 # select out African countries with malaria (i.e. countries in foresite package)
-countries <- countries_africa[!(countries_africa$ID_0 %in% c("DZA", "CPV", "EGY", "LSO", "LBY", "MUS", "MYT", "MAR", "REU", "SHN", "STP", "SYC", "TUN", "ESH")), ]
+countries <- countries_africa[!(countries_africa$ID_0 %in% c("DZA", "CPV", "EGY", "LBY", "MUS", "MYT", "MAR", "REU", "SHN", "STP", "SYC", "TUN", "ESH")), ]
 admin1s <- admin1s_africa[!(admin1s_africa$ID_0 %in% c("DZA", "CPV", "EGY", "LSO", "LBY", "MUS", "MYT", "MAR", "REU", "SHN", "STP", "SYC", "TUN", "ESH")), ]
-
-
-
 
 admin1s<- admin1s |>
   mutate(id= paste0(NAME_1, '_', ID_0))
@@ -176,8 +164,6 @@ remove_urbanicity<- function(admin_data){
 
   return(reduced)
 }
-
-
 
 # Country borders --------------------------------------------------------------
 # define borders between country polygons

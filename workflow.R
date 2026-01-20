@@ -7,32 +7,32 @@
 
 # setup ------------------------------------------------------------------------
 remotes::install_github('mrc-ide/vimcmalaria@paper')
-#remotes::install_github('mrc-ide/site@paper')
-
+remotes::install_github('mrc-ide/site@paper')
 #orderly2::orderly_init()
 library(data.table)
 library(dplyr)
 library(hipercow)
 library(vimcmalaria)
 library(tidyr)
-
 source('functions.R')
+
 coverage<- read.csv('src/process_inputs/vimc_inputs/vaccine_coverage/coverage_202409malaria-1_malaria-r3-r4-default.csv')
 iso3cs<- unique(coverage$country_code)
 dir<- getwd()
 
 # # generate parameter map for analysis ------------------------------------------
-map<- make_parameter_map(iso3cs= c(iso3cs),
-                         scenarios = c('no-vaccination', 'proxy'),
-                          description = 'number_plug_paper',
-                          parameter_draws = c(1:50),
+map<- make_parameter_map(iso3cs= c('COD'),
+                         scenarios = c('proxy', 'no-vaccination'),
+                          description = 'fixed_demography',
+                          parameter_draws = c(0:5),
                           quick_run= FALSE)
 
 # check function
 map<- check_not_rerun(report_name = 'process_country', map = map, date = 0)
 map<- check_reports_completed('process_country', map, date_time = 0)
-reports<- completed_reports('process_country')
+reports<- completed_reports('process_country') |> filter(iso3c == 'GNB', description== 'number_plug_paper')
 
+map$site_number<- 3
 # # STEP 1: run process_inputs report --------------------------------------------
 #lapply(iso3cs, function(x) orderly2::orderly_run('process_inputs', parameters = list(iso3c = x)))
 
@@ -47,7 +47,7 @@ hipercow::hipercow_environment_create()
 hipercow::hipercow_configuration()
 
 # # submit groups of jobs by number of cores to submit  ------------------------
-#lapply(unique(map$site_number), submit_by_core, dt = map, test = FALSE)
+lapply(unique(map$site_number), submit_by_core, dt = map, test = FALSE)
 
 # STEP 3: run postprocessing on outputs   --------------------------------------
 for(iso in iso3cs){
@@ -58,7 +58,7 @@ task<- hipercow::task_create_expr(
 orderly2::orderly_run(
     "postprocessing",
     parameters = list(
-      iso3c = iso,
+      iso3c = 'GNB',
       description = 'number_plug_paper',
       quick_run = FALSE
     ))
@@ -70,16 +70,16 @@ orderly2::orderly_run(
 for(iso in iso3cs){
 
   message(iso)
-task<- hipercow::task_create_expr(
+#task<- hipercow::task_create_expr(
   orderly2::orderly_run(
-    "diagnostics",
+    "postprocessing",
     parameters = list(
-      iso3c = 'GNB',
-      description = 'number_plug_paper',
+      iso3c = 'SDN',
+      description = 'fixed_demography',
       quick_run = FALSE
     ))
 )
-}
+#}
 
 # compile diagnostic outputs to shared filepath
 compile_diagnostics(descrip = 'gavi_reruns_2025', date_time = 0)
