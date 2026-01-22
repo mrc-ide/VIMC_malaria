@@ -8,6 +8,7 @@
 *.rds
 *.RDS
 *.pdf
+*.docx
 2022/
 raw_data/
 data/

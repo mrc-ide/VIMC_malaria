@@ -468,3 +468,36 @@ summarise(percent_mean= mean(percent_cases_averted),
   as.data.table()
 
 
+# calculate summary stat for results-- children aged 1-4 years old, from 2060 onward
+mvip<- copy(vax)
+mvip<- mvip |>
+  filter(scenario== 'Routine') |>
+  filter(age %in% c(1:4)) |>
+  filter(year >=2060) |>
+  group_by(scenario, run_id, year) |>
+  summarise(cases_averted = sum(cases_averted,na.rm= TRUE),
+            deaths_averted = sum(deaths_averted, na.rm = TRUE),
+            dalys_averted = sum(dalys_averted, na.rm= TRUE),
+            cohort_size = sum(cohort_size, na.rm= TRUE),
+            cases= sum(cases, na.rm = TRUE),
+            cases_novax = sum(cases_novax, na.rm = TRUE),
+            deaths_novax = sum(deaths_novax, na.rm = TRUE),
+            dalys_novax = sum(dalys_novax, na.rm = TRUE),
+            .groups = 'keep') |>
+  data.table()  |>
+    ungroup() |>
+    group_by(scenario, run_id)|>
+    mutate(percent_cases_averted = cases_averted/cases_novax,
+           percent_deaths_averted = deaths_averted/ deaths_novax,
+           percent_dalys_averted = dalys_averted/ dalys_novax) |>
+    unique() |>
+  ungroup() |>
+  group_by(scenario) |>
+summarise(percent_mean= mean(percent_cases_averted),
+          percent_lower= quantile(percent_cases_averted, 0.0275),
+        percent_upper = quantile(percent_cases_averted, 0.975),
+      percent_deaths_mean= mean(percent_deaths_averted),
+    percent_deaths_lower = quantile(percent_deaths_averted, 0.0275),
+  percent_deaths_upper= quantile(percent_deaths_averted, 0.975),
+.groups= 'keep') |>
+  as.data.table()

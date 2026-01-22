@@ -17,7 +17,6 @@ plotting_theme<- theme_bw(base_size = 14) +
 
 
 # figure S2 --------------------------------------------------------------
-
 # plot vaccine coverage across all countries
 country_names<- vax |>
   rename(iso3c = country) |>
@@ -314,6 +313,7 @@ fig_1<- vax |>
   group_by(scenario,year, run_id, country, description) |>
   summarise(cases_averted = sum(cases_averted, na.rm= TRUE),
             deaths_averted = sum(deaths_averted, na.rm = TRUE),
+            cohort_size= sum(cohort_size),
             .groups = 'keep') |>
   ungroup() |>
   group_by(scenario, run_id) |>
@@ -333,7 +333,8 @@ fig_1<- vax |>
     deaths_upper =  quantile(deaths_averted, 0.975, na.rm= TRUE),
     deaths_cumulative_mean = mean(cumulative_deaths, na.rm= TRUE),
     deaths_cumulative_lower = quantile(cumulative_deaths, 0.025, na.rm= TRUE),
-    deaths_cumulative_upper =  quantile(cumulative_deaths, 0.975, na.rm= TRUE), .groups = 'keep')
+    deaths_cumulative_upper =  quantile(cumulative_deaths, 0.975, na.rm= TRUE),
+    cohort_size = mean(cohort_size), .groups = 'keep')
 
 
 # Figure S6 --------------------------------------------------------------
@@ -358,8 +359,8 @@ figure_s6<- ggplot(fig_1) +
 # Figure S7 --------------------------------------------------------------
 #Figure S7: deaths averted per year in fixed vs dynamic demography runs
 figure_s7<- ggplot(fig_1) +
-  geom_smooth(aes(x= year, y= deaths_mean/1000, color= scenario), method= 'loess', span= 0.08, se= FALSE) +
-  geom_ribbon(mapping = aes(x= year, ymin= deaths_lower/1000, ymax= deaths_upper/1000, fill= scenario), alpha = 0.25) +
+  geom_smooth(aes(x= year, y= (deaths_mean/1000), color= scenario), method= 'loess', span= 0.08, se= FALSE) +
+  geom_ribbon(mapping = aes(x= year, ymin= (deaths_lower/1000), ymax= (deaths_upper/1000), fill= scenario), alpha = 0.25) +
   facet_wrap(~description) +
   scale_color_manual(values = '#1B4F72') +
   scale_fill_manual(values = '#1B4F72') +
@@ -370,8 +371,6 @@ figure_s7<- ggplot(fig_1) +
     y = "Deaths averted (thousands)",
     x = "Year"
   )
-
-ggarrange(p1, p2, ncol= 2)
 
 
 vax_age<- copy(vax)
@@ -418,9 +417,11 @@ figure_s8<- ggplot(table_2) +
   xlim(2020, 2100) +
   scale_y_continuous(labels = scales::comma) +
   plotting_theme+
-    theme(legend.position = 'none') +
+    theme(legend.position = 'bottom') +
   labs(title = '',
        x= '',
+       color= 'Age',
+       fill= 'Age',
        y= 'Cases averted')
 
 
@@ -436,10 +437,15 @@ figure_s9<- ggplot(table_2) +
   scale_fill_manual(values = cols) +
   xlim(2020, 2100)+
   scale_y_continuous(labels = scales::comma) +
-  plotting_theme+
+    theme(legend.position = 'bottom') +
+  plotting_theme +
   labs(title = '',
-       x= 'Year',
+       x= '',
+       color= 'Age',
+       fill= 'Age',
        y= 'Deaths averted')
+
+
 
 
 
@@ -537,7 +543,7 @@ plotting_theme +
   theme( legend.position = 'none')
 
 
-figure_s11<- ggarrange(p1, p2, ncol = 2)
+figure_s11<- ggarrange(p1, p2, ncol = 2, common.legend = TRUE, legend= 'bottom')
 
 
 
