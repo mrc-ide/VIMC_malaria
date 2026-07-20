@@ -5,7 +5,7 @@
 #########################################################
 
 # read inputs
-source('J:/VIMC/VIMC_malaria/analyses/paper/source_code/paper_functions.R')
+source('J:/VIMC/VIMC_malaria/analyses/paper/source_code/0_paper_functions.R')
 vax<- readRDS('analyses/paper/inputs/vax.rds') #results saved
 
 
@@ -13,6 +13,7 @@ vax<- readRDS('analyses/paper/inputs/vax.rds') #results saved
 africa<- vax |>
     group_by(scenario, run_id) |>
     filter(year <= 2050) |>
+    filter(year>= 2023) |>
     summarise(cases_averted = sum(cases_averted, na.rm = TRUE),
               deaths_averted = sum(deaths_averted, na.rm = TRUE),
               dalys_averted = sum(dalys_averted, na.rm = TRUE),
@@ -41,7 +42,8 @@ get_values(africa |> filter(scenario == 'Routine') |> pull(percent_deaths_averte
 ## through 2100, this represents X% of cases and X% of deaths: ------------------------------
 africa<- vax |>
     group_by(scenario, run_id) |>
-    filter(year <= 2050) |>
+    filter(year <= 2100) |>
+    filter(year>= 2023) |>
     summarise(cases_averted = sum(cases_averted, na.rm = TRUE),
               deaths_averted = sum(deaths_averted, na.rm = TRUE),
               dalys_averted = sum(dalys_averted, na.rm = TRUE),
@@ -61,9 +63,13 @@ get_values(africa |> filter(scenario == 'Routine') |> pull(percent_cases_averted
 get_values(africa |> filter(scenario == 'Routine') |> pull(percent_deaths_averted))
 
 ## The impact was greatest in children under 5: ----------------------------------------
+#metric difference-- sum cases/deaths averted and cases/deaths of the novax scenario through 2100
+# percent of cases averted should really only be calculated from 2023 onward, because this is the simulation period
+# or should the denominator be cases and deaths from 2000-2100? I think no
 africa<- vax |>
     group_by(scenario, run_id) |>
   filter(age <= 5) |>
+  filter(year>= 2023) |>
     summarise(cases_averted = sum(cases_averted, na.rm = TRUE),
               deaths_averted = sum(deaths_averted, na.rm = TRUE),
               dalys_averted = sum(dalys_averted, na.rm = TRUE),
@@ -87,19 +93,20 @@ get_values(africa |> filter(scenario == 'Routine') |> pull(percent_deaths_averte
 
 # Results section: -------------------------------------------------------------------------------------
 ## Paragraph 1: under a baseline vaccine scenario:------------------------------------------------------
-  bl<- vax |>
-    filter(year %in%  c(2023:2050)) |>
-    group_by(scenario,run_id) |>
-    summarise(cases_baseline = sum(cases_novax, na.rm = TRUE), # pull ivory coast site file
-              deaths_baseline = sum(deaths_novax, na.rm= TRUE),
-              .groups = 'keep')
+#   bl<- vax |>
+#     filter(year %in%  c(2023:2050)) |>
+#     group_by(scenario,run_id) |>
+#     summarise(cases_baseline = sum(cases_novax, na.rm = TRUE), # pull ivory coast site file
+#               deaths_baseline = sum(deaths_novax, na.rm= TRUE),
+#               .groups = 'keep')
 
-get_values(bl |> filter(scenario == 'Routine') |> pull(cases_baseline))
-get_values(bl |> filter(scenario == 'Routine') |> pull(deaths_baseline))
+# get_values(bl |> filter(scenario == 'Routine') |> pull(cases_baseline))
+# get_values(bl |> filter(scenario == 'Routine') |> pull(deaths_baseline))
 
 # Under a routine vaccine scenario, X cases and X deaths will be averted through 2050
 africa<- vax |>
   filter(year <= 2050) |>
+  filter(year>=2023) |>
     group_by(scenario, run_id) |>
     summarise(cases_averted = sum(cases_averted, na.rm = TRUE),
               deaths_averted = sum(deaths_averted, na.rm = TRUE),
@@ -125,7 +132,8 @@ get_values(africa |> filter(scenario == 'Routine') |> pull(percent_deaths_averte
 
 # through 2100, this represents an X% decrease in cases and deaths
 africa<- vax |>
-  filter(year <= 2050) |>
+  filter(year <= 2100) |>
+    filter(year>=2023) |>
     group_by(scenario, run_id) |>
     summarise(cases_averted = sum(cases_averted, na.rm = TRUE),
               deaths_averted = sum(deaths_averted, na.rm = TRUE),
@@ -147,8 +155,12 @@ get_values(africa |> filter(scenario == 'Routine') |> pull(percent_deaths_averte
 
 
 ## Results by age (paragraph 2) -----------------------------------------------------------------------
-#counts through 2100
+# counts through 2100
+vax_age<- copy(vax)
+vax_age$age<- cut(vax_age$age, breaks = c(0, 5, 15, 101), include.lowest = TRUE)
+
 table_2<- vax_age |>
+   filter(year >= 2023) |>
   filter(scenario== 'Routine') |>
   group_by(scenario, age, run_id) |>
   summarise(cases_averted = sum(cases_averted),
@@ -172,7 +184,7 @@ table_2<- vax_age |>
 # percentages by age through 2100
 percents<- vax_age |>
   filter(scenario== 'Routine') |>
-  filter(year >= 2023) |>
+ filter(year >= 2023) |>
   group_by(scenario, age, run_id) |>
   summarise(cases_averted = sum(cases_averted,na.rm= TRUE),
             deaths_averted = sum(deaths_averted, na.rm = TRUE),
@@ -208,13 +220,51 @@ get_values(percents |> filter(scenario == 'Routine'& age== '[0,5]') |> pull(perc
 get_values(percents |> filter(scenario == 'Routine'& age== '(5,15]') |> pull(percent_deaths_averted))
 get_values(percents |> filter(scenario == 'Routine'& age== '(15,101]') |> pull(percent_deaths_averted))
 
+# mvip comparison----------------------------------------------------------------------------------
+mvip<- copy(vax)
+mvip<- unique(mvip)
+
+mvip<- mvip |>
+  filter(scenario== 'Routine') |>
+  filter(age %in% c(1:4)) |>
+  filter(year %in% c(2060:2100)) |>
+  group_by(scenario, run_id, year) |>
+  summarise(cases_averted = sum(cases_averted,na.rm= TRUE),
+            deaths_averted = sum(deaths_averted, na.rm = TRUE),
+            dalys_averted = sum(dalys_averted, na.rm= TRUE),
+            cohort_size = sum(cohort_size, na.rm= TRUE),
+            cases= sum(cases, na.rm = TRUE),
+            cases_novax = sum(cases_novax, na.rm = TRUE),
+            deaths_novax = sum(deaths_novax, na.rm = TRUE),
+            dalys_novax = sum(dalys_novax, na.rm = TRUE),
+            .groups = 'keep') |>
+  data.table()  |>
+    ungroup() |>
+    group_by(scenario, run_id, year)|>
+    mutate(percent_cases_averted = cases_averted/cases_novax,
+           percent_deaths_averted = deaths_averted/ deaths_novax,
+           percent_dalys_averted = dalys_averted/ dalys_novax) |>
+    unique() |>
+  as.data.table()
+
+
+
+get_values(mvip |> filter(scenario == 'Routine') |> pull(cases_averted))
+get_values(mvip |> filter(scenario == 'Routine') |> pull(deaths_averted))
+
+get_values(mvip |> filter(scenario == 'Routine') |> pull(cases_novax))
+get_values(mvip |> filter(scenario == 'Routine') |> pull(deaths_novax))
+
+get_values(mvip |> filter(scenario == 'Routine') |> pull(percent_cases_averted))
+get_values(mvip |> filter(scenario == 'Routine') |> pull(percent_deaths_averted))
+
 
 ## fourth paragraph: cases and deaths averted per FVP ------------------------------------
 total_doses<- compile_dose_outputs('number_plug_paper', iso = 'all') |> data.table() |> filter(scenario %in% c('proxy', 'no-vaccination'))
 total_doses[scenario %like% 'no-vaccination', scenario := 'Control']
 total_doses<- unique(total_doses)
 total_doses<- total_doses |>
- filter(year <= 2038)|>
+ filter(year %in% c(2023:2038))|>
   group_by(iso3c, scenario, run_id) |>
   summarise(cases_averted = sum(cases_averted),
             deaths_averted = sum(deaths_averted),
@@ -246,6 +296,7 @@ total_doses<- compile_dose_outputs('number_plug_paper', iso = 'all') |> data.tab
 total_doses[scenario %like% 'no-vaccination', scenario := 'Control']
 total_doses<- unique(total_doses)
 total_doses<- total_doses |>
+  filter(year >=2023) |>
   group_by(iso3c, scenario, run_id) |>
   summarise(cases_averted = sum(cases_averted),
             deaths_averted = sum(deaths_averted),
@@ -273,10 +324,10 @@ proxy<- get_values(total_doses |> filter(scenario == 'proxy') |> pull(deaths_mea
 
 
 
-
 ### by country --------------------------------------
 by_country <- vax |>
   group_by(scenario, country, country_name, run_id) |>
+  filter(year >=2023) |>
   summarise(
     cases_averted = sum(cases_averted),
     deaths_averted = sum(deaths_averted),
@@ -311,6 +362,7 @@ get_values(by_country |> filter(scenario == 'Routine', country_name %like% 'Kins
 ##first paragraph:------------------------------------------
 africa<- vax |>
   filter(year <= 2050) |>
+  filter(year >= 2023) |>
     group_by(scenario, run_id) |>
     summarise(cases_averted = sum(cases_averted, na.rm = TRUE),
               deaths_averted = sum(deaths_averted, na.rm = TRUE),
@@ -332,7 +384,25 @@ get_values(africa |> filter(scenario == 'Routine') |> pull(cases_averted))
 get_values(africa |> filter(scenario == 'Routine') |> pull(deaths_averted))
 
 # Despite the large magnitude:
-get_values(africa |> filter(scenario == 'Routine') |> pull(percent_cases_averted))
+africa<- vax |>
+    group_by(scenario, run_id) |>
+  filter(age <= 5) |>
+  filter(year>= 2023) |>
+    summarise(cases_averted = sum(cases_averted, na.rm = TRUE),
+              deaths_averted = sum(deaths_averted, na.rm = TRUE),
+              dalys_averted = sum(dalys_averted, na.rm = TRUE),
+              cases_novax = sum(cases_novax, na.rm = TRUE),
+              deaths_novax = sum(deaths_novax, na.rm = TRUE),
+              dalys_novax = sum(dalys_novax, na.rm = TRUE),
+              .groups = 'keep') |>
+    ungroup() |>
+    group_by(scenario) |>
+    filter(scenario!= 'Control') |>
+    mutate(percent_cases_averted = cases_averted/cases_novax,
+           percent_deaths_averted = deaths_averted/ deaths_novax,
+           percent_dalys_averted = dalys_averted/ dalys_novax) |>
+    data.table()
+
 get_values(africa |> filter(scenario == 'Routine') |> pull(percent_deaths_averted))
 
 
@@ -341,7 +411,7 @@ total_doses<- compile_dose_outputs('number_plug_paper', iso = 'all') |> data.tab
 total_doses[scenario %like% 'no-vaccination', scenario := 'Control']
 total_doses<- unique(total_doses)
 total_doses<- total_doses |>
-  filter(year<= 2038) |>
+  filter(year%in% c(2023:2038)) |>
   group_by(iso3c, scenario, run_id) |>
   summarise(cases_averted = sum(cases_averted),
             deaths_averted = sum(deaths_averted),
@@ -365,20 +435,20 @@ total_doses<- total_doses |>
   unique()
 
 proxy<- get_values(total_doses |> filter(scenario == 'proxy') |> pull(cases_mean))
-proxy<- get_values(total_doses |> filter(scenario == 'proxy') |> pull(deaths_mean))
-
-## fourth paragraph: estimated X% reduction in a 50 year period ----------------------------------
-get_values(africa |> filter(scenario == 'Routine') |> pull(percent_cases_averted))
 
 
 
-# mvip comparison----------------------------------------------------------------------------------
+
+
+
+## fourth paragraph: estimated X% reduction in children 1-4----------------------------------
 mvip<- copy(vax)
 mvip<- unique(mvip)
 
 mvip<- mvip |>
   filter(scenario== 'Routine') |>
   filter(age %in% c(1:4)) |>
+  filter(year %in% c(2060:2100)) |>
   group_by(scenario, run_id, year) |>
   summarise(cases_averted = sum(cases_averted,na.rm= TRUE),
             deaths_averted = sum(deaths_averted, na.rm = TRUE),
@@ -407,7 +477,12 @@ get_values(mvip |> filter(scenario == 'Routine') |> pull(cases_novax))
 get_values(mvip |> filter(scenario == 'Routine') |> pull(deaths_novax))
 
 get_values(mvip |> filter(scenario == 'Routine') |> pull(percent_cases_averted))
-get_values(mvip |> filter(scenario == 'Routine') |> pull(percent_cases_averted))
+get_values(mvip |> filter(scenario == 'Routine') |> pull(percent_deaths_averted))
+
+
+get_values(africa |> filter(scenario == 'Routine') |> pull(percent_cases_averted))
+
+
 
 
 

@@ -78,8 +78,8 @@ for(iso in iso3cs){
       description = 'fixed_demography',
       quick_run = FALSE
     ))
-)
-#}
+
+}
 
 # compile diagnostic outputs to shared filepath
 compile_diagnostics(descrip = 'gavi_reruns_2025', date_time = 0)
@@ -116,4 +116,30 @@ task<- hipercow::task_create_expr(vimcmalaria::compile_and_save('booster_update'
 task<- hipercow::task_create_expr(vimcmalaria::compile_and_save('booster_update', 'malaria-rts3-rts4-default'))
 
 
+
+
+  completed<- completed_reports('process_country')
+
+  descrip<- 'new_site_file_test'
+
+clean_reports<- function(descrip){
+
+  com<- completed |> filter(description== descrip)
+
+  #for(i in c(1:nrow(com))){
+
+    message(i)
+    subset<- com[i,]
+    dir_name<- subset$directory_name
+    print(dir_name)
+    filepath<- paste0('archive/process_country/', dir_name, '/')
+    print(unlink(filepath, recursive = TRUE))
+  }
+
+#}
+
+clean_reports('new_site_file_test')
+
+
+  com<- completed |> filter(description== 'number_plug_paper')
 

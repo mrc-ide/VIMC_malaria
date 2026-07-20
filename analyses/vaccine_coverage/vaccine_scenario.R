@@ -73,7 +73,7 @@ read_pop<- function(file_name){
   return(pop)
 }
 
-files<- list.files('src/process_inputs/site_files/', full.names = T)
+files<- list.files('J:/VIMC_archive/VIMC_runs_sept_2024/VIMC_malaria/src/process_inputs/site_files/', full.names = T)
 pops<- rbindlist(lapply(files, read_pop))
 
 #pull out identifying info for countries, clean names for merging

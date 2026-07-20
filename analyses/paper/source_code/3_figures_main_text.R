@@ -3,7 +3,7 @@
 ## author  Lydia Haile
 ## purpose generate figures
 ###########################################################################
-source('J:/VIMC/VIMC_malaria/analyses/paper/source_code/paper_functions.R')
+source('J:/VIMC/VIMC_malaria/analyses/paper/source_code/0_paper_functions.R')
 vax<- readRDS('analyses/paper/inputs/vax.rds')
 
 
@@ -106,7 +106,7 @@ total_doses<- compile_dose_outputs('number_plug_paper', iso = 'all') |> data.tab
 total_doses[scenario %like% 'no-vaccination', scenario := 'Control']
 total_doses<- unique(total_doses)
 total_doses<- total_doses |>
- filter(year <= 2038)|>
+ filter(year %in% c(2023:2038))|>
   group_by(iso3c, scenario, run_id) |>
   summarise(cases_averted = sum(cases_averted),
             deaths_averted = sum(deaths_averted),

@@ -96,6 +96,7 @@ figure_s3 <- ggplot() +
 
 # Figure S4: plot of cases + deaths averted by country -------------------------------------------------------------------
 by_country <- vax |>
+  filter(year >= 2023) |>
   group_by(scenario, country, country_name, run_id) |>
   summarise(
     cases_averted = sum(cases_averted),
@@ -151,6 +152,33 @@ p2 <- ggplot(data = by_country, aes(x = reorder(country, -deaths_mean), group = 
 
 
 # plot cases averted by country per FVP
+total_doses<- compile_dose_outputs('number_plug_paper', iso = 'all') |> data.table() |> filter(scenario %in% c('proxy', 'no-vaccination'))
+total_doses[scenario %like% 'no-vaccination', scenario := 'Control']
+total_doses<- unique(total_doses)
+total_doses<- total_doses |>
+ filter(year >= 2023)|>
+  group_by(iso3c, scenario, run_id) |>
+  summarise(cases_averted = sum(cases_averted),
+            deaths_averted = sum(deaths_averted),
+            fvp = sum(fvp),
+            .groups = 'keep') |>
+  mutate(cases_averted_per_fvp= cases_averted*100000/ fvp,
+         deaths_averted_per_fvp = deaths_averted*1000/ fvp) |>
+  select(iso3c, scenario, run_id, cases_averted_per_fvp, deaths_averted_per_fvp) |>
+  rename(country = iso3c) |>
+  ungroup() |>
+  group_by(scenario, country) |>
+  summarise(
+    cases_mean = mean(cases_averted_per_fvp, na.rm = TRUE),
+    cases_lower = quantile(cases_averted_per_fvp, 0.025, na.rm = TRUE),
+    cases_upper = quantile(cases_averted_per_fvp, 0.975, na.rm = TRUE),
+    deaths_mean = mean(deaths_averted_per_fvp, na.rm = TRUE),
+    deaths_lower = quantile(deaths_averted_per_fvp, 0.025, na.rm = TRUE),
+    deaths_upper = quantile(deaths_averted_per_fvp, 0.975, na.rm = TRUE),
+    .groups= 'keep'
+  ) |>
+  unique()
+
 p3<- ggplot(data = total_doses, aes(x = reorder(country, -cases_mean), group = scenario)) +
   geom_col(position = "dodge", width = 0.8, mapping = aes(y = cases_mean, color = scenario, fill = scenario)) +
   geom_errorbar(aes(ymin = cases_lower, ymax = cases_upper), position = position_dodge(0.8)) +

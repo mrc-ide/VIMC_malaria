@@ -5,7 +5,11 @@
 ##         for number plugging, tables, and figures
 ###########################################################################
 
-source('J:/VIMC/VIMC_malaria/analyses/paper/source_code/paper_functions.R')
+library(dplyr)
+library(vimcmalaria)
+library(data.table)
+
+source('J:/VIMC/VIMC_malaria/analyses/paper/source_code/0_paper_functions.R')
 iso3cs<-read.csv('src/process_inputs/vimc_inputs/vaccine_coverage/coverage_202409malaria-1_malaria-r3-r4-default.csv') |> pull(country_code) |> unique()
 
 # pull country level output -------------- --------------------------------------
@@ -20,11 +24,10 @@ completed <- completed_reports("process_country") |>
 
 
 default<- compile_final_outputs('number_plug_paper') |>
-  #filter(country == 'COD') |>
   data.table() |>
   mutate(scenario = ifelse(scenario == 'proxy', 'Routine', scenario))
 
-total<- copy(default) # VIMC output unsummarised
+total<- copy(default) #output unsummarised
 total<- unique(total)
 
 # calculate cases averted (all ages)-------------------------------------------------------------------------------------
