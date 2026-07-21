@@ -5,7 +5,7 @@ parms <- orderly::orderly_parameters(
   scenario = 'proxy',
   quick_run = TRUE,
   parameter_draw = 0,
-  description = 'fixed_demography'
+  description = 'constant coverage'
 )
 
 orderly::orderly_description('Analyze vaccine impact at the country level')

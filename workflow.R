@@ -6,8 +6,10 @@
 
 
 # setup ------------------------------------------------------------------------
-remotes::install_github('mrc-ide/vimcmalaria@paper')
-remotes::install_github('mrc-ide/site@paper')
+#remotes::install_github('mrc-ide/vimcmalaria@paper')
+#remotes::install_github('mrc-ide/site@paper')
+#remotes::install_github('mrc-ide/postie@928cf585a3a995dc16da0a99b1c1e3a7c51d9cae')
+#remotes::install_github('mrc-ide/scene@4bc0d154cb63bd8730b9c17d7b8742e9d05349a5')
 #orderly2::orderly_init()
 library(data.table)
 library(dplyr)
@@ -23,9 +25,9 @@ dir<- getwd()
 # # generate parameter map for analysis ------------------------------------------
 map<- make_parameter_map(iso3cs= c('COD'),
                          scenarios = c('proxy', 'no-vaccination'),
-                          description = 'fixed_demography',
-                          parameter_draws = c(0:5),
-                          quick_run= FALSE)
+                          description = 'reduced NVMIs',
+                          parameter_draws = c(0),
+                          quick_run= TRUE)
 
 # check function
 map<- check_not_rerun(report_name = 'process_country', map = map, date = 0)
@@ -71,12 +73,12 @@ for(iso in iso3cs){
 
   message(iso)
 #task<- hipercow::task_create_expr(
-  orderly2::orderly_run(
+  orderly::orderly_run(
     "postprocessing",
     parameters = list(
-      iso3c = 'SDN',
-      description = 'fixed_demography',
-      quick_run = FALSE
+      iso3c = 'COD',
+      description = 'constant coverage',
+      quick_run = TRUE
     ))
 
 }

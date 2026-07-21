@@ -4,7 +4,7 @@ local::./postie_0.1.2.tar.gz
 mrc-ide/site@paper
 
 mrc-ide/malariasimulation
-mrc-ide/scene
+mrc-ide/scene@4bc0d154cb63bd8730b9c17d7b8742e9d05349a5
 mrc-ide/orderly
 mrc-ide/vimcmalaria@paper
 
