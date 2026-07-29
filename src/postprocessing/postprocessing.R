@@ -156,7 +156,7 @@ final_postprocessing<- function(draw){
 outputs<- lapply(c(0:max_draw), final_postprocessing)
 
 # run this for both sets of model outputs and save to flat file
-saveRDS(outputs, 'outputs.rds')
+saveRDS(outputs, 'final_output.rds')
 
 
 dose_postprocessing<- function(draw){
