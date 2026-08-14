@@ -234,9 +234,9 @@ table_2<- vax_age |>
     ) |>
     unique() |>
   as.data.table()
-  table_2[age== '[0,5]', age:= 'under 5']
-  table_2[age== '(5,15]', age:= '5 to 15']
-  table_2[age== '(15,101]', age:= 'over 15']
+  table_2[age== '[0,5]', age:= '5 or under']
+  table_2[age== '(5,15]', age:= '6 to 15']
+  table_2[age== '(15,101]', age:= '16+']
 
 p5<- ggplot(table_2) +
   geom_line(mapping = aes(x= year, y= cohort_size, color = age)) +
@@ -275,52 +275,51 @@ p6<- ggplot(table_2) +
 figure_s5<- ggarrange(p5, p6, ncol = 2)
 
 
-
 # demography analysis plots: figures S6-S9
 # objects for plotting
 
 # read the unscaled outputs
-fixed<- rbindlist(readRDS('analyses/paper/source_code/reorg/COD_fixed_demography.rds')) |> 
-  mutate(description = 'fixed') |>
-  rename(run_id = parameter_draw) |>
-  mutate(scenario = ifelse(scenario == 'proxy', 'Routine', scenario)) |>
-  data.table()
+# fixed<- rbindlist(readRDS('analyses/paper/inputs/COD_fixed_demography.rds')) |> 
+#   mutate(description = 'fixed') |>
+#   rename(run_id = parameter_draw) |>
+#   mutate(scenario = ifelse(scenario == 'proxy', 'Routine', scenario)) |>
+#   data.table()
 
-dynamic<- rbindlist(readRDS('analyses/paper/source_code/reorg/COD_dynamic_output_dynamic_demography.rds')) |>
-  mutate(description = 'dynamic') |> 
-  rename(run_id = parameter_draw) |>
-  mutate(scenario = ifelse(scenario == 'proxy', 'Routine', scenario)) |>
-  data.table()
+# dynamic<- rbindlist(readRDS('analyses/paper/inputs/COD_dynamic_output_dynamic_demography.rds')) |>
+#   mutate(description = 'dynamic') |> 
+#   rename(run_id = parameter_draw) |>
+#   mutate(scenario = ifelse(scenario == 'proxy', 'Routine', scenario)) |>
+#   data.table()
 
-default<- rbind(fixed, dynamic, fill = TRUE)
-total<- default |> filter(description == 'dynamic')
+# default<- rbind(fixed, dynamic, fill = TRUE)
+# total<- default |> filter(description == 'dynamic')
 
 
 # fix the population from 2025 onwards for the fixed outputs
-total_fixed<- default |>
-  filter(description == 'fixed') |>
-  mutate(clinical = cases/cohort_size,
-  mort= deaths/cohort_size)
+# total_fixed<- default |>
+#   filter(description == 'fixed') |>
+#   mutate(clinical = cases/cohort_size,
+#   mort= deaths/cohort_size)
 
-# pull age/sex/country specific cohort size to merge onto original dataset and recalculate rates with
-initial_demo<- default |> 
-  filter(year== 2025, run_id == 0) |>
-  select(age, country, country_name, cohort_size) |>
-  unique() |>
-  rename(cohort_size_2025 = cohort_size) # duplicates based on parameter_id 
+# # pull age/sex/country specific cohort size to merge onto original dataset and recalculate rates with
+# initial_demo<- default |> 
+#   filter(year== 2025, run_id == 0) |>
+#   select(age, country, country_name, cohort_size) |>
+#   unique() |>
+#   rename(cohort_size_2025 = cohort_size) # duplicates based on parameter_id 
 
-tot<- merge(total_fixed, 
-  initial_demo, 
-  by = c('age', 'country', 'country_name'), 
-  allow.cartesian = T)
+# tot<- merge(total_fixed, 
+#   initial_demo, 
+#   by = c('age', 'country', 'country_name'), 
+#   allow.cartesian = T)
 
-tot<- tot |>
-  mutate(cohort_size = if_else(year > 2025, cohort_size_2025, cohort_size)) |>
-  mutate(cases = clinical* cohort_size,
-  deaths= mort * cohort_size) |>
-  select(-clinical, -mort) 
+# tot<- tot |>
+#   mutate(cohort_size = if_else(year > 2025, cohort_size_2025, cohort_size)) |>
+#   mutate(cases = clinical* cohort_size,
+#   deaths= mort * cohort_size) |>
+#   select(-clinical, -mort) 
 
-tot<- rbind(tot, total, fill =TRUE)
+tot<- rbind(tot, default_settings, fill =TRUE)
 
 # rerun the same plots
   novax<- tot |> filter(scenario == 'no-vaccination') |>
@@ -329,7 +328,7 @@ tot<- rbind(tot, total, fill =TRUE)
            dalys_novax = dalys) |>
     select(year, age, run_id, description, country, cases_novax, deaths_novax, dalys_novax)
 
-  vax<- tot |> filter(scenario == 'Routine')
+  vax<- tot |> filter(scenario == 'proxy')
   vax<- merge(vax, novax, by = c('country', 'age', 'year', 'run_id', 'description'))
 
   vax<- vax |>
@@ -337,19 +336,43 @@ tot<- rbind(tot, total, fill =TRUE)
            deaths_averted = deaths_novax- deaths,
            dalys_averted = dalys_novax - dalys)
 
-fig_1<- vax |>
-  group_by(scenario,year, run_id, country, description) |>
+comparison_dt <- tot |>
+  bind_rows(default_settings) |>
+  #filter(run_id <= 25) |>
+  mutate(scenario= ifelse(scenario== 'Routine', 'proxy', scenario)) |>
+  select(-pfpr_threshold, -cohort_size_2025) |>
+  mutate(scenario = case_when(
+    scenario == "proxy"        ~ "intvn",
+    scenario == "no-vaccination" ~ "bl",
+    TRUE ~ scenario
+  )) |>
+  filter(scenario %in% c("bl", "intvn")) |>
+  pivot_wider(
+    names_from = scenario,
+    values_from = c(cases, deaths, dalys, yll)
+  ) |>
+  mutate(
+    cases_averted  = cases_bl  - cases_intvn, # calculate cases deaths dalys and ylls averted by scenario
+    deaths_averted = deaths_bl - deaths_intvn,
+    dalys_averted= dalys_bl -dalys_intvn,
+    ylls_averted= yll_bl- yll_intvn
+  ) 
+
+
+
+fig_1<- comparison_dt |>
+  group_by(year, run_id, country, description) |>
   summarise(cases_averted = sum(cases_averted, na.rm= TRUE),
             deaths_averted = sum(deaths_averted, na.rm = TRUE),
             cohort_size= sum(cohort_size),
             .groups = 'keep') |>
   ungroup() |>
-  group_by(scenario, run_id) |>
+  group_by(run_id, description) |>
   mutate(cumulative_cases = cumsum(cases_averted),
          cumulative_deaths = cumsum(deaths_averted)) |>
   data.table() |>
   ungroup() |>
-  group_by(scenario, year, country, description) |>
+  group_by( year, country, description) |>
   summarise(cases_mean = mean(cases_averted, na.rm= TRUE),
         cases_lower = quantile(cases_averted, 0.025, na.rm= TRUE),
       cases_upper =  quantile(cases_averted, 0.975, na.rm= TRUE),
@@ -368,11 +391,11 @@ fig_1<- vax |>
 # Figure S6 --------------------------------------------------------------
 #Figure S6: cases averted by year in fixed vs demography model runs
 figure_s6<- ggplot(fig_1) +
-  geom_smooth(aes(x= year, y= cases_mean/1000000, color= scenario), method= 'loess', span= 0.08, se= FALSE) +
-  geom_ribbon(mapping = aes(x= year, ymin= cases_lower/1000000, ymax= cases_upper/1000000, fill= scenario), alpha = 0.25) +
+  geom_smooth(aes(x= year, y= cases_mean/1000000, color= description), method= 'loess', span= 0.08, se= FALSE) +
+  geom_ribbon(mapping = aes(x= year, ymin= cases_lower/1000000, ymax= cases_upper/1000000, fill= description), alpha = 0.25) +
   facet_wrap(~ description ) +
-  scale_color_manual(values = '#CE5137') +
-  scale_fill_manual(values = '#CE5137') +
+  scale_color_manual(values = c('#CE5137','#1B4F72')) +
+  scale_fill_manual(values = c('#CE5137', '#1B4F72')) +
   plotting_theme +
     theme(legend.position = 'none') +
   scale_y_continuous(labels = scales::comma) +
@@ -387,11 +410,11 @@ figure_s6<- ggplot(fig_1) +
 # Figure S7 --------------------------------------------------------------
 #Figure S7: deaths averted per year in fixed vs dynamic demography runs
 figure_s7<- ggplot(fig_1) +
-  geom_smooth(aes(x= year, y= (deaths_mean/1000), color= scenario), method= 'loess', span= 0.08, se= FALSE) +
-  geom_ribbon(mapping = aes(x= year, ymin= (deaths_lower/1000), ymax= (deaths_upper/1000), fill= scenario), alpha = 0.25) +
+  geom_smooth(aes(x= year, y= (deaths_mean/1000), color= description), method= 'loess', span= 0.08, se= FALSE) +
+  geom_ribbon(mapping = aes(x= year, ymin= (deaths_lower/1000), ymax= (deaths_upper/1000), fill= description), alpha = 0.25) +
   facet_wrap(~description) +
-  scale_color_manual(values = '#1B4F72') +
-  scale_fill_manual(values = '#1B4F72') +
+  scale_color_manual(values = c('#CE5137','#1B4F72')) +
+  scale_fill_manual(values = c('#CE5137', '#1B4F72')) +
   plotting_theme +
     theme(legend.position = 'none') +
   scale_y_continuous(labels = scales::comma) +
@@ -401,18 +424,19 @@ figure_s7<- ggplot(fig_1) +
   )
 
 
-vax_age<- copy(vax)
+vax_age<- copy(comparison_dt)
 vax_age$age<- cut(vax_age$age, breaks = c(0, 5, 15, 101), include.lowest = TRUE)
 table_2<- vax_age |>
-  filter(scenario== 'Routine') |>
-  group_by(scenario, age, year, run_id, country, description) |>
+ # filter(scenario== 'Routine') |>
+  group_by(description, age, year, run_id, country) |>
   summarise(cases_averted = sum(cases_averted,na.rm= TRUE),
             deaths_averted = sum(deaths_averted, na.rm = TRUE),
             cohort_size = sum(cohort_size, na.rm= TRUE),
             .groups = 'keep') |>
   data.table()  |>
+  mutate(description = ifelse(description == 'default', 'dynamic', description)) |>
     ungroup() |>
-    group_by(scenario, age, year, country, description) |>
+    group_by(age, year, country, description) |>
     summarise(
       cases_mean = mean(cases_averted, na.rm = TRUE),
       cases_lower = quantile(cases_averted, 0.025, na.rm = TRUE),
@@ -427,17 +451,17 @@ table_2<- vax_age |>
   as.data.table()
 
 
-  table_2[age== '[0,5]', age:= 'under 5']
-  table_2[age== '(5,15]', age:= '5 to 15']
-  table_2[age== '(15,101]', age:= 'over 15']
+  table_2[age== '[0,5]', age:= '5 or under']
+  table_2[age== '(5,15]', age:= '6 to 15']
+  table_2[age== '(15,101]', age:= '16+']
 
 
 
 # Figure S8 --------------------------------------------------------------
 # figure S8: cases averted by age group, fixed vs. dynamic demography
 figure_s8<- ggplot(table_2) +
-  geom_smooth(mapping = aes(x= year, y= cases_mean, color = age), method= 'loess', span = 0.1, se= FALSE) +
-  geom_ribbon(aes(x= year, ymin = cases_lower, ymax = cases_upper, fill= age) , alpha = 0.1) +
+  geom_smooth(mapping = aes(x= year, y= cases_mean, color = age), method= 'loess', span = 0.12, se= FALSE) +
+  geom_ribbon(aes(x= year, ymin = cases_lower, ymax = cases_upper, fill= age) , alpha = 0.15) +
   facet_wrap(~description ) +
   geom_hline(yintercept = 0, linetype = 'dotted') +
   scale_color_manual(values = cols) +
@@ -648,3 +672,186 @@ deaths_averted_per_fvp = deaths_averted/fvp)
 
 ggplot(output_modify, mapping = aes(x= pfpr_2024, y= cases_averted_per_fvp))+
   geom_point()
+
+
+
+
+#' Pull final outputs from workflow
+#' @param descrip         description of runs to pull
+#' @export
+compile_final_outputs<- function(descrip, quick){
+
+  completed<- completed_reports('postprocessing')
+  completed<- completed[description == {{descrip}} & quick_run == {{quick}}] |>
+    dplyr::arrange(desc(date_time)) |>
+    dplyr::distinct(iso3c, description, quick_run, .keep_all = TRUE) |> # this is not working because it's pulling both quick run outputs (true or false)
+    dplyr::arrange(iso3c, description, quick_run)
+
+  pull_output<- function(index, map){
+
+    message(index)
+    map<- map[ index,]
+    directory_name<- map$directory_name
+    iso3c<- map$iso3c
+    output<- data.table::rbindlist(readRDS(paste0('archive/postprocessing/', directory_name, '/final_output.rds')))
+    return(output)
+  }
+
+  outputs<- data.table::rbindlist(lapply(c(1:nrow(completed)), pull_output, map = completed))
+}
+
+
+## compile final outptuts
+nvmis<- compile_final_outputs('reduced NVMIs', quick= FALSE) |>
+  mutate(description= 'NVMIs', quick= FALSE)
+
+constant_coverage<- compile_final_outputs('constant coverage', quick= FALSE) |>
+  mutate(description= 'constant coverage')
+
+default_settings<- compile_final_outputs('number_plug_paper', quick= FALSE) |>
+  mutate(description= 'default') |>
+  filter(country== 'COD')
+
+
+# read the unscaled outputs
+fixed<-copy(default_settings) |> 
+  mutate(description = 'fixed') |>
+ # rename(run_id = parameter_draw) |>
+  mutate(scenario = ifelse(scenario == 'proxy', 'Routine', scenario)) |>
+  data.table()
+
+# fix the population from 2025 onwards for the fixed outputs
+total_fixed<- fixed |>
+  mutate(clinical = cases/cohort_size,
+  mort= deaths/cohort_size)
+
+# pull age/sex/country specific cohort size to merge onto original dataset and recalculate rates with
+initial_demo<- fixed |> 
+  filter(year== 2025) |>
+  select(age, country, country_name, cohort_size) |>
+  unique() |>
+  rename(cohort_size_2025 = cohort_size) # duplicates based on parameter_id 
+
+tot<- merge(total_fixed, 
+  initial_demo, 
+  by = c('age', 'country', 'country_name'), 
+  allow.cartesian = T)
+
+tot<- tot |>
+  mutate(cohort_size = if_else(year > 2025, cohort_size_2025, cohort_size)) |>
+  mutate(cases = clinical* cohort_size,
+  deaths= mort * cohort_size) |>
+  select(-clinical, -mort) 
+
+
+# first pull the demography results and plot those
+comparison_dt <- tot |>
+  bind_rows(default_settings, nvmis, constant_coverage) |>
+  #filter(run_id <= 25) |>
+  mutate(scenario= ifelse(scenario== 'Routine', 'proxy', scenario)) |>
+  select(-pfpr_threshold, -cohort_size_2025) |>
+  mutate(scenario = case_when(
+    scenario == "proxy"        ~ "intvn",
+    scenario == "no-vaccination" ~ "bl",
+    TRUE ~ scenario
+  )) |>
+  filter(scenario %in% c("bl", "intvn")) |>
+  pivot_wider(
+    names_from = scenario,
+    values_from = c(cases, deaths, dalys, yll)
+  ) |>
+  mutate(
+    cases_averted  = cases_bl  - cases_intvn, # calculate cases deaths dalys and ylls averted by scenario
+    deaths_averted = deaths_bl - deaths_intvn,
+    dalys_averted= dalys_bl -dalys_intvn,
+    ylls_averted= yll_bl- yll_intvn
+  ) |>
+  group_by(description, year, run_id) |>
+ # filter(run_id== 0) |>
+  summarise(cases_averted= sum(cases_averted)/1000000,
+            deaths_averted= sum(deaths_averted)/1000,
+            dalys_averted= sum(dalys_averted),
+          .groups= 'keep') |>
+  mutate(description= ifelse(description == 'default', 'default \nparameters', description)) |>
+  mutate(description= ifelse(description == 'fixed', 'fixed \ndemography', description)) |>
+  mutate(description= ifelse(description == 'constant coverage', '100% constant \nvaccine coverage', description)) |>
+  mutate(description= ifelse(description == 'NVMIs', 'reduced \nITNs and IRS \nby 50%', description)) |>
+  group_by(description, year) |> # summarise mean and UI across parameter draws
+  summarise(
+    across(
+      c(cases_averted, deaths_averted, dalys_averted),
+      list(
+        mean  = ~mean(.x, na.rm = TRUE),
+        lower = ~quantile(.x, 0.025, na.rm = TRUE),
+        upper = ~quantile(.x, 0.975, na.rm = TRUE)
+      ),
+      .names = "{.col}__{.fn}"
+    ),
+    .groups = "drop"
+  ) |>
+  pivot_longer(              # do some reshaping
+    cols = -c(description, year),
+    names_to = c("metric", "stat"),
+    names_sep = "__",
+    values_to = "value"
+  ) |>
+  pivot_wider(
+    names_from = stat,
+    values_from = value
+  )
+
+comparison_dt<- comparison_dt |>
+  filter(metric!= 'dalys_averted') |>
+  mutate(metric= ifelse(metric== 'cases_averted', 'Cases averted (millions)', metric)) |>
+  mutate(metric= ifelse(metric== 'deaths_averted', 'Deaths averted (thousands)', metric)) 
+  
+
+
+demo<- comparison_dt |> 
+  filter(description %like% 'default' | description %like% 'fixed')
+
+demography<- ggplot(filter(demo)) +
+  #geom_line(mapping = aes(x= year, y= mean, color= description)) +
+  geom_smooth(aes(x= year, y= mean, color= description), method= 'loess', span= 0.15, se= FALSE) +
+  geom_ribbon(mapping = aes(x=year, ymin= lower, ymax= upper, fill= description), alpha= 0.3) +
+  facet_wrap(~metric, scales= 'free') +
+  scale_color_manual(values= ltc('casa_natal', 4, 'discrete')) +
+  scale_fill_manual(values= ltc('casa_natal', 4, 'discrete')) +
+ ggthemes::theme_clean()  +
+  xlim(2024, 2100) +
+  theme(legend.position= 'left')+
+  labs(y= 'Counts')
+
+
+constant_cov<- comparison_dt |> 
+  filter(description %like% 'default' | description %like% 'constant')
+
+coverage<- ggplot(filter(constant_cov)) +
+  #geom_line(mapping = aes(x= year, y= mean, color= description)) +
+  geom_smooth(aes(x= year, y= mean, color= description), method= 'loess', span= 0.15, se= FALSE) +
+  geom_ribbon(mapping = aes(x=year, ymin= lower, ymax= upper, fill= description), alpha= 0.3) +
+  facet_wrap(~metric, scales= 'free') +
+  scale_color_manual(values= ltc('casa_natal', 4, 'discrete')) +
+  scale_fill_manual(values= ltc('casa_natal', 4, 'discrete')) +
+ ggthemes::theme_clean()  +
+  xlim(2024, 2100) +
+  theme(legend.position= 'bottom')+
+  labs( y= 'Counts')
+
+
+
+nvmi_dt<- comparison_dt |> 
+  filter(description %like% 'default' | description %like% 'reduced')
+
+nvmi<- ggplot(filter(nvmi_dt)) +
+  #geom_line(mapping = aes(x= year, y= mean, color= description)) +
+  geom_smooth(aes(x= year, y= mean, color= description), method= 'loess', span= 0.15, se= FALSE) +
+  geom_ribbon(mapping = aes(x=year, ymin= lower, ymax= upper, fill= description), alpha= 0.3) +
+  facet_wrap(~metric, scales= 'free') +
+  scale_color_manual(values= ltc('casa_natal', 4, 'discrete')) +
+  scale_fill_manual(values= ltc('casa_natal', 4, 'discrete')) +
+ ggthemes::theme_clean()  +
+  xlim(2024, 2100) +
+  theme(legend.position= 'bottom')+
+  labs(y= 'Counts')
+

@@ -93,15 +93,15 @@ get_values(africa |> filter(scenario == 'Routine') |> pull(percent_deaths_averte
 
 # Results section: -------------------------------------------------------------------------------------
 ## Paragraph 1: under a baseline vaccine scenario:------------------------------------------------------
-#   bl<- vax |>
-#     filter(year %in%  c(2023:2050)) |>
-#     group_by(scenario,run_id) |>
-#     summarise(cases_baseline = sum(cases_novax, na.rm = TRUE), # pull ivory coast site file
-#               deaths_baseline = sum(deaths_novax, na.rm= TRUE),
-#               .groups = 'keep')
+  bl<- vax |>
+    filter(year %in%  c(2023:2100)) |>
+    group_by(scenario,run_id) |>
+    summarise(cases_baseline = sum(cases_novax, na.rm = TRUE), # pull ivory coast site file
+              deaths_baseline = sum(deaths_novax, na.rm= TRUE),
+              .groups = 'keep')
 
-# get_values(bl |> filter(scenario == 'Routine') |> pull(cases_baseline))
-# get_values(bl |> filter(scenario == 'Routine') |> pull(deaths_baseline))
+get_values(bl |> filter(scenario == 'Routine') |> pull(cases_baseline))
+get_values(bl |> filter(scenario == 'Routine') |> pull(deaths_baseline))
 
 # Under a routine vaccine scenario, X cases and X deaths will be averted through 2050
 africa<- vax |>

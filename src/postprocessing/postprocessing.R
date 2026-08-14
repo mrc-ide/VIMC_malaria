@@ -159,67 +159,68 @@ outputs<- lapply(c(0:max_draw), final_postprocessing)
 saveRDS(outputs, 'final_output.rds')
 
 
-dose_postprocessing<- function(draw){
-  intvn_filepaths<- completed |> filter(parameter_draw == draw)
+# dose_postprocessing<- function(draw){
+#   intvn_filepaths<- completed |> filter(parameter_draw == draw)
   
-  # pull model outputs for all scenarios
-  raw<- bind_rows(lapply(c(1:nrow(intvn_filepaths)), get_raw_output, map = intvn_filepaths, output_filepath = 'J:/VIMC/VIMC_malaria/archive/process_country/' ))
-  raw<- raw |>
-    mutate(site = paste0(site_name, '_', urban_rural, '_', scenario),
-           site_ur = paste0(site_name, '_', urban_rural))
+#   # pull model outputs for all scenarios
+#   raw<- bind_rows(lapply(c(1:nrow(intvn_filepaths)), get_raw_output, map = intvn_filepaths, output_filepath = 'J:/VIMC/VIMC_malaria/archive/process_country/' ))
+#   raw<- raw |>
+#     mutate(site = paste0(site_name, '_', urban_rural, '_', scenario),
+#            site_ur = paste0(site_name, '_', urban_rural))
   
-  ids<- unique(raw$site)
+#   ids<- unique(raw$site)
   
-  case_output<- rbindlist(lapply(ids, site_postprocessing, dt = raw)) 
+#   case_output<- rbindlist(lapply(ids, site_postprocessing, dt = raw)) 
              
-  case_output<- case_output |>
-             rename(year = t,
-                    age = age_lower) |>
-             mutate(cases = round(clinical * n),
-                    deaths = round(mortality * n)) |>
-             group_by(site, year, site_ur) |>
-             summarise(cases = sum(cases),
-                       deaths= sum(deaths),
-                       .groups = 'keep') 
+#   case_output<- case_output |>
+#              rename(year = t,
+#                     age = age_lower) |>
+#              mutate(cases = round(clinical * n),
+#                     deaths = round(mortality * n)) |>
+#              group_by(site, year, site_ur) |>
+#              summarise(cases = sum(cases),
+#                        deaths= sum(deaths),
+#                        .groups = 'keep') 
            
-           #calculate cases averted by year and site
-           novax<- case_output|> 
-             filter(site %like%'no-vaccination') |>
-             rename(cases_novax = cases,
-                    deaths_novax = deaths) |>
-             ungroup() |>
-             select(-site)
+#            #calculate cases averted by year and site
+#            novax<- case_output|> 
+#              filter(site %like%'no-vaccination') |>
+#              rename(cases_novax = cases,
+#                     deaths_novax = deaths) |>
+#              ungroup() |>
+#              select(-site)
          
-           vax<- case_output |> filter(!site %like% 'no-vaccination')
+#            vax<- case_output |> filter(!site %like% 'no-vaccination')
            
-           averted<- merge(vax, novax, by = c('year', 'site_ur')) |>
-             mutate(cases_averted = cases_novax- cases,
-                    deaths_averted = deaths_novax - deaths)
+#            averted<- merge(vax, novax, by = c('year', 'site_ur')) |>
+#              mutate(cases_averted = cases_novax- cases,
+#                     deaths_averted = deaths_novax - deaths)
          
              
-           doses<- raw |>
-             select(timestep, n_pev_epi_dose_1, n_pev_epi_dose_2, n_pev_epi_dose_3, n_pev_epi_booster_1, scenario, site) |>
-             mutate(year = as.integer(timestep/365)) |>
-             group_by(site, year, scenario) |>
-             summarise(n_pev_epi_dose_1 = sum(n_pev_epi_dose_1),
-                       n_pev_epi_dose_2 = sum(n_pev_epi_dose_2),
-                       n_pev_epi_dose_3 = sum(n_pev_epi_dose_3),
-                       n_pev_epi_booster_1 = sum(n_pev_epi_booster_1),
-                       .groups = 'keep') |>
-               mutate(fvp = n_pev_epi_dose_3) |> # to align with Nora and HIllary's paper
-               mutate(doses_total = n_pev_epi_dose_1 + n_pev_epi_dose_2 +n_pev_epi_dose_3 + n_pev_epi_booster_1) |>
-             select(-n_pev_epi_dose_1, -n_pev_epi_dose_2, -n_pev_epi_dose_3, -n_pev_epi_booster_1) |>
-             mutate(year = year +1998) #there was misalignment here
+#            doses<- raw |>
+#              select(timestep, n_pev_epi_dose_1, n_pev_epi_dose_2, n_pev_epi_dose_3, n_pev_epi_booster_1, scenario, site) |>
+#              mutate(year = as.integer(timestep/365)) |>
+#              group_by(site, year, scenario) |>
+#              summarise(n_pev_epi_dose_1 = sum(n_pev_epi_dose_1),
+#                        n_pev_epi_dose_2 = sum(n_pev_epi_dose_2),
+#                        n_pev_epi_dose_3 = sum(n_pev_epi_dose_3),
+#                        n_pev_epi_booster_1 = sum(n_pev_epi_booster_1),
+#                        .groups = 'keep') |>
+#                mutate(fvp = n_pev_epi_dose_3) |> # to align with Nora and HIllary's paper
+#                mutate(doses_total = n_pev_epi_dose_1 + n_pev_epi_dose_2 +n_pev_epi_dose_3 + n_pev_epi_booster_1) |>
+#              select(-n_pev_epi_dose_1, -n_pev_epi_dose_2, -n_pev_epi_dose_3, -n_pev_epi_booster_1) |>
+#              mutate(year = year +1998) #there was misalignment here
              
-           dose_output<- merge(averted, doses, by = c('year', 'site')) 
-           dose_output <- dose_output |>
-             mutate(parameter_draw = draw)
+#            dose_output<- merge(averted, doses, by = c('year', 'site')) 
+#            dose_output <- dose_output |>
+#              mutate(parameter_draw = draw)
          
-  return(dose_output)
+#   return(dose_output)
   
-}
+# }
 
-dose_output<- lapply(c(0:max_draw), dose_postprocessing)
+# dose_output<- lapply(c(0:max_draw), dose_postprocessing)
+dose_output<- data.frame()
 saveRDS(dose_output, 'dose_output.rds')
 
 message('done with postprocessing')

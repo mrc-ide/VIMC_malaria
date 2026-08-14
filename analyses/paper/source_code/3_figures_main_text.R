@@ -202,9 +202,9 @@ table_2<- vax_age |>
     ) |>
     unique() |>
   as.data.table()
-  table_2[age== '[0,5]', age:= 'under 5']
-  table_2[age== '(5,15]', age:= '5 to 15']
-  table_2[age== '(15,101]', age:= 'over 15']
+  table_2[age== '[0,5]', age:= '5 or under']
+  table_2[age== '(5,15]', age:= '6 to 15']
+  table_2[age== '(15,101]', age:= '16+']
 
 p3<- ggplot(table_2) +
   geom_smooth(mapping = aes(x= year, y= cases_mean, color = age), method= 'loess', span = 0.1, se= FALSE) +
@@ -237,7 +237,7 @@ p4<- ggplot(table_2) +
 
 fig_3<- ggarrange(p3, p4, nrow = 2, heights= c(1, 1.25))
 
-pdf('Figure_3.pdf')
+pdf('Figure_2_update.pdf')
 print(fig_3)
 dev.off()
 
